@@ -1,107 +1,101 @@
 # Agentic Ad Exchange
 
-Autonomous real-time bidding (RTB) auctions with sub-cent USDC settlement on Arc Testnet. Publishers list inventory, buyer agents compete in a second-price auction, and the winner pays via Circle Developer-Controlled Wallets — no manual settlement required.
+Autonomous ad auctions with sub-cent USDC settlement on Arc. A hackathon
+submission for Circle's *Nanopayments on Arc* hackathon — buyer agents bid
+on ad impressions, seller agents serve inventory, and every auction settles
+as a Circle Nanopayment on Arc (≤ $0.01 / impression, $0.00 gas).
 
-## Architecture
+See `PLANNING.md` for architecture, `CLAUDE.md` for AI-behavior rules, and
+`architecture-diagram.md` for the Mermaid system + sequence + data diagrams.
 
-```
-src/
-├── config.ts                  # Centralised env vars and blockchain constants
-├── types/index.ts             # Shared interfaces: Bid, InventoryListing, AuctionResult
-├── exchange/
-│   ├── auction.ts             # Second-price (Vickrey) auction engine
-│   ├── server.ts              # Express server + x402 Gateway middleware
-│   └── index.ts              # Barrel export
-├── wallets/
-│   ├── circleClient.ts        # Circle DCW: transferUSDC, getBalance, waitForTx
-│   └── index.ts              # Barrel export
-└── agents/buyer/
-    ├── tools/placeBid.ts      # GatewayClient bid tool (x402 nanopayment)
-    └── index.ts              # Barrel export
+## Status
 
-scripts/
-├── initWallets.ts            # Create buyer + seller DCWs
-├── depositGateway.ts         # Fund buyer's x402 Gateway balance
-├── testAuction.ts            # Run a local auction (no network)
-├── testBid.ts                # Place a live bid against the running server
-└── testTransfer.ts           # Test DCW USDC transfer directly
-```
+`feature/scaffolding` — this branch lands the monorepo, strict-TypeScript
+plumbing, shared zod schemas, second-price auction engine, EIP-3009 builder
+stub, LangGraph-based buyer/seller skeletons, a React + Vite + Tailwind
+demo dashboard, and all setup scripts. **No real Circle / x402 / Gemini
+calls land in this branch** — every external SDK sits behind a typed
+adapter with a `// TODO(post-scaffold):` marker.
 
-## Payment rails
-
-| Flow | Rail |
-|------|------|
-| Bid fee ($0.001 per bid) | Circle x402 Gateway (EIP-3009 batch settlement) |
-| Clearing price (winner → seller) | Circle Developer-Controlled Wallets (DCW) |
-
-## Setup
-
-### 1. Install dependencies
+## Quick start
 
 ```bash
-npm install
+nvm use                                  # Node 20 LTS (.nvmrc)
+pnpm install                             # installs all workspace packages
+cp .env.example .env.local               # fill in Circle / Gemini keys
+
+# --- Circle wallets (testnet) ---
+pnpm --filter @ade/scripts generate:entity-secret
+pnpm --filter @ade/scripts register:entity-secret
+pnpm --filter @ade/scripts create:wallet-set
+pnpm --filter @ade/scripts create:wallets <wallet-set-id>
+pnpm --filter @ade/scripts fund:wallets          # Circle Faucet
+pnpm --filter @ade/scripts deposit:gateway       # one-time Gateway deposit
+
+# --- run the demo ---
+pnpm dev                                 # server :4021, UI :5173
 ```
 
-### 2. Configure environment
+Then open <http://localhost:5173>. You should see:
+
+- an empty auction feed,
+- a transaction counter at `0`,
+- the margin-explainer card comparing Stripe vs. Nanopayments.
+
+The Exchange health check: `curl http://localhost:4021/health` → `{"status":"ok"}`.
+
+## Important warnings
+
+- **Testnet only.** `CIRCLE_ENVIRONMENT=testnet` is required; mainnet paths
+  are guarded and forbidden until the submission build.
+- **Gateway deposit takes 13–19 minutes to credit on testnet** after on-chain
+  confirmation. The `deposit:gateway` script polls until the balance appears;
+  leave it running.
+- **No secrets in `ui/`.** Only `VITE_API_BASE_URL=/api` is allowed in
+  `ui/.env*`; the Circle API key, entity secret, and any private key are
+  server-side only. An ESLint rule blocks `ui/**` from importing
+  `@ade/wallets` or the Gateway middleware.
+- **Rate limits** on `POST /bid` are keyed by buyer wallet (not IP). Demo
+  agents share a loopback IP, so IP-keyed limits would starve each other.
+
+## Packages
+
+```
+shared/           # zod schemas, constants, shared types
+server/           # Express exchange (auction, routes, SSE, EIP-3009 stub)
+wallets/          # Circle Developer-Controlled Wallets wrapper (typed stub)
+agents/buyer/     # LangGraph buyer skeleton (Gemini adapter TODO)
+agents/seller/    # LangGraph seller skeleton (Gemini adapter TODO)
+ui/               # React + Vite + Tailwind demo dashboard
+scripts/          # Wallet setup + demo-load scripts
+```
+
+## Validation gates
 
 ```bash
-cp .env.example .env
+pnpm typecheck     # pnpm -r exec tsc --noEmit
+pnpm lint          # eslint .
+pnpm test          # pnpm -r test (vitest + RTL)
+pnpm build         # pnpm -r build
+pnpm audit         # 0 high / 0 critical expected at scaffold time
 ```
 
-Fill in the values (see comments in `.env.example`).
+## Hackathon constraints (do not regress)
 
-### 3. Create wallets
+| Constraint | Enforced by |
+|---|---|
+| Per-action pricing ≤ $0.01 | `shared/src/constants.ts` (`NANOPAYMENT_UNIT_USDC`, `MAX_CLEARING_PRICE_USDC`) + `server/src/auction/engine.ts` cap. |
+| ≥ 50 on-chain transactions in demo | `server/src/routes/stream.ts` SSE + `ui/src/components/TransactionCounter.tsx` + `scripts/src/demoLoad.ts` (stub; implements in a follow-up PRP). |
+| Margin explainer | `ui/src/components/MarginExplainer.tsx` — Stripe $0.30 fee vs. Nanopayment $0.00 gas comparison, copy final. |
 
-```bash
-npm run script:initWallets
-```
+## References
 
-Copy the printed `BUYER_WALLET_*` and `SELLER_WALLET_*` values into your `.env`.
+- `PLANNING.md` — authoritative architecture, data model, project structure
+- `CLAUDE.md` — AI-behavior and security rules
+- `hackathon-context.md` — submission brief + judging criteria
+- `architecture-diagram.md` — Mermaid diagrams
+- `tutorials/` — local reference for Circle / x402 / LangChain SDK patterns
 
-### 4. Fund the wallets
+## License
 
-Go to [faucet.circle.com](https://faucet.circle.com) → Arc Testnet and request test USDC for both addresses.
-
-### 5. Fund the buyer's Gateway balance
-
-The buyer needs USDC pre-deposited in the GatewayWallet contract for the x402 bid fee:
-
-```bash
-npm run script:depositGateway
-```
-
-## Running the exchange
-
-```bash
-# Development (live reload)
-npm run dev
-
-# Production
-npm start
-```
-
-The server starts on `http://localhost:3000`.
-
-## API
-
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `POST` | `/inventory` | none | List an ad slot |
-| `POST` | `/auction/bid` | x402 $0.001 | Place a bid |
-| `POST` | `/auction/run/:listingId` | none | Run auction + settle |
-| `GET` | `/stats` | none | Auction stats |
-| `GET` | `/health` | none | Health check |
-
-## Scripts
-
-```bash
-npm run script:testAuction    # Offline auction logic test
-npm run script:testBid        # Live bid against running server
-npm run script:testTransfer   # DCW transfer smoke test
-```
-
-## TypeScript
-
-```bash
-npm run build   # tsc --noEmit (type-check only)
-```
+MIT — see `LICENSE`.

@@ -1,0 +1,168 @@
+# CLAUDE.md — Agentic Ad Exchange Stack
+
+> AI behavior guide for this repository. Keep in sync with `PLANNING.md`.
+> This is a **hackathon project** for Circle's *Nanopayments on Arc* hackathon. Calibrate strictness accordingly: payment, auction, and wallet code needs rigor; demo UI does not.
+
+---
+
+## Project Awareness & Context
+
+Read these docs at the start of a new conversation, in this order:
+
+1. `PLANNING.md` — architecture, components, data model, project structure. **Authoritative.**
+2. `hackathon-context.md` — the submission brief: mandatory stack, tracks, judging criteria.
+3. `agentic-ad-exchange-stack.md` — short product spec (what the Exchange does).
+4. `architecture-diagram.md` — Mermaid diagrams for the system, payment sequence, and data objects.
+5. `ai-agent-micropayments-validation.md` — the *why*: product strategy, track alignment, re-scored ideas. Use for framing, not implementation.
+6. `tutorials/` — three working tutorials (x402 payments, autonomous wallet agent, pay-per-call LLM nanopayments). **Consult these before writing novel Circle SDK, x402, or LangChain code** — their patterns are known-good and the SDKs change fast.
+
+Before starting a new task: check the task list (via the Task tool). If the task isn't tracked, add it.
+
+### Non-negotiable hackathon constraints
+
+Every code path that contributes to the demo must be compatible with:
+
+- **Per-action pricing ≤ $0.01** (USDC on Arc)
+- **≥ 50 on-chain transactions** visible in the submission demo
+- **Margin explainer** — the model must be demonstrably uneconomic on traditional rails
+
+If a design choice breaks any of the above, flag it before building.
+
+---
+
+## Project Structure
+
+The monorepo layout is defined in `PLANNING.md`. Do not reshape it without updating `PLANNING.md` first.
+
+```
+agentic-ad-exchange/
+├── server/         # Exchange server (Express) — matching, auction, payment trigger
+├── agents/
+│   ├── buyer/      # Buying agent (Gemini + LangGraph) + tools
+│   └── seller/     # Selling agent (Gemini + LangGraph) + tools
+├── wallets/        # Circle SDK wrapper for Developer-Controlled Wallets
+├── ui/             # React + TypeScript demo dashboard
+├── scripts/        # Wallet creation, funding, Gateway deposit
+└── .env.example
+```
+
+- **Barrel exports (`index.ts`)** at each package boundary. No deep imports across packages.
+- **Secrets never leave the server side.** `ui/` must never import from `wallets/`, `server/middleware/nanopayments`, or anything that touches the Circle entity secret or agent private keys.
+
+---
+
+## Code Structure & Modularity
+
+- **No file longer than 300 lines.** If it approaches the limit, extract. Exception: generated types, ABI/bytecode artifacts.
+- **One primary export per file** (one component, one class, one agent definition). Name the file after the export.
+- **Environment variables** accessed only through a typed config module (e.g. `server/config.ts`). Never inline `process.env.FOO`.
+- **Colocate tests** with source as `*.test.ts` / `*.test.tsx`.
+
+---
+
+## TypeScript
+
+- **`strict` mode everywhere.** No `any` without a `// Reason:` comment.
+- `interface` for object shapes; `type` for unions/intersections.
+- **Named exports** only.
+- **`zod` for all runtime validation at boundaries:** inbound HTTP requests, Circle API responses, agent tool inputs and outputs, and anything parsed from env/config.
+- No `.js` in any package's `src/`.
+
+---
+
+## React (applies to `ui/` only)
+
+- Functional components only.
+- Local state first; lift state up before reaching for global state. Use Zustand or context sparingly.
+- Only memoize (`useMemo`/`useCallback`/`React.memo`) with a measured reason.
+- Prop drilling limited to 2 levels — use composition or context beyond that.
+- **CSS:** Tailwind. Don't mix with CSS-in-JS or plain CSS modules.
+
+---
+
+## Agent Framework Rules (`agents/buyer`, `agents/seller`)
+
+- **Stack:** Google Gemini (via Function Calling) + LangChain / LangGraph.
+- **Tool descriptions must be precise.** The LLM selects tools from their descriptions alone — vague descriptions cause wrong-tool-selection bugs that look like LLM failures.
+- **Cap agent iterations at 5** per task (matches the tutorials' precedent). Prevents tool-use infinite loops.
+- **Validate every tool output with `zod`** before returning it to the agent loop.
+- **Never** pass wallet private keys, Circle entity secret, or raw EIP-3009 signatures into the LLM prompt or tool response surface. The agent should hold *wallet addresses and balances*, not secrets.
+- Agent tools are thin wrappers over `server/` or `wallets/` functions — keep business logic out of the tool layer.
+
+---
+
+## Blockchain & Payment Safety (`server/`, `wallets/`, `scripts/`)
+
+- **Development on Arc testnet only.** Mainnet reserved for final submission/judging.
+- **Circle Developer-Controlled Wallets** for every agent; the entity secret lives in a server-side secrets store and is **never logged, printed, or echoed**.
+- **EIP-3009 authorizations:** verify `nonce` uniqueness (persist nonces), `validAfter`/`validBefore`, and `chainId` before forwarding to Circle. Reject duplicates.
+- **Auction clearing price is computed server-side only.** Never trust a price from the client, from an agent tool response, or from a seller agent.
+- **Floor price enforcement** and **bid-range validation** happen in the auction engine, not in the agent layer.
+- **Faucet top-ups and Gateway deposits** go through `scripts/`, never from an HTTP handler.
+- **Initial Gateway deposit takes 13–19 minutes to credit on testnet** (per the nanopayments tutorial). Design flows, loading states, and demo scripts to tolerate this.
+- **Trust model** is documented in `PLANNING.md` § Trust Model — framed as *"trust-minimized, with Circle as the settlement facilitator."* Don't rewrite this framing without updating PLANNING.
+
+---
+
+## Security
+
+- **No secrets in `ui/`** — and no `VITE_*`/`NEXT_PUBLIC_*` env var may hold a secret.
+- **Circle API key, entity secret, and wallet private keys** are loaded from env via the typed config module, server-side only.
+- **Validate and sanitize all inputs** with `zod` at every boundary. Reject on first failure.
+- **CORS on the Exchange API:** explicit allow-list. Never `*` in anything that will be demoed to judges.
+- **httpOnly, secure, sameSite** cookies if/when any session auth is added. No JWTs in `localStorage`.
+- **Rate-limit the bid endpoint** — a misbehaving buying agent can flood the matcher otherwise.
+- **Run `pnpm audit`** (or `npm audit`) before the submission build.
+
+---
+
+## Testing
+
+- **Vitest** for all packages. **React Testing Library** for `ui/`.
+- **Auction engine:** exhaustive unit tests — second-price math, tie-breaking, floor enforcement, single-bidder degenerate case.
+- **EIP-3009 builders:** test against known-good signature vectors.
+- **Circle SDK calls:** mock at the SDK boundary (not deep inside handlers).
+- **At least one integration test** covers the full happy path: seller register → buyer bid → match → auction → authorization signed → payment confirmed (Circle mocked) → settlement receipt stored.
+- Each new feature ships with: 1 happy path, 1 edge case, 1 failure case.
+- Query by role/label/text in RTL — never by className or test ID unless unavoidable.
+
+---
+
+## Style & Naming
+
+- **Naming conventions:**
+  - Components: `PascalCase` (`AuctionFeed.tsx`)
+  - Hooks: `camelCase` with `use` prefix (`useAuctionStream.ts`)
+  - Utils / functions: `camelCase` (`computeClearingPrice.ts`)
+  - Types / interfaces: `PascalCase` (`BidRequest`, `SettlementReceipt`)
+  - Constants: `UPPER_SNAKE_CASE` (`MAX_AGENT_ITERATIONS`)
+  - Event handlers: `handle` prefix (`handleBidSubmit`)
+- **JSDoc** on exports that cross package boundaries. Internal helpers don't need it.
+- **`// Reason:` comments** for any non-obvious choice, any `any`, or any constraint workaround.
+- Follow repo ESLint/Prettier. No inline rule overrides without a `// Reason:` comment.
+
+---
+
+## Performance
+
+- Demo must sustain a **1–5 Hz auction cadence**. Avoid per-auction synchronous DB writes in the hot path — batch, stream, or write async.
+- Lazy-load heavy demo routes with `React.lazy` + `Suspense`.
+- Keep `ui/` bundle lean; this is a demo dashboard, not a product.
+
+---
+
+## Task Completion
+
+- Use the Task tool (`TaskCreate` / `TaskUpdate`) for in-session tracking.
+- If a `TASK.md` is added to the repo root, mirror completed tasks there for cross-session persistence.
+- Newly discovered follow-ups go under a **Discovered During Work** section (in `TASK.md` if present, else in the Task tool).
+
+---
+
+## AI Behavior Rules
+
+- **Never assume missing context. Ask questions if uncertain** — especially about Circle SDK method signatures and x402 SDK exports, which change between tutorial versions.
+- **Never hallucinate libraries, functions, or Circle/x402 SDK methods.** Verify against `tutorials/`, Circle's GitHub (`github.com/circlefin`), or the Arc docs before writing code that calls them.
+- **Always confirm file paths and module names exist** before referencing them.
+- **Never delete or overwrite existing code** unless a task explicitly instructs you to.
+- For payment-, auction-, or wallet-touching code, **state your assumptions explicitly and ask before shipping**. The cost of a wrong settlement path (lost USDC, stuck nonces, demo blowup) is much higher than the cost of a clarifying question.

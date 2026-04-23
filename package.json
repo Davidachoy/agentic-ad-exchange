@@ -1,50 +1,36 @@
 {
   "name": "agentic-ad-exchange",
-  "version": "1.0.0",
-  "description": "Autonomous ad auctions with sub-cent USDC settlement on Arc",
-  "main": "index.js",
-  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agentic Ad Exchange Stack — autonomous ad auctions settled via Circle Nanopayments on Arc.",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@10.33.1+sha512.05ba3c1d5d1c18f68df06470d74055e62d41fc110a0c660db1b2dfb2785327f04cf0f68345d4609bc52089e7fa0343c31593b2f9594e2c5d5da426230acc9820",
   "scripts": {
-    "start": "tsx src/exchange/server.ts",
-    "dev": "tsx watch src/exchange/server.ts",
-    "build": "tsc --noEmit",
-    "script:initWallets": "tsx scripts/initWallets.ts",
-    "script:depositGateway": "tsx scripts/depositGateway.ts",
-    "script:testAuction": "tsx scripts/testAuction.ts",
-    "script:testBid": "tsx scripts/testBid.ts",
-    "script:testMultipleBids": "tsx scripts/testMultipleBids.ts",
-    "script:testTransfer": "tsx scripts/testTransfer.ts"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Davidachoy/agentic-ad-exchange.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Davidachoy/agentic-ad-exchange/issues"
-  },
-  "homepage": "https://github.com/Davidachoy/agentic-ad-exchange#readme",
-  "dependencies": {
-    "@circle-fin/developer-controlled-wallets": "^10.3.0",
-    "@circle-fin/x402-batching": "^3.0.2",
-    "@google/generative-ai": "^0.24.1",
-    "@x402/core": "^2.3.0",
-    "@x402/evm": "^2.3.0",
-    "@x402/express": "^2.3.0",
-    "@x402/fetch": "^2.10.0",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "viem": "^2.48.4",
-    "x402-express": "^1.2.0"
+    "dev": "concurrently -k -n server,ui -c blue,magenta \"pnpm --filter @ade/server dev\" \"pnpm --filter @ade/ui dev\"",
+    "build": "pnpm -r --filter=!@ade/scripts build && pnpm --filter @ade/scripts build",
+    "test": "pnpm -r test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "typecheck": "pnpm -r exec tsc --noEmit",
+    "audit": "pnpm audit",
+    "precommit": "pnpm typecheck && pnpm lint && pnpm test"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/node": "^25.6.0",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "@types/node": "^20.14.10",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-import": "^2.29.1",
+    "prettier": "^3.3.3",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4",
+    "vitest": "^1.6.0"
   }
 }
