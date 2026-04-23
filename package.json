@@ -1,0 +1,49 @@
+{
+  "name": "agentic-ad-exchange",
+  "version": "1.0.0",
+  "description": "Autonomous ad auctions with sub-cent USDC settlement on Arc",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/exchange/server.ts",
+    "dev": "tsx watch src/exchange/server.ts",
+    "build": "tsc --noEmit",
+    "script:initWallets": "tsx scripts/initWallets.ts",
+    "script:depositGateway": "tsx scripts/depositGateway.ts",
+    "script:testAuction": "tsx scripts/testAuction.ts",
+    "script:testBid": "tsx scripts/testBid.ts",
+    "script:testTransfer": "tsx scripts/testTransfer.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Davidachoy/agentic-ad-exchange.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Davidachoy/agentic-ad-exchange/issues"
+  },
+  "homepage": "https://github.com/Davidachoy/agentic-ad-exchange#readme",
+  "dependencies": {
+    "@circle-fin/developer-controlled-wallets": "^10.3.0",
+    "@circle-fin/x402-batching": "^3.0.2",
+    "@google/generative-ai": "^0.24.1",
+    "@x402/core": "^2.3.0",
+    "@x402/evm": "^2.3.0",
+    "@x402/express": "^2.3.0",
+    "@x402/fetch": "^2.10.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "viem": "^2.48.4",
+    "x402-express": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.6.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
