@@ -1,0 +1,24 @@
+import { config as loadDotenv } from "dotenv";
+import { z } from "zod";
+
+const SellerEnvSchema = z.object({
+  GEMINI_API_KEY: z.string().min(1),
+  GEMINI_MODEL: z.string().min(1).default("gemini-1.5-flash"),
+  EXCHANGE_API_URL: z.string().url().default("http://localhost:4021"),
+  SELLER_WALLET_ID: z.string().min(1),
+});
+
+export type SellerAgentConfig = z.infer<typeof SellerEnvSchema>;
+
+export function loadSellerConfig(env: NodeJS.ProcessEnv = process.env): SellerAgentConfig {
+  loadDotenv({ path: [".env.local", ".env"] });
+  const parsed = SellerEnvSchema.safeParse(env);
+  if (!parsed.success) {
+    throw new Error(
+      `Invalid seller-agent env: ${parsed.error.issues
+        .map((i) => `${i.path.join(".")} ${i.message}`)
+        .join("; ")}`,
+    );
+  }
+  return parsed.data;
+}
