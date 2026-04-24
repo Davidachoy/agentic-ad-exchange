@@ -1,0 +1,29 @@
+{
+  "name": "@ade/scripts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "test": "vitest run",
+    "generate:entity-secret": "tsx src/generateEntitySecret.ts",
+    "register:entity-secret": "tsx src/registerEntitySecret.ts",
+    "create:wallet-set": "tsx src/createWalletSet.ts",
+    "create:wallets": "tsx src/createWallets.ts",
+    "fund:wallets": "tsx src/fundWallets.ts",
+    "deposit:gateway": "tsx src/depositGateway.ts",
+    "demo:load": "tsx src/demoLoad.ts"
+  },
+  "dependencies": {
+    "@ade/shared": "workspace:*",
+    "@ade/wallets": "workspace:*",
+    "@circle-fin/developer-controlled-wallets": "^10.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4",
+    "vitest": "^1.6.0"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "@ade/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./constants": {
+      "types": "./src/constants.ts",
+      "import": "./src/constants.ts",
+      "default": "./src/constants.ts"
+    },
+    "./schemas": {
+      "types": "./src/schemas/index.ts",
+      "import": "./src/schemas/index.ts",
+      "default": "./src/schemas/index.ts"
+    },
+    "./env": {
+      "types": "./src/loadRootEnv.ts",
+      "import": "./src/loadRootEnv.ts",
+      "default": "./src/loadRootEnv.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "vitest": "^1.6.0"
+  }
+}

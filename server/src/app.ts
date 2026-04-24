@@ -1,0 +1,63 @@
+import express, { type Express } from "express";
+
+import { createEventBus, type EventBus } from "./events/bus.js";
+import { createCorsMiddleware } from "./middleware/corsAllowList.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+import { createInMemoryNonceStore, type NonceStore } from "./nonces/store.js";
+import { registerRoutes } from "./routes/index.js";
+import {
+  createBidStore,
+  createListingStore,
+  createSettlementStore,
+  type BidStore,
+  type ListingStore,
+  type SettlementStore,
+} from "./state/stores.js";
+
+export interface AppDeps {
+  corsAllowOrigins: readonly string[];
+  bidRateLimitPerMin: number;
+  listingStore?: ListingStore;
+  bidStore?: BidStore;
+  settlementStore?: SettlementStore;
+  nonceStore?: NonceStore;
+  eventBus?: EventBus;
+}
+
+export interface AppHandles {
+  app: Express;
+  listingStore: ListingStore;
+  bidStore: BidStore;
+  settlementStore: SettlementStore;
+  nonceStore: NonceStore;
+  eventBus: EventBus;
+}
+
+/**
+ * Pure Express app factory. No listen(); no process.env reads. Dependency
+ * injection points let tests swap each store for a fresh in-memory instance.
+ */
+export function createApp(deps: AppDeps): AppHandles {
+  const app = express();
+  const listingStore = deps.listingStore ?? createListingStore();
+  const bidStore = deps.bidStore ?? createBidStore();
+  const settlementStore = deps.settlementStore ?? createSettlementStore();
+  const nonceStore = deps.nonceStore ?? createInMemoryNonceStore();
+  const eventBus = deps.eventBus ?? createEventBus();
+
+  app.disable("x-powered-by");
+  app.use(createCorsMiddleware(deps.corsAllowOrigins));
+  app.use(express.json({ limit: "64kb" }));
+
+  registerRoutes(app, {
+    listingStore,
+    bidStore,
+    nonceStore,
+    eventBus,
+    rateLimitPerMin: deps.bidRateLimitPerMin,
+  });
+
+  app.use(errorHandler);
+
+  return { app, listingStore, bidStore, settlementStore, nonceStore, eventBus };
+}
