@@ -18,6 +18,9 @@ coverage/
 .env.local
 .env.*.local
 
+# Circle entity-secret recovery bundle — treat like the secret itself
+recovery_file_*.dat
+
 # Logs
 *.log
 npm-debug.log*
