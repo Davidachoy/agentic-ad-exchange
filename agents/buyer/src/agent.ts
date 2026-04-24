@@ -62,7 +62,10 @@ export function createBuyerAgent(deps: CreateBuyerAgentDeps): BuyerAgent {
         const args = tool.inputSchema.parse(decision.toolCall.args);
         const out = await tool.invoke(args);
         const parsedOut = tool.outputSchema.parse(out);
-        history.push({ role: "tool", content: JSON.stringify({ tool: tool.name, out: parsedOut }) });
+        history.push({
+          role: "tool",
+          content: JSON.stringify({ tool: tool.name, out: parsedOut }),
+        });
       }
       return { output: "(iteration cap reached)", toolCalls, iterations: cap };
     },

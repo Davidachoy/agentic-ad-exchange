@@ -4,8 +4,7 @@ import { assertTestnet, loadScriptsConfig } from "./config.js";
 
 const base = {
   CIRCLE_API_KEY: "k",
-  CIRCLE_ENTITY_SECRET:
-    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  CIRCLE_ENTITY_SECRET: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   CIRCLE_ENVIRONMENT: "testnet",
   DEPOSIT_AMOUNT_USDC: "0.10",
 } as NodeJS.ProcessEnv;

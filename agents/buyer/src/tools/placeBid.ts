@@ -14,7 +14,9 @@ export interface PlaceBidDeps {
   fetchImpl?: typeof fetch;
 }
 
-export function createPlaceBidTool(deps: PlaceBidDeps): AgentTool<BidRequest, z.infer<typeof OutputSchema>> {
+export function createPlaceBidTool(
+  deps: PlaceBidDeps,
+): AgentTool<BidRequest, z.infer<typeof OutputSchema>> {
   const fetcher = deps.fetchImpl ?? fetch;
   return {
     name: "placeBid",

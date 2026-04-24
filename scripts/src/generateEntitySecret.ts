@@ -2,6 +2,8 @@ import { randomBytes } from "node:crypto";
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+import { loadRootEnv } from "@ade/shared/env";
+
 import { banner } from "./logger.js";
 
 /**

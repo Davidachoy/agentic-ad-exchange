@@ -9,9 +9,7 @@ import {
   createViewHistoryTool,
 } from "./tools/index.js";
 
-function fakeLlm(
-  decisions: ReturnType<LlmAdapter["step"]>[],
-): LlmAdapter {
+function fakeLlm(decisions: ReturnType<LlmAdapter["step"]>[]): LlmAdapter {
   let i = 0;
   return {
     async step() {

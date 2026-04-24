@@ -6,10 +6,7 @@ import { z } from "zod";
 // placeholder (e.g. `WALLET_SET_ID=`) would otherwise fail `.min(1)` / `.url()` /
 // `.regex()` checks. We treat blank strings as "not provided" at the boundary.
 const blankToUndefined = <T extends z.ZodTypeAny>(schema: T) =>
-  z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    schema,
-  );
+  z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), schema);
 
 /**
  * Single reader of process.env for @ade/scripts. Scripts inherit the same
@@ -21,7 +18,19 @@ const ScriptsEnvSchema = z.object({
   CIRCLE_ENVIRONMENT: z.enum(["testnet", "mainnet"]).default("testnet"),
   WALLET_SET_ID: blankToUndefined(z.string().min(1).optional()),
   BUYER_WALLET_ID: blankToUndefined(z.string().min(1).optional()),
+  BUYER_WALLET_ADDRESS: blankToUndefined(
+    z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/)
+      .optional(),
+  ),
   SELLER_WALLET_ID: blankToUndefined(z.string().min(1).optional()),
+  SELLER_WALLET_ADDRESS: blankToUndefined(
+    z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/)
+      .optional(),
+  ),
   MARKETPLACE_WALLET_ADDRESS: blankToUndefined(
     z
       .string()
@@ -36,6 +45,18 @@ const ScriptsEnvSchema = z.object({
   ),
   ARC_CHAIN_ID: blankToUndefined(z.coerce.number().int().positive().optional()),
   ARC_RPC_URL: blankToUndefined(z.string().url().optional()),
+  BUYER_CHAIN: blankToUndefined(z.string().min(1).default("arcTestnet")),
+  // Reason: EIP-3009 signer key. Required only for deposit:gateway; other
+  // scripts may run without it. Validated as 0x-prefixed 32-byte hex when
+  // present so we never pass a bad key into the x402-batching SDK.
+  BUYER_PRIVATE_KEY: blankToUndefined(
+    z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{64}$/)
+      .optional(),
+  ),
+  DEPOSIT_TIMEOUT_MS: blankToUndefined(z.coerce.number().int().positive().default(1_500_000)),
+  DEMO_LOAD_CYCLES: blankToUndefined(z.coerce.number().int().min(50).default(50)),
 });
 
 export type ScriptsConfig = z.infer<typeof ScriptsEnvSchema>;

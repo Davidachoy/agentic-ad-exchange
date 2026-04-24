@@ -1,11 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createCircleClient, type CircleSdkAdapter } from "./circle.js";
 
 const validEnv = {
   CIRCLE_API_KEY: "test-api-key",
-  CIRCLE_ENTITY_SECRET:
-    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  CIRCLE_ENTITY_SECRET: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   CIRCLE_ENVIRONMENT: "testnet",
 } as NodeJS.ProcessEnv;
 
@@ -21,6 +20,12 @@ const fakeSdk = (overrides: Partial<CircleSdkAdapter> = {}): CircleSdkAdapter =>
   }),
   listTransactions: async () => [],
   createTransfer: async () => ({ transactionId: "tx-1", status: "queued" }),
+  getTransaction: async () => ({
+    transactionId: "tx-1",
+    txHash: `0x${"f".repeat(64)}`,
+    state: "COMPLETE",
+    blockchain: "ARC-TESTNET",
+  }),
   ...overrides,
 });
 
@@ -47,5 +52,82 @@ describe("createCircleClient", () => {
         env: { ...validEnv, CIRCLE_ENTITY_SECRET: undefined } as NodeJS.ProcessEnv,
       }),
     ).toThrow(/CIRCLE_ENTITY_SECRET/);
+  });
+
+  it("treats blank WALLET_SET_ID as unset (regression: dotenv loads blank lines as '')", () => {
+    expect(() =>
+      createCircleClient({
+        env: { ...validEnv, WALLET_SET_ID: "" } as NodeJS.ProcessEnv,
+        sdk: fakeSdk(),
+      }),
+    ).not.toThrow();
+  });
+});
+
+describe("waitForTx", () => {
+  it("returns the receipt when state reaches COMPLETE (happy path)", async () => {
+    const sleep = vi.fn(async () => undefined);
+    const states = ["QUEUED", "SENT", "COMPLETE"];
+    let i = 0;
+    const sdk = fakeSdk({
+      getTransaction: async () => ({
+        transactionId: "tx-1",
+        txHash: `0x${"a".repeat(64)}`,
+        state: states[i++] ?? "COMPLETE",
+        blockchain: "ARC-TESTNET",
+      }),
+    });
+    const client = createCircleClient({ env: validEnv, sdk, sleep });
+    const receipt = await client.waitForTx({
+      transactionId: "tx-1",
+      intervalMs: 10,
+      maxAttempts: 5,
+    });
+    expect(receipt.state).toBe("COMPLETE");
+    expect(receipt.txHash).toMatch(/^0x[a-f0-9]{64}$/);
+    expect(sleep).toHaveBeenCalledTimes(2);
+  });
+
+  it("short-circuits on the first poll when already COMPLETE (edge)", async () => {
+    const sleep = vi.fn(async () => undefined);
+    const sdk = fakeSdk();
+    const client = createCircleClient({ env: validEnv, sdk, sleep });
+    const receipt = await client.waitForTx({
+      transactionId: "tx-1",
+      intervalMs: 10,
+      maxAttempts: 3,
+    });
+    expect(receipt.state).toBe("COMPLETE");
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it("throws when the SDK reports a terminal FAILED state (failure)", async () => {
+    const sleep = vi.fn(async () => undefined);
+    const sdk = fakeSdk({
+      getTransaction: async () => ({
+        transactionId: "tx-1",
+        state: "FAILED",
+      }),
+    });
+    const client = createCircleClient({ env: validEnv, sdk, sleep });
+    await expect(
+      client.waitForTx({ transactionId: "tx-1", intervalMs: 10, maxAttempts: 3 }),
+    ).rejects.toThrow(/FAILED/);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it("throws a timeout error when maxAttempts elapses without COMPLETE (failure)", async () => {
+    const sleep = vi.fn(async () => undefined);
+    const sdk = fakeSdk({
+      getTransaction: async () => ({
+        transactionId: "tx-1",
+        state: "QUEUED",
+      }),
+    });
+    const client = createCircleClient({ env: validEnv, sdk, sleep });
+    await expect(
+      client.waitForTx({ transactionId: "tx-1", intervalMs: 10, maxAttempts: 3 }),
+    ).rejects.toThrow(/timeout/);
+    expect(sleep).toHaveBeenCalledTimes(2);
   });
 });

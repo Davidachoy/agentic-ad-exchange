@@ -1,7 +1,6 @@
 import { AdInventoryListingSchema } from "@ade/shared";
 import { Router } from "express";
 
-
 import type { ListingStore } from "../state/stores.js";
 
 export interface InventoryDeps {

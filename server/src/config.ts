@@ -2,7 +2,6 @@ import { MAX_CLEARING_PRICE_USDC } from "@ade/shared";
 import { loadRootEnv } from "@ade/shared/env";
 import { z } from "zod";
 
-
 /**
  * Typed server config. The ONLY file that reads process.env in @ade/server.
  * Throws at startup on missing or malformed values.
@@ -23,9 +22,7 @@ const OriginListSchema = z
 const ServerEnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(4021),
-  LOG_LEVEL: z
-    .enum(["trace", "debug", "info", "warn", "error", "fatal", "silent"])
-    .default("info"),
+  LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal", "silent"]).default("info"),
   CORS_ALLOW_ORIGINS: OriginListSchema.default("http://localhost:5173"),
   BID_RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(120),
   ARC_CHAIN_ID: z.coerce.number().int().positive().default(421614),

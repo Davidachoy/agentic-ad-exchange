@@ -15,7 +15,9 @@ export function AuctionFeed({ lastAuction }: AuctionFeedProps): JSX.Element {
           {JSON.stringify(lastAuction, null, 2)}
         </pre>
       ) : (
-        <p className="mt-2 text-sm text-slate-400">No auctions yet. Waiting for buyer/seller agents…</p>
+        <p className="mt-2 text-sm text-slate-400">
+          No auctions yet. Waiting for buyer/seller agents…
+        </p>
       )}
     </section>
   );
