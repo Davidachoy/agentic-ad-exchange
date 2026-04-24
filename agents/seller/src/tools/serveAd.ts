@@ -6,7 +6,10 @@ const InputSchema = z.object({
   auctionId: z.string().uuid(),
   creativeId: z.string().min(1),
 });
-const OutputSchema = z.object({ served: z.boolean(), servedAt: z.string().datetime({ offset: true }) });
+const OutputSchema = z.object({
+  served: z.boolean(),
+  servedAt: z.string().datetime({ offset: true }),
+});
 
 export interface ServeAdDeps {
   exchangeUrl: string;

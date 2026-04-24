@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 
-import type { AuctionResult, SettlementReceipt, StreamEventName , STREAM_EVENTS } from "@ade/shared";
+import type { AuctionResult, SettlementReceipt, StreamEventName, STREAM_EVENTS } from "@ade/shared";
 
 export interface EventPayloads {
   [STREAM_EVENTS.auctionMatched]: AuctionResult;

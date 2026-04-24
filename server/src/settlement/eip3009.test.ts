@@ -42,9 +42,7 @@ describe("buildTypedData", () => {
   });
 
   it("rejects an expired validBefore (failure)", () => {
-    expect(() =>
-      buildTypedData({ ...validArgs, validBefore: now - 1 }),
-    ).toThrow(/validBefore/);
+    expect(() => buildTypedData({ ...validArgs, validBefore: now - 1 })).toThrow(/validBefore/);
   });
 });
 

@@ -53,7 +53,12 @@ describe("matchBidsToListing", () => {
 
   it("rejects bids whose context tag hits a contextual exclusion (failure)", () => {
     const blocked = bid("d", {
-      targeting: { adType: "display", format: "banner", size: "300x250", contextTags: ["gambling"] },
+      targeting: {
+        adType: "display",
+        format: "banner",
+        size: "300x250",
+        contextTags: ["gambling"],
+      },
     });
     const matched = matchBidsToListing(listing, [blocked]);
     expect(matched).toHaveLength(0);

@@ -1,6 +1,5 @@
-import { registerEntitySecretCiphertext } from "@circle-fin/developer-controlled-wallets";
-
 import { loadRootEnv } from "@ade/shared/env";
+import { registerEntitySecretCiphertext } from "@circle-fin/developer-controlled-wallets";
 
 import { loadScriptsConfig } from "./config.js";
 import { banner, log } from "./logger.js";

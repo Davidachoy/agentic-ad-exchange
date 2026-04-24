@@ -3,7 +3,10 @@ import { z } from "zod";
 
 import type { AgentTool } from "./types.js";
 
-const InputSchema = z.object({ sellerAgentId: z.string().min(1), limit: z.number().int().positive().max(100).default(20) });
+const InputSchema = z.object({
+  sellerAgentId: z.string().min(1),
+  limit: z.number().int().positive().max(100).default(20),
+});
 const OutputSchema = z.object({ items: z.array(AuctionResultSchema) });
 
 export interface ViewHistoryDeps {

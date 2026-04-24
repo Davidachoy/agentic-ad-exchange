@@ -1,7 +1,6 @@
 import { STREAM_EVENTS } from "@ade/shared";
 import { Router } from "express";
 
-
 import type { EventBus } from "../events/bus.js";
 
 export interface StreamDeps {

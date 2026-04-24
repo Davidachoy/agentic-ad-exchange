@@ -1,7 +1,6 @@
 import { Eip3009NonceSchema, GATEWAY_WALLET_ADDRESS, WalletAddressSchema } from "@ade/shared";
 import { z } from "zod";
 
-
 import type { NonceStore } from "../nonces/store.js";
 
 /**

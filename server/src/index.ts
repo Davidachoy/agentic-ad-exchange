@@ -16,10 +16,6 @@ export { createInMemoryNonceStore } from "./nonces/store.js";
 export type { NonceStore } from "./nonces/store.js";
 export { createEventBus } from "./events/bus.js";
 export type { EventBus, EventPayloads } from "./events/bus.js";
-export {
-  createListingStore,
-  createBidStore,
-  createSettlementStore,
-} from "./state/stores.js";
+export { createListingStore, createBidStore, createSettlementStore } from "./state/stores.js";
 export type { ListingStore, BidStore, SettlementStore } from "./state/stores.js";
 export { logger } from "./logger.js";

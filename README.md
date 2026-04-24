@@ -10,12 +10,25 @@ See `PLANNING.md` for architecture, `CLAUDE.md` for AI-behavior rules, and
 
 ## Status
 
-`feature/scaffolding` — this branch lands the monorepo, strict-TypeScript
-plumbing, shared zod schemas, second-price auction engine, EIP-3009 builder
-stub, LangGraph-based buyer/seller skeletons, a React + Vite + Tailwind
-demo dashboard, and all setup scripts. **No real Circle / x402 / Gemini
-calls land in this branch** — every external SDK sits behind a typed
-adapter with a `// TODO(post-scaffold):` marker.
+Scaffolding + **real Circle wiring for setup, wallets, deposit, and demo
+load.** The monorepo, strict-TypeScript plumbing, shared zod schemas,
+second-price auction engine, EIP-3009 builder stub, LangGraph-based
+buyer/seller skeletons, and React + Vite + Tailwind dashboard are all in
+place.
+
+Wired with real SDK calls:
+
+- `@ade/wallets::createCircleClient` — real
+  `@circle-fin/developer-controlled-wallets` adapter (createWalletSet /
+  createWallet / getBalance / transfer / `waitForTx`).
+- `scripts/src/*.ts` — real `create:wallet-set`, `create:wallets`,
+  `fund:wallets` (balance report), `deposit:gateway` (Gateway deposit +
+  13–19 min testnet credit poll), `demo:load` (≥ 50 real DCW transfers +
+  margin-explainer banner).
+
+Still TODO (carry-over from the PRP backlog): Gemini in the agent loop, the
+x402-batching server middleware on `POST /bid`, the `POST /auction/run/:id`
+route, and resolving the `ARC_TESTNET_USDC` placeholder.
 
 ## Quick start
 
@@ -24,15 +37,26 @@ nvm use                                  # Node 20 LTS (.nvmrc)
 pnpm install                             # installs all workspace packages
 cp .env.example .env.local               # fill in Circle / Gemini keys
 
-# --- Circle wallets (testnet) ---
-pnpm --filter @ade/scripts generate:entity-secret
-pnpm --filter @ade/scripts register:entity-secret
-pnpm --filter @ade/scripts create:wallet-set
-pnpm --filter @ade/scripts create:wallets <wallet-set-id>
-pnpm --filter @ade/scripts fund:wallets          # Circle Faucet
-pnpm --filter @ade/scripts deposit:gateway       # one-time Gateway deposit
+# --- Circle DCW setup (testnet) ---
+pnpm --filter @ade/scripts generate:entity-secret      # writes CIRCLE_ENTITY_SECRET to .env.local
+pnpm --filter @ade/scripts register:entity-secret      # registers with Circle; saves recovery file
+pnpm --filter @ade/scripts create:wallet-set           # idempotent; prints WALLET_SET_ID to copy into .env.local
+pnpm --filter @ade/scripts create:wallets              # reads WALLET_SET_ID from env; prints buyer + seller ids/addresses
 
-# --- run the demo ---
+# Fund both DCWs at https://faucet.circle.com (Arc Testnet), then:
+pnpm --filter @ade/scripts fund:wallets                # prints current DCW balances (faucet is a manual step)
+
+# --- Gateway deposit (one-time, 13–19 min testnet credit) ---
+# BUYER_PRIVATE_KEY is a *separate* EOA that signs approve + deposit — not a DCW key.
+# Generate one: node -e "console.log('0x' + require('crypto').randomBytes(32).toString('hex'))"
+# Paste into .env.local as BUYER_PRIVATE_KEY, then:
+pnpm --filter @ade/scripts show:address                # prints the EOA address — fund with USDC on the Circle Faucet
+pnpm --filter @ade/scripts deposit:gateway             # deposits + polls getBalances until credited
+
+# --- Run the ≥ 50-cycle demo load ---
+pnpm --filter @ade/scripts demo:load                   # buyer → seller DCW transfers @ ≤ $0.01 each, prints margin banner
+
+# --- Run the dashboard ---
 pnpm dev                                 # server :4021, UI :5173
 ```
 
@@ -63,11 +87,11 @@ The Exchange health check: `curl http://localhost:4021/health` → `{"status":"o
 ```
 shared/           # zod schemas, constants, shared types
 server/           # Express exchange (auction, routes, SSE, EIP-3009 stub)
-wallets/          # Circle Developer-Controlled Wallets wrapper (typed stub)
+wallets/          # Circle DCW wrapper — real SDK behind a zod-typed adapter
 agents/buyer/     # LangGraph buyer skeleton (Gemini adapter TODO)
 agents/seller/    # LangGraph seller skeleton (Gemini adapter TODO)
 ui/               # React + Vite + Tailwind demo dashboard
-scripts/          # Wallet setup + demo-load scripts
+scripts/          # Wallet setup + Gateway deposit + ≥ 50-cycle demo load
 ```
 
 ## Validation gates
@@ -85,8 +109,8 @@ pnpm audit         # 0 high / 0 critical expected at scaffold time
 | Constraint | Enforced by |
 |---|---|
 | Per-action pricing ≤ $0.01 | `shared/src/constants.ts` (`NANOPAYMENT_UNIT_USDC`, `MAX_CLEARING_PRICE_USDC`) + `server/src/auction/engine.ts` cap. |
-| ≥ 50 on-chain transactions in demo | `server/src/routes/stream.ts` SSE + `ui/src/components/TransactionCounter.tsx` + `scripts/src/demoLoad.ts` (stub; implements in a follow-up PRP). |
-| Margin explainer | `ui/src/components/MarginExplainer.tsx` — Stripe $0.30 fee vs. Nanopayment $0.00 gas comparison, copy final. |
+| ≥ 50 on-chain transactions in demo | `scripts/src/demoLoad.ts` drives `DEMO_LOAD_CYCLES` (default 50, min-enforced at config) DCW transfers; each prints an Arc explorer URL, and the script fails loud if fewer settle. Live SSE feed via `server/src/routes/stream.ts` + `ui/src/components/TransactionCounter.tsx`. |
+| Margin explainer | `scripts/src/demoLoad.margin.ts` prints the final terminal banner; `ui/src/components/MarginExplainer.tsx` shows the Stripe $0.30 fee vs. Nanopayment $0.00 gas comparison in the dashboard. |
 
 ## References
 

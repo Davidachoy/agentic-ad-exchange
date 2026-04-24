@@ -42,16 +42,11 @@ function resolveWorkspaceRoot(): string {
 /** Exposed for tests. */
 export function findWorkspaceRoot(startDir: string): string {
   let current = resolve(startDir);
-  while (true) {
+  while (current !== dirname(current)) {
     if (existsSync(resolve(current, WORKSPACE_MARKER))) return current;
-    const parent = dirname(current);
-    if (parent === current) {
-      throw new Error(
-        `loadRootEnv: could not find ${WORKSPACE_MARKER} walking up from ${startDir}`,
-      );
-    }
-    current = parent;
+    current = dirname(current);
   }
+  throw new Error(`loadRootEnv: could not find ${WORKSPACE_MARKER} walking up from ${startDir}`);
 }
 
 /** Test-only: clears the cached root so subsequent calls re-resolve. */
