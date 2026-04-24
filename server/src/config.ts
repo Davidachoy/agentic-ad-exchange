@@ -1,4 +1,4 @@
-import { MAX_CLEARING_PRICE_USDC } from "@ade/shared";
+import { ARC_TESTNET_CHAIN_ID, MAX_CLEARING_PRICE_USDC } from "@ade/shared";
 import { loadRootEnv } from "@ade/shared/env";
 import { z } from "zod";
 
@@ -25,7 +25,7 @@ const ServerEnvSchema = z.object({
   LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal", "silent"]).default("info"),
   CORS_ALLOW_ORIGINS: OriginListSchema.default("http://localhost:5173"),
   BID_RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(120),
-  ARC_CHAIN_ID: z.coerce.number().int().positive().default(421614),
+  ARC_CHAIN_ID: z.coerce.number().int().positive().default(ARC_TESTNET_CHAIN_ID),
   MAX_CLEARING_PRICE_USDC: z
     .string()
     .regex(/^\d+(?:\.\d{1,6})?$/)

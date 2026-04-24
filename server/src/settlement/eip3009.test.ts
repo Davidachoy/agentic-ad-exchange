@@ -1,3 +1,4 @@
+import { ARC_TESTNET_CHAIN_ID } from "@ade/shared";
 import { describe, expect, it } from "vitest";
 
 import { createInMemoryNonceStore } from "../nonces/store.js";
@@ -15,7 +16,7 @@ const validArgs = {
   validAfter: now - 60,
   validBefore: now + 3600,
   nonce: nonce("a"),
-  chainId: 421614,
+  chainId: ARC_TESTNET_CHAIN_ID,
   verifyingContract: wallet("3"),
 };
 
@@ -23,7 +24,7 @@ describe("buildTypedData", () => {
   it("produces the EIP-3009 typed-data shape for a valid authorization (happy)", () => {
     const td = buildTypedData(validArgs);
     expect(td.primaryType).toBe("TransferWithAuthorization");
-    expect(td.domain.chainId).toBe(validArgs.chainId);
+    expect(td.domain.chainId).toBe(ARC_TESTNET_CHAIN_ID);
     expect(td.message.from).toBe(validArgs.from);
     expect(td.message.nonce).toBe(validArgs.nonce);
     // Spec requires these fields in the struct in this order.
@@ -35,6 +36,14 @@ describe("buildTypedData", () => {
       "validBefore",
       "nonce",
     ]);
+  });
+
+  it("domain.chainId matches ARC_TESTNET_CHAIN_ID — wrong chain produces a different domain hash (known-good-vector guard)", () => {
+    const arcTd = buildTypedData(validArgs);
+    // Arbitrum Sepolia chain id — the stale placeholder we replaced.
+    const wrongChainTd = buildTypedData({ ...validArgs, chainId: 421614 });
+    expect(arcTd.domain.chainId).toBe(ARC_TESTNET_CHAIN_ID);
+    expect(wrongChainTd.domain.chainId).not.toBe(ARC_TESTNET_CHAIN_ID);
   });
 
   it("rejects a zero chainId (edge / known-good-vector guard)", () => {
