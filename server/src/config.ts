@@ -26,6 +26,12 @@ const ServerEnvSchema = z.object({
   CORS_ALLOW_ORIGINS: OriginListSchema.default("http://localhost:5173"),
   BID_RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(120),
   ARC_CHAIN_ID: z.coerce.number().int().positive().default(421614),
+  // Reason: blank strings from .env placeholders ("BUYER_WALLET_ID=") must be
+  // treated as absent so the server starts without a funded wallet configured.
+  BUYER_WALLET_ID: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.string().min(1).optional(),
+  ),
   MAX_CLEARING_PRICE_USDC: z
     .string()
     .regex(/^\d+(?:\.\d{1,6})?$/)

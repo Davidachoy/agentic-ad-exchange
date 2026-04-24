@@ -1,23 +1,15 @@
 import { randomBytes, randomUUID } from "node:crypto";
 
-import { runSecondPriceAuction } from "@ade/server";
-import {
-  BidRequestSchema,
-  MAX_CLEARING_PRICE_USDC,
-  NANOPAYMENT_UNIT_USDC,
-  type BidRequest,
-} from "@ade/shared";
-import type { CircleClient, TransactionState } from "@ade/wallets";
+import { BidRequestSchema, MAX_CLEARING_PRICE_USDC, NANOPAYMENT_UNIT_USDC } from "@ade/shared";
 
 const USDC_UNITS = 1_000_000n;
 const ARC_EXPLORER_BASE = "https://testnet.arcscan.app" as const;
 
 export interface RunDemoCycleDeps {
-  circle: CircleClient;
+  exchangeApiUrl: string;
+  listingId: string;
   buyerAgentId?: string;
-  buyerWalletId: string;
   buyerAddress: string;
-  sellerAddress: string;
   floorUsdc: string;
   /** Injectable RNG; returns `[0, 1)`. Defaults to Math.random. */
   rand?: () => number;
@@ -26,23 +18,22 @@ export interface RunDemoCycleDeps {
 export interface DemoCycleResult {
   bidAmount: string;
   clearingPrice: string;
-  transactionId: string;
+  auctionId: string;
   txHash: string;
   explorerUrl: string;
-  state: TransactionState;
+  status: string;
 }
 
 /**
- * Run one buyer→seller nanopayment cycle: generate a single BidRequest, run
- * the server-side second-price auction engine, settle on-chain via Circle
- * DCW, and return the receipt. Pure orchestration — all price math lives in
- * `@ade/server/auction`, all wallet I/O in `@ade/wallets`.
+ * Run one buyer→seller nanopayment cycle via the Exchange HTTP API.
+ * POSTs a bid, then triggers the server-side second-price auction which
+ * handles settlement and emits SSE events for the live dashboard.
  */
 export async function runDemoCycle(deps: RunDemoCycleDeps): Promise<DemoCycleResult> {
   const rand = deps.rand ?? Math.random;
   const bidAmount = pickBidAmount(deps.floorUsdc, rand);
 
-  const bid: BidRequest = BidRequestSchema.parse({
+  const bid = BidRequestSchema.parse({
     bidId: randomUUID(),
     buyerAgentId: deps.buyerAgentId ?? "demo-buyer",
     buyerWallet: deps.buyerAddress,
@@ -58,28 +49,40 @@ export async function runDemoCycle(deps: RunDemoCycleDeps): Promise<DemoCycleRes
     createdAt: new Date().toISOString(),
   });
 
-  const auction = runSecondPriceAuction({ bids: [bid], floorUsdc: deps.floorUsdc });
-  if (!auction) {
+  const bidRes = await fetch(`${deps.exchangeApiUrl}/bid`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(bid),
+  });
+  if (!bidRes.ok) {
+    const body = await bidRes.json().catch(() => null);
+    throw new Error(`POST /bid failed: ${bidRes.status} ${JSON.stringify(body)}`);
+  }
+
+  const auctionRes = await fetch(
+    `${deps.exchangeApiUrl}/auction/run/${deps.listingId}`,
+    { method: "POST", headers: { "Content-Type": "application/json" } },
+  );
+  if (!auctionRes.ok) {
+    const body = await auctionRes.json().catch(() => null);
     throw new Error(
-      "runSecondPriceAuction returned null for a single qualifying bid — impossible; check floor config",
+      `POST /auction/run/${deps.listingId} failed: ${auctionRes.status} ${JSON.stringify(body)}`,
     );
   }
 
-  const tx = await deps.circle.transfer({
-    walletId: deps.buyerWalletId,
-    destinationAddress: deps.sellerAddress,
-    amountUsdc: auction.clearingPriceUsdc,
-  });
-  const receipt = await deps.circle.waitForTx({ transactionId: tx.transactionId });
-  const txHash = receipt.txHash ?? "";
+  const { auctionResult, receipt } = (await auctionRes.json()) as {
+    auctionResult: { auctionId: string; clearingPriceUsdc: string };
+    receipt: { status: string; arcTxHash?: string };
+  };
 
+  const txHash = receipt.arcTxHash ?? "";
   return {
     bidAmount,
-    clearingPrice: auction.clearingPriceUsdc,
-    transactionId: tx.transactionId,
+    clearingPrice: auctionResult.clearingPriceUsdc,
+    auctionId: auctionResult.auctionId,
     txHash,
     explorerUrl: txHash ? `${ARC_EXPLORER_BASE}/tx/${txHash}` : "(no tx hash reported)",
-    state: receipt.state,
+    status: receipt.status,
   };
 }
 
