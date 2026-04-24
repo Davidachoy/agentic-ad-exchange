@@ -12,6 +12,7 @@
     "script:depositGateway": "tsx scripts/depositGateway.ts",
     "script:testAuction": "tsx scripts/testAuction.ts",
     "script:testBid": "tsx scripts/testBid.ts",
+    "script:testMultipleBids": "tsx scripts/testMultipleBids.ts",
     "script:testTransfer": "tsx scripts/testTransfer.ts"
   },
   "repository": {
