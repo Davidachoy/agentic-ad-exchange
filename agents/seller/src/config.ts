@@ -1,4 +1,4 @@
-import { config as loadDotenv } from "dotenv";
+import { loadRootEnv } from "@ade/shared/env";
 import { z } from "zod";
 
 const SellerEnvSchema = z.object({
@@ -11,7 +11,7 @@ const SellerEnvSchema = z.object({
 export type SellerAgentConfig = z.infer<typeof SellerEnvSchema>;
 
 export function loadSellerConfig(env: NodeJS.ProcessEnv = process.env): SellerAgentConfig {
-  loadDotenv({ path: [".env.local", ".env"] });
+  loadRootEnv();
   const parsed = SellerEnvSchema.safeParse(env);
   if (!parsed.success) {
     throw new Error(
