@@ -18,6 +18,7 @@
   "dependencies": {
     "@ade/shared": "workspace:*",
     "@ade/wallets": "workspace:*",
+    "@circle-fin/developer-controlled-wallets": "^10.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
