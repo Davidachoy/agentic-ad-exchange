@@ -21,6 +21,11 @@
       "types": "./src/schemas/index.ts",
       "import": "./src/schemas/index.ts",
       "default": "./src/schemas/index.ts"
+    },
+    "./env": {
+      "types": "./src/loadRootEnv.ts",
+      "import": "./src/loadRootEnv.ts",
+      "default": "./src/loadRootEnv.ts"
     }
   },
   "scripts": {
@@ -29,6 +34,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "dotenv": "^16.4.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {

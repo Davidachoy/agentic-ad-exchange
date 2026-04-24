@@ -1,4 +1,4 @@
-import { config as loadDotenv } from "dotenv";
+import { loadRootEnv } from "@ade/shared/env";
 import { z } from "zod";
 
 /**
@@ -27,7 +27,7 @@ const ScriptsEnvSchema = z.object({
 export type ScriptsConfig = z.infer<typeof ScriptsEnvSchema>;
 
 export function loadScriptsConfig(env: NodeJS.ProcessEnv = process.env): ScriptsConfig {
-  loadDotenv({ path: [".env.local", ".env"] });
+  loadRootEnv();
   const parsed = ScriptsEnvSchema.safeParse(env);
   if (!parsed.success) {
     throw new Error(

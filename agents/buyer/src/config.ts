@@ -1,4 +1,4 @@
-import { config as loadDotenv } from "dotenv";
+import { loadRootEnv } from "@ade/shared/env";
 import { z } from "zod";
 
 /**
@@ -15,7 +15,7 @@ const BuyerEnvSchema = z.object({
 export type BuyerAgentConfig = z.infer<typeof BuyerEnvSchema>;
 
 export function loadBuyerConfig(env: NodeJS.ProcessEnv = process.env): BuyerAgentConfig {
-  loadDotenv({ path: [".env.local", ".env"] });
+  loadRootEnv();
   const parsed = BuyerEnvSchema.safeParse(env);
   if (!parsed.success) {
     throw new Error(

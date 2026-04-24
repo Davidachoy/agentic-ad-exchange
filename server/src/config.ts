@@ -1,5 +1,5 @@
 import { MAX_CLEARING_PRICE_USDC } from "@ade/shared";
-import { config as loadDotenv } from "dotenv";
+import { loadRootEnv } from "@ade/shared/env";
 import { z } from "zod";
 
 
@@ -41,7 +41,7 @@ const ServerEnvSchema = z.object({
 export type ServerConfig = z.infer<typeof ServerEnvSchema>;
 
 export function loadServerConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
-  loadDotenv({ path: [".env.local", ".env"] });
+  loadRootEnv();
   const parsed = ServerEnvSchema.safeParse(env);
   if (!parsed.success) {
     throw new Error(
