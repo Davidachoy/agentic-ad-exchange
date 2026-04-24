@@ -10,7 +10,8 @@ import { banner } from "./logger.js";
  * If CIRCLE_ENTITY_SECRET is already present the script bails rather than overwrite.
  */
 function main(): void {
-  const envPath = resolve(process.cwd(), ".env.local");
+  const { rootDir } = loadRootEnv();
+  const envPath = resolve(rootDir, ".env.local");
   if (existsSync(envPath)) {
     const current = readFileSync(envPath, "utf-8");
     if (/^CIRCLE_ENTITY_SECRET=\S+/m.test(current)) {
