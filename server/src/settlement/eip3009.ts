@@ -10,8 +10,9 @@ import type { NonceStore } from "../nonces/store.js";
  * held by wallets/ (or, later, Circle's signer). This keeps the server free
  * of any private-key material and matches PLANNING.md § Trust Model.
  *
- * TODO(post-scaffold): plug an actual signer + chainId check against
- * config.ARC_CHAIN_ID and verifyingContract = USDC on Arc (not Gateway).
+ * Callers must pass `chainId: config.ARC_CHAIN_ID` (defaults to `ARC_TESTNET_CHAIN_ID`
+ * from `@ade/shared`) and `verifyingContract: ARC_TESTNET_USDC` (not Gateway).
+ * Signing is a separate concern in wallets/ — this module stays key-free.
  */
 export const AuthorizationArgsSchema = z.object({
   from: WalletAddressSchema,
