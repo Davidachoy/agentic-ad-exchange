@@ -1,7 +1,8 @@
 import { createCircleClient } from "@ade/wallets";
 
 import { createApp } from "./app.js";
-import { loadServerConfig } from "./config.js";
+import { buildBuyerWalletRouting, loadServerConfig } from "./config.js";
+import { resolvePersonasFromEnv } from "./demo/runAgentAuction.js";
 import { createLogger } from "./logger.js";
 import { createGatewayAdapter, type GatewayMiddlewareAdapter } from "./middleware/nanopayments.js";
 
@@ -30,12 +31,25 @@ function main(): void {
     logger.warn("SELLER_WALLET_ADDRESS not set — POST /bid has no payment gate");
   }
 
+  const buyerWalletRouting = buildBuyerWalletRouting(config);
+  const personas = resolvePersonasFromEnv(process.env);
+  const gemini = config.GEMINI_API_KEY
+    ? { apiKey: config.GEMINI_API_KEY, model: config.GEMINI_MODEL }
+    : undefined;
+
   const { app } = createApp({
     corsAllowOrigins: config.CORS_ALLOW_ORIGINS,
     bidRateLimitPerMin: config.BID_RATE_LIMIT_PER_MIN,
     circleClient,
     buyerWalletId: config.BUYER_WALLET_ID,
     gateway,
+    buyerWalletRouting,
+    demo: {
+      exchangeUrl: `http://localhost:${config.PORT}`,
+      sellerWallet: config.SELLER_WALLET_ADDRESS,
+      personas,
+      gemini,
+    },
   });
 
   app.listen(config.PORT, () => {
@@ -45,6 +59,8 @@ function main(): void {
         env: config.NODE_ENV,
         corsAllowOrigins: config.CORS_ALLOW_ORIGINS,
         gatewayEnabled: Boolean(gateway),
+        personaWallets: buyerWalletRouting.size,
+        demoEnabled: Boolean(gemini && config.SELLER_WALLET_ADDRESS && personas.length > 0),
       },
       "exchange_server_listening",
     );

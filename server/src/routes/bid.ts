@@ -20,6 +20,15 @@ export function createBidRouter(deps: BidDeps): Router {
   const router = Router();
   const paymentGate = deps.gateway?.require("$0.001") ?? passThrough;
 
+  router.get("/bids", async (_req, res, next) => {
+    try {
+      const items = await deps.bidStore.list();
+      res.json({ items });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.post(
     "/bid",
     createBidRateLimiter(deps.rateLimitPerMin),
