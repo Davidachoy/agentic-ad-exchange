@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-
 import type { AdInventoryListing } from "@ade/shared";
+import { useEffect, useState } from "react";
 
 import { postInventory, runAuction, triggerAgentDemo } from "./api/client.js";
 import { AuctionFeed } from "./components/AuctionFeed.js";
@@ -8,7 +7,9 @@ import { AuctionPanel } from "./components/AuctionPanel.js";
 import { BuyerPanel } from "./components/BuyerPanel.js";
 import { MarginExplainer } from "./components/MarginExplainer.js";
 import { SellerPanel } from "./components/SellerPanel.js";
+import { SettlementLedger } from "./components/SettlementLedger.js";
 import { TransactionCounter } from "./components/TransactionCounter.js";
+import { uiEnv } from "./env.js";
 import { useAuctionStream } from "./hooks/useAuctionStream.js";
 import { useBids } from "./hooks/useBids.js";
 import { useInventory } from "./hooks/useInventory.js";
@@ -16,7 +17,8 @@ import { useInventory } from "./hooks/useInventory.js";
 const SELLER_WALLET = "0xcc00000000000000000000000000000000000003";
 
 export function App(): JSX.Element {
-  const { connected, settlementCount, auctions, lastAuction, lastReceipt } = useAuctionStream();
+  const { connected, settlementCount, auctions, lastAuction, lastReceipt, confirmedReceipts } =
+    useAuctionStream();
   const { listings, refresh: refreshInventory } = useInventory();
   const { bids, refresh: refreshBids } = useBids();
 
@@ -181,9 +183,13 @@ export function App(): JSX.Element {
         </div>
 
         {/* Bottom row */}
-        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           <AuctionFeed auctions={auctions} />
           <TransactionCounter count={settlementCount} />
+          <SettlementLedger
+            receipts={confirmedReceipts}
+            sellerAddress={uiEnv.VITE_SELLER_WALLET_ADDRESS}
+          />
           <MarginExplainer />
         </div>
       </main>

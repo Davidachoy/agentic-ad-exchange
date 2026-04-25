@@ -21,4 +21,10 @@ describe("<App />", () => {
     const region = screen.getByRole("region", { name: /auction feed/i });
     expect(region).toHaveTextContent(/no auctions/i);
   });
+
+  it("renders the settlement ledger region", () => {
+    render(<App />);
+    const region = screen.getByRole("region", { name: /settlement ledger/i });
+    expect(region).toBeInTheDocument();
+  });
 });
