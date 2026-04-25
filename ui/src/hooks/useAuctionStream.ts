@@ -38,6 +38,13 @@ export function useAuctionStream(): AuctionStreamState {
           ...s,
           lastAuction: parsed.data,
           auctions: [parsed.data, ...s.auctions].slice(0, MAX_HISTORY),
+          // Reason: a new auction has matched; any prior receipt belongs to a
+          // previous auctionId. Drop it so the UI shows "pending" until the
+          // settlement.confirmed for THIS auction arrives.
+          lastReceipt:
+            s.lastReceipt && s.lastReceipt.auctionId === parsed.data.auctionId
+              ? s.lastReceipt
+              : null,
         }));
       },
       onSettlementConfirmed: (data) => {

@@ -25,12 +25,17 @@ export function AuctionPanel({
 }: AuctionPanelProps): JSX.Element {
   const noListings = listings.length === 0;
 
+  const receiptForCurrentAuction =
+    lastReceipt && lastAuction && lastReceipt.auctionId === lastAuction.auctionId
+      ? lastReceipt
+      : null;
+  const settlementLabel = receiptForCurrentAuction?.status ?? "pending…";
   const receiptColor =
-    lastReceipt == null
+    receiptForCurrentAuction == null
       ? "text-yellow-400"
-      : lastReceipt.status === "confirmed"
+      : receiptForCurrentAuction.status === "confirmed"
         ? "text-exchange-accent"
-        : lastReceipt.status === "failed"
+        : receiptForCurrentAuction.status === "failed"
           ? "text-exchange-warn"
           : "text-yellow-400";
 
@@ -103,12 +108,10 @@ export function AuctionPanel({
             <Row label="Clearing price" value={`$${lastAuction.clearingPriceUsdc} USDC`} accent />
             <Row label="Winning bid" value={`$${lastAuction.winningBidUsdc} USDC`} />
             <Row label="Seller" value={lastAuction.sellerAgentId} />
-            {lastReceipt && (
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400">Settlement</span>
-                <span className={`font-semibold ${receiptColor}`}>{lastReceipt.status}</span>
-              </div>
-            )}
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Settlement</span>
+              <span className={`font-semibold ${receiptColor}`}>{settlementLabel}</span>
+            </div>
           </div>
         </div>
       ) : (
