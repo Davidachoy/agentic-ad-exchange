@@ -3,6 +3,7 @@ import type { Express } from "express";
 import type { CircleClient } from "@ade/wallets";
 
 import type { EventBus } from "../events/bus.js";
+import type { GatewayMiddlewareAdapter } from "../middleware/nanopayments.js";
 import type { NonceStore } from "../nonces/store.js";
 import type { BidStore, ListingStore, SettlementStore } from "../state/stores.js";
 
@@ -25,12 +26,14 @@ export interface RegisterRoutesDeps {
   rateLimitPerMin: number;
   circleClient: CircleClient | null;
   buyerWalletId: string | undefined;
+  /** When present, POST /bid is gated on a sub-cent x402 nanopayment. */
+  gateway?: GatewayMiddlewareAdapter;
   buyerWalletRouting?: ReadonlyMap<string, string>;
   demo?: {
     exchangeUrl: string;
-    sellerWallet?: string;
     personas: ResolvedPersona[];
     gemini?: { apiKey: string; model: string };
+    buyerPrivateKey?: `0x${string}`;
   };
 }
 
@@ -42,6 +45,7 @@ export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
       bidStore: deps.bidStore,
       nonceStore: deps.nonceStore,
       rateLimitPerMin: deps.rateLimitPerMin,
+      gateway: deps.gateway,
     }),
   );
   app.use(
@@ -61,9 +65,10 @@ export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
     app.use(
       createDemoRouter({
         exchangeUrl: deps.demo.exchangeUrl,
-        sellerWallet: deps.demo.sellerWallet,
+        listingStore: deps.listingStore,
         personas: deps.demo.personas,
         gemini: deps.demo.gemini,
+        buyerPrivateKey: deps.demo.buyerPrivateKey,
       }),
     );
   }

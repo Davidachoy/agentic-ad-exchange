@@ -4,6 +4,7 @@ import { createApp } from "./app.js";
 import { buildBuyerWalletRouting, loadServerConfig } from "./config.js";
 import { resolvePersonasFromEnv } from "./demo/runAgentAuction.js";
 import { createLogger } from "./logger.js";
+import { createGatewayAdapter, type GatewayMiddlewareAdapter } from "./middleware/nanopayments.js";
 
 function main(): void {
   const config = loadServerConfig();
@@ -19,6 +20,17 @@ function main(): void {
     logger.warn("Circle wallet config incomplete — POST /auction/run will store failed receipts");
   }
 
+  let gateway: GatewayMiddlewareAdapter | undefined;
+  if (config.SELLER_WALLET_ADDRESS) {
+    gateway = createGatewayAdapter({
+      sellerAddress: config.SELLER_WALLET_ADDRESS,
+      facilitatorUrl: config.GATEWAY_FACILITATOR_URL,
+    });
+    logger.info({ sellerAddress: config.SELLER_WALLET_ADDRESS }, "gateway_nanopayments_enabled");
+  } else {
+    logger.warn("SELLER_WALLET_ADDRESS not set — POST /bid has no payment gate");
+  }
+
   const buyerWalletRouting = buildBuyerWalletRouting(config);
   const personas = resolvePersonasFromEnv(process.env);
   const gemini = config.GEMINI_API_KEY
@@ -30,12 +42,13 @@ function main(): void {
     bidRateLimitPerMin: config.BID_RATE_LIMIT_PER_MIN,
     circleClient,
     buyerWalletId: config.BUYER_WALLET_ID,
+    gateway,
     buyerWalletRouting,
     demo: {
       exchangeUrl: `http://localhost:${config.PORT}`,
-      sellerWallet: config.SELLER_WALLET_ADDRESS,
       personas,
       gemini,
+      buyerPrivateKey: config.BUYER_PRIVATE_KEY as `0x${string}` | undefined,
     },
   });
 
@@ -45,8 +58,9 @@ function main(): void {
         port: config.PORT,
         env: config.NODE_ENV,
         corsAllowOrigins: config.CORS_ALLOW_ORIGINS,
+        gatewayEnabled: Boolean(gateway),
         personaWallets: buyerWalletRouting.size,
-        demoEnabled: Boolean(gemini && config.SELLER_WALLET_ADDRESS && personas.length > 0),
+        demoEnabled: Boolean(gemini && personas.length > 0),
       },
       "exchange_server_listening",
     );

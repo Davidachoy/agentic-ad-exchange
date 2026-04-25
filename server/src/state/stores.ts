@@ -8,6 +8,7 @@ export interface ListingStore {
   add(listing: AdInventoryListing): Promise<void>;
   list(): Promise<AdInventoryListing[]>;
   get(listingId: string): Promise<AdInventoryListing | undefined>;
+  remove(listingId: string): Promise<void>;
 }
 
 export interface BidStore {
@@ -33,6 +34,9 @@ export function createListingStore(): ListingStore {
     },
     async get(id) {
       return map.get(id);
+    },
+    async remove(id) {
+      map.delete(id);
     },
   };
 }

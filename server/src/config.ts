@@ -49,9 +49,21 @@ const ServerEnvSchema = z.object({
   BUYER_GROWTHCO_WALLET_ADDRESS: optionalAddr,
   BUYER_RETAILCO_WALLET_ID: optionalWalletId,
   BUYER_RETAILCO_WALLET_ADDRESS: optionalAddr,
+  // Seller's EVM address — required for Gateway middleware to credit
+  // payments and for the demo route as the listing payee.
+  SELLER_WALLET_ADDRESS: optionalAddr,
+  // EOA private key used by GatewayClient to sign x402 payment authorizations
+  // in demo/script runs. Never logged or surfaced to the LLM layer.
+  BUYER_PRIVATE_KEY: blankToUndefined(
+    z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{64}$/, "must be 0x-prefixed 64 hex chars")
+      .optional(),
+  ),
+  // Override the Circle Gateway facilitator endpoint. Defaults to Arc testnet.
+  GATEWAY_FACILITATOR_URL: blankToUndefined(z.string().url().optional()),
   // Demo deps for POST /demo/agent-run. Optional at startup; the route
   // returns 503 if any are missing when called.
-  SELLER_WALLET_ADDRESS: optionalAddr,
   GEMINI_API_KEY: blankToUndefined(z.string().min(1).optional()),
   GEMINI_MODEL: blankToUndefined(z.string().min(1).default("gemini-2.5-flash")),
   MAX_CLEARING_PRICE_USDC: z

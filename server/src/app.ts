@@ -5,6 +5,7 @@ import type { CircleClient } from "@ade/wallets";
 import { createEventBus, type EventBus } from "./events/bus.js";
 import { createCorsMiddleware } from "./middleware/corsAllowList.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import type { GatewayMiddlewareAdapter } from "./middleware/nanopayments.js";
 import { createInMemoryNonceStore, type NonceStore } from "./nonces/store.js";
 import { registerRoutes } from "./routes/index.js";
 import {
@@ -27,6 +28,8 @@ export interface AppDeps {
   /** Injected in production; null in tests that don't exercise settlement. */
   circleClient?: CircleClient | null;
   buyerWalletId?: string;
+  /** When present, POST /bid is gated on a sub-cent x402 nanopayment. */
+  gateway?: GatewayMiddlewareAdapter;
   /**
    * Optional address-keyed Circle wallet id map. When the winning bid's
    * `buyerWallet` matches a key here, settlement uses that wallet; otherwise
@@ -35,14 +38,22 @@ export interface AppDeps {
   buyerWalletRouting?: ReadonlyMap<string, string>;
   /**
    * Optional self-contained agent-demo dependencies. When set, the server
-   * exposes POST /demo/agent-run which orchestrates a full Gemini-driven
-   * cycle (seller registers → buyers bid → auction clears).
+   * exposes POST /demo/agent-run which runs buyer agents against an existing
+   * listing in inventory (seller registration is a separate UI flow).
    */
   demo?: {
     exchangeUrl: string;
-    sellerWallet?: string;
     personas: import("./demo/runAgentAuction.js").ResolvedPersona[];
     gemini?: { apiKey: string; model: string };
+    /**
+     * Shared EOA private key used by GatewayClient to sign x402 payment
+     * authorizations for every persona's bid in the demo cycle. When absent,
+     * bids fall through to plain fetch and will be rejected by the gateway
+     * middleware on /bid (402). Reason: Circle DCWs don't expose private keys,
+     * so demo bid-fees use one shared EOA while settlement still routes per
+     * persona via buyerWalletRouting. See features/x402-bid-middleware.md.
+     */
+    buyerPrivateKey?: `0x${string}`;
   };
 }
 
@@ -80,6 +91,7 @@ export function createApp(deps: AppDeps): AppHandles {
     rateLimitPerMin: deps.bidRateLimitPerMin,
     circleClient: deps.circleClient ?? null,
     buyerWalletId: deps.buyerWalletId,
+    gateway: deps.gateway,
     buyerWalletRouting: deps.buyerWalletRouting,
     demo: deps.demo,
   });

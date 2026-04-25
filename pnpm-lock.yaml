@@ -50,6 +50,9 @@ importers:
       '@ade/shared':
         specifier: workspace:*
         version: link:../../shared
+      '@circle-fin/x402-batching':
+        specifier: ^3.0.2
+        version: 3.0.2(@x402/core@2.10.0)(@x402/evm@2.10.0(typescript@5.9.3))(viem@2.48.4(typescript@5.9.3)(zod@3.25.76))
       '@google/generative-ai':
         specifier: ^0.24.1
         version: 0.24.1
@@ -132,7 +135,7 @@ importers:
         version: 10.3.0
       '@circle-fin/x402-batching':
         specifier: ^3.0.2
-        version: 3.0.2(@x402/core@2.10.0)(viem@2.48.4(typescript@5.9.3)(zod@3.25.76))
+        version: 3.0.2(@x402/core@2.10.0)(@x402/evm@2.10.0(typescript@5.9.3))(viem@2.48.4(typescript@5.9.3)(zod@3.25.76))
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -161,6 +164,15 @@ importers:
       '@ade/wallets':
         specifier: workspace:*
         version: link:../wallets
+      '@circle-fin/x402-batching':
+        specifier: ^3.0.2
+        version: 3.0.2(@x402/core@2.10.0)(@x402/evm@2.10.0(typescript@5.9.3))(viem@2.48.4(typescript@5.9.3)(zod@3.25.76))
+      '@x402/core':
+        specifier: ^2.10.0
+        version: 2.10.0
+      '@x402/evm':
+        specifier: ^2.10.0
+        version: 2.10.0(typescript@5.9.3)
       cors:
         specifier: ^2.8.5
         version: 2.8.6
@@ -1337,6 +1349,9 @@ packages:
 
   '@x402/core@2.10.0':
     resolution: {integrity: sha512-n9Exnt1HN4LFaINaPYhk6Cy3ICBt0e46XN1Uo5i6efIZfIoqP6pY8ONSX/M9bU4F1fpvMj0JZ3xdcBZCiGInfw==}
+
+  '@x402/evm@2.10.0':
+    resolution: {integrity: sha512-iEGIgW5K3qM3d2S1wuBSGJ1Kfdctd+0LAN8l+33dbYZgdkvCvTDwBPjbojVJ9mXI0Zk2bt4hUpcoOgsdmr79BA==}
 
   abitype@1.2.3:
     resolution: {integrity: sha512-Ofer5QUnuUdTFsBRwARMoWKOH1ND5ehwYhJ3OJ/BQO+StkwQjHw0XyVh4vDttzHB7QOFhPHa/o413PJ82gU/Tg==}
@@ -3647,10 +3662,12 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@circle-fin/x402-batching@3.0.2(@x402/core@2.10.0)(viem@2.48.4(typescript@5.9.3)(zod@3.25.76))':
+  '@circle-fin/x402-batching@3.0.2(@x402/core@2.10.0)(@x402/evm@2.10.0(typescript@5.9.3))(viem@2.48.4(typescript@5.9.3)(zod@3.25.76))':
     dependencies:
       '@x402/core': 2.10.0
       viem: 2.48.4(typescript@5.9.3)(zod@3.25.76)
+    optionalDependencies:
+      '@x402/evm': 2.10.0(typescript@5.9.3)
 
   '@csstools/color-helpers@5.1.0': {}
 
@@ -4421,6 +4438,16 @@ snapshots:
   '@x402/core@2.10.0':
     dependencies:
       zod: 3.25.76
+
+  '@x402/evm@2.10.0(typescript@5.9.3)':
+    dependencies:
+      '@x402/core': 2.10.0
+      viem: 2.48.4(typescript@5.9.3)(zod@3.25.76)
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
 
   abitype@1.2.3(typescript@5.9.3)(zod@3.25.76):
     optionalDependencies:

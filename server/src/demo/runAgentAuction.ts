@@ -1,6 +1,7 @@
 import { randomBytes, randomUUID } from "node:crypto";
 
 import {
+  buildGatewayClient,
   createBuyerAgent,
   createCheckBalanceTool,
   createGeminiLlmAdapter,
@@ -9,7 +10,9 @@ import {
   type AgentTool as BuyerAgentTool,
   type BuyerAgent,
 } from "@ade/agent-buyer";
-import { createSellerAgentWithGemini } from "@ade/agent-seller";
+import type { GatewayClient } from "@circle-fin/x402-batching/client";
+
+import type { ListingStore } from "../state/stores.js";
 
 /**
  * In-server orchestrator that drives one full multi-agent auction cycle:
@@ -136,10 +139,15 @@ function nonce(): string {
 
 function buildBuyerAgentForPersona(
   persona: ResolvedPersona,
-  cfg: { apiKey: string; model: string; exchangeUrl: string },
+  cfg: {
+    apiKey: string;
+    model: string;
+    exchangeUrl: string;
+    gatewayClient?: GatewayClient;
+  },
 ): BuyerAgent {
   const tools: BuyerAgentTool<unknown, unknown>[] = [
-    createPlaceBidTool({ exchangeUrl: cfg.exchangeUrl }),
+    createPlaceBidTool({ exchangeUrl: cfg.exchangeUrl, gatewayClient: cfg.gatewayClient }),
     createCheckBalanceTool({ exchangeUrl: cfg.exchangeUrl }),
     createReviewAuctionTool({ exchangeUrl: cfg.exchangeUrl }),
   ];
@@ -219,9 +227,19 @@ export interface AgentAuctionResult {
 
 export interface AgentAuctionDeps {
   exchangeUrl: string;
-  sellerWallet: string;
+  /**
+   * Source of existing inventory. The orchestrator picks the oldest unsold
+   * listing from this store; it does not create new listings.
+   */
+  listingStore: ListingStore;
   personas: ResolvedPersona[];
   gemini: { apiKey: string; model: string };
+  /**
+   * Shared EOA private key used to sign x402 payment authorizations for every
+   * persona's bid. Optional: when absent, bids fall through to plain fetch and
+   * will be 402'd by the gateway middleware on /bid.
+   */
+  buyerPrivateKey?: `0x${string}`;
   rng?: () => number;
 }
 
@@ -230,44 +248,44 @@ export async function runAgentAuction(deps: AgentAuctionDeps): Promise<AgentAuct
     throw new Error("runAgentAuction: no personas resolved — set BUYER_*_WALLET_ID/_ADDRESS env");
   }
   const rng = deps.rng ?? Math.random;
-  const tpl = LISTING_TEMPLATES[Math.floor(rng() * LISTING_TEMPLATES.length)]!;
 
-  // Step 1: seller agent registers the listing
-  const listingId = randomUUID();
-  const sellerNow = new Date().toISOString();
-  const sellerPrompt = [
-    "Register a new ad inventory listing on the Exchange.",
-    `Inventory description: ${tpl.description}`,
-    "Use the listInventory tool ONCE with EXACTLY these field values:",
-    `- listingId: "${listingId}"`,
-    `- sellerAgentId: "seller-${tpl.vertical}"`,
-    `- sellerWallet: "${deps.sellerWallet}"`,
-    `- adType: "display"`,
-    `- format: "banner"`,
-    `- size: "300x250"`,
-    `- contextualExclusions: []`,
-    `- floorPriceUsdc: "${tpl.floorUsdc}"`,
-    `- createdAt: "${sellerNow}"`,
-  ].join("\n");
-
-  const seller = createSellerAgentWithGemini();
-  const sellerResult = await seller.run(sellerPrompt);
-  if (!sellerResult.toolCalls.includes("listInventory")) {
-    throw new Error("Seller agent did not call listInventory");
+  // Step 1: pick an existing listing from the seller's inventory.
+  // The demo no longer auto-registers a new listing — listings come in via
+  // the SellerPanel "+ Register Demo Ad Slot" button (POST /inventory).
+  const inventory = await deps.listingStore.list();
+  if (inventory.length === 0) {
+    throw new Error(
+      "no_inventory_available: register an ad slot from the Seller panel before running the multi-agent auction",
+    );
   }
+  // FIFO: oldest listing (insertion order) is consumed first.
+  const listing = inventory[0]!;
 
-  // Step 2: buyer agents compete in parallel
+  // The on-store listing schema doesn't carry a description or context tags,
+  // so synthesize narrative context for the buyer prompts from a template.
+  // This lets buyers reason about cohort fit while the auction itself runs
+  // against the real listing's listingId / floorPriceUsdc / sellerWallet.
+  const tpl = LISTING_TEMPLATES[Math.floor(rng() * LISTING_TEMPLATES.length)]!;
   const listingForBuyers = {
-    listingId,
-    floor: tpl.floorUsdc,
+    listingId: listing.listingId,
+    floor: listing.floorPriceUsdc,
     tags: tpl.contextTags,
     description: tpl.description,
   };
+  const sellerOutput = `Consumed listing #${listing.listingId.slice(0, 8)} (${listing.format} ${listing.size}, floor $${listing.floorPriceUsdc} USDC)`;
+  // Build one shared GatewayClient when a buyer EOA key is configured; every
+  // persona's placeBid tool reuses it so bids carry a Payment-Signature
+  // header and clear the x402 nanopayments middleware on /bid. Settlement on
+  // the auction route still routes per-persona via buyerWalletRouting.
+  const gatewayClient = deps.buyerPrivateKey
+    ? buildGatewayClient(deps.buyerPrivateKey, "arcTestnet")
+    : undefined;
   const buyers = deps.personas.map((p) =>
     buildBuyerAgentForPersona(p, {
       apiKey: deps.gemini.apiKey,
       model: deps.gemini.model,
       exchangeUrl: deps.exchangeUrl,
+      gatewayClient,
     }),
   );
   const settled = await Promise.allSettled(
@@ -307,7 +325,7 @@ export async function runAgentAuction(deps: AgentAuctionDeps): Promise<AgentAuct
   }
 
   // Step 3: clear the auction via the Exchange's own HTTP route
-  const auctionRes = await fetch(`${deps.exchangeUrl}/auction/run/${listingId}`, {
+  const auctionRes = await fetch(`${deps.exchangeUrl}/auction/run/${listing.listingId}`, {
     method: "POST",
   });
   const auctionJson = (await auctionRes.json()) as Record<string, unknown>;
@@ -321,11 +339,11 @@ export async function runAgentAuction(deps: AgentAuctionDeps): Promise<AgentAuct
   const receipt = auctionJson.receipt as { status: string; arcTxHash?: string } | undefined;
 
   return {
-    listingId,
+    listingId: listing.listingId,
     listingVertical: tpl.vertical,
     listingTags: tpl.contextTags,
-    floorUsdc: tpl.floorUsdc,
-    sellerOutput: sellerResult.output,
+    floorUsdc: listing.floorPriceUsdc,
+    sellerOutput,
     bids,
     winner: ar
       ? {

@@ -132,6 +132,13 @@ export function createAuctionRouter(deps: AuctionRunDeps): Router {
         await deps.settlementStore.add(receipt);
         deps.eventBus.emit("settlement.confirmed", receipt);
 
+        // Consume the listing on confirmed settlement so the seller's inventory
+        // doesn't accumulate sold slots. Failed settlements leave the listing
+        // in place so it can be re-auctioned without a fresh listInventory call.
+        if (receipt.status === "confirmed") {
+          await deps.listingStore.remove(listing.listingId);
+        }
+
         res.status(200).json({ auctionResult, receipt });
       } catch (err) {
         next(err);
