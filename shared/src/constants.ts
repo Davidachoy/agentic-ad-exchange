@@ -25,6 +25,15 @@ export const MAX_AGENT_ITERATIONS = 5 as const;
 export const GATEWAY_WALLET_ADDRESS = "0x0077777d7EBA4688BDeF3E311b846F25870A19B9" as const;
 
 /**
+ * Arc testnet chain ID — the numeric EVM identifier used in EIP-712 typed-data
+ * domains (EIP-3009 TransferWithAuthorization). Verified from
+ * https://docs.arc.network/arc/references/network-information on 2026-04-24.
+ * CAIP-2 equivalent: `eip155:5042002` (see X402_NETWORK in .env.example).
+ * Mainnet chain ID differs; do not reuse for a mainnet cutover.
+ */
+export const ARC_TESTNET_CHAIN_ID = 5042002 as const;
+
+/**
  * Arc testnet USDC contract address — the ERC-20 precompile that wraps the
  * native USDC gas token on Arc. Verified from
  * https://docs.arc.network/arc/references/contract-addresses on 2026-04-24.
