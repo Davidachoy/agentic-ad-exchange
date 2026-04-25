@@ -25,11 +25,12 @@ export const MAX_AGENT_ITERATIONS = 5 as const;
 export const GATEWAY_WALLET_ADDRESS = "0x0077777d7EBA4688BDeF3E311b846F25870A19B9" as const;
 
 /**
- * Arc testnet USDC contract address. Placeholder — verify against
- * https://docs.arc.network/arc/references/contract-addresses#usdc before first on-chain call.
+ * Arc testnet USDC contract address — the ERC-20 precompile that wraps the
+ * native USDC gas token on Arc. Verified from
+ * https://docs.arc.network/arc/references/contract-addresses on 2026-04-24.
+ * Mainnet address differs; do not reuse for mainnet-cutover.md.
  */
-// Reason: Arc testnet is still moving; do NOT trust a memorized address. See PRP assumption #4.
-export const ARC_TESTNET_USDC = "0x0000000000000000000000000000000000000000" as const;
+export const ARC_TESTNET_USDC = "0x3600000000000000000000000000000000000000" as const;
 
 /** SSE event names the server emits; the UI subscribes by name. */
 export const STREAM_EVENTS = {
