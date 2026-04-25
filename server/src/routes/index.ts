@@ -22,6 +22,7 @@ export interface RegisterRoutesDeps {
   rateLimitPerMin: number;
   circleClient: CircleClient | null;
   buyerWalletId: string | undefined;
+  buyerWalletRouting?: ReadonlyMap<string, string>;
 }
 
 export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
@@ -42,6 +43,7 @@ export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
       eventBus: deps.eventBus,
       circleClient: deps.circleClient,
       buyerWalletId: deps.buyerWalletId,
+      buyerWalletRouting: deps.buyerWalletRouting,
     }),
   );
   app.use(createSettlementRouter({ settlementStore: deps.settlementStore }));

@@ -11,8 +11,9 @@ import {
   type BuyerAgent,
 } from "@ade/agent-buyer";
 import { createSellerAgentWithGemini } from "@ade/agent-seller";
+import { createCircleClient } from "@ade/wallets";
 
-import { loadScriptsConfig } from "./config.js";
+import { loadScriptsConfig, type ScriptsConfig } from "./config.js";
 import { banner, log } from "./logger.js";
 
 /**
@@ -27,44 +28,91 @@ interface BuyerPersona {
   agentId: string;
   brand: string;
   walletAddress: string;
+  walletId: string;
   strategy: string;
   maxBid: string;
   minBid: string;
   preferredTags: ReadonlyArray<string>;
 }
 
-const BUYER_PERSONAS: ReadonlyArray<BuyerPersona> = [
+interface PersonaTemplate {
+  agentId: string;
+  brand: string;
+  strategy: string;
+  maxBid: string;
+  minBid: string;
+  preferredTags: ReadonlyArray<string>;
+  envWalletId: keyof Pick<
+    ScriptsConfig,
+    "BUYER_LUXURYCO_WALLET_ID" | "BUYER_GROWTHCO_WALLET_ID" | "BUYER_RETAILCO_WALLET_ID"
+  >;
+  envWalletAddr: keyof Pick<
+    ScriptsConfig,
+    | "BUYER_LUXURYCO_WALLET_ADDRESS"
+    | "BUYER_GROWTHCO_WALLET_ADDRESS"
+    | "BUYER_RETAILCO_WALLET_ADDRESS"
+  >;
+}
+
+const PERSONA_TEMPLATES: ReadonlyArray<PersonaTemplate> = [
   {
     agentId: "buyer-luxuryco",
     brand: "LuxuryCo (premium fashion brand awareness)",
-    walletAddress: "0xaa00000000000000000000000000000000001111",
     strategy:
       "Brand awareness for high-CPM premium audiences. Pay up for luxury contexts; pull back hard on commodity inventory.",
     maxBid: "0.009",
     minBid: "0.003",
     preferredTags: ["luxury", "fashion", "premium", "high-income"],
+    envWalletId: "BUYER_LUXURYCO_WALLET_ID",
+    envWalletAddr: "BUYER_LUXURYCO_WALLET_ADDRESS",
   },
   {
     agentId: "buyer-growthco",
     brand: "GrowthCo (B2B SaaS performance marketing)",
-    walletAddress: "0xbb00000000000000000000000000000000002222",
     strategy:
       "ROAS-optimized. Strict CPM caps. Pay near max only for developer/SaaS contexts where conversion likelihood is high.",
     maxBid: "0.005",
     minBid: "0.002",
     preferredTags: ["tech", "saas", "b2b", "developer"],
+    envWalletId: "BUYER_GROWTHCO_WALLET_ID",
+    envWalletAddr: "BUYER_GROWTHCO_WALLET_ADDRESS",
   },
   {
     agentId: "buyer-retailco",
     brand: "RetailCo (e-commerce retargeting)",
-    walletAddress: "0xcc00000000000000000000000000000000003333",
     strategy:
       "Dynamic CPM by intent signal. Top dollar for cart-abandoner cohorts; floor-only for cold traffic.",
     maxBid: "0.008",
     minBid: "0.002",
     preferredTags: ["retail", "ecommerce", "shopping", "checkout-intent"],
+    envWalletId: "BUYER_RETAILCO_WALLET_ID",
+    envWalletAddr: "BUYER_RETAILCO_WALLET_ADDRESS",
   },
 ];
+
+function resolvePersonas(config: ScriptsConfig): BuyerPersona[] {
+  const out: BuyerPersona[] = [];
+  for (const t of PERSONA_TEMPLATES) {
+    const walletId = config[t.envWalletId];
+    const walletAddress = config[t.envWalletAddr];
+    if (!walletId || !walletAddress) {
+      throw new Error(
+        `Persona ${t.agentId}: ${t.envWalletId} and ${t.envWalletAddr} must be set in .env.local. Run create:wallets and copy the values in.`,
+      );
+    }
+    out.push({
+      agentId: t.agentId,
+      brand: t.brand,
+      walletAddress,
+      walletId,
+      strategy: t.strategy,
+      maxBid: t.maxBid,
+      minBid: t.minBid,
+      preferredTags: t.preferredTags,
+    });
+  }
+  return out;
+}
 
 interface ListingTemplate {
   vertical: string;
@@ -226,14 +274,38 @@ async function runOnce(): Promise<void> {
     );
   }
 
+  const personas = resolvePersonas(config);
   const buyerCfg = loadBuyerConfig();
   const listingTpl = pickListingTemplate();
+
+  // Preflight: report each persona's USDC balance so the user knows which
+  // wallets need a faucet top-up before the auction settles.
+  const circle = createCircleClient({ env: process.env });
+  const balances = await Promise.all(
+    personas.map(async (p) => {
+      try {
+        const b = await circle.getBalance(p.walletId);
+        return { agentId: p.agentId, address: p.walletAddress, usdc: b.usdc };
+      } catch (e) {
+        return {
+          agentId: p.agentId,
+          address: p.walletAddress,
+          usdc: `ERR ${(e as Error).message}`,
+        };
+      }
+    }),
+  );
 
   banner("Multi-Agent Auction — starting", [
     `Listing vertical: ${listingTpl.vertical}`,
     `Listing tags: ${listingTpl.contextTags.join(", ")}`,
     `Floor: $${listingTpl.floorUsdc} USDC`,
-    `Buyers competing: ${BUYER_PERSONAS.length}`,
+    `Buyers competing: ${personas.length} (per-persona Circle DCWs)`,
+    "",
+    "Persona balances:",
+    ...balances.map(
+      (b) => `  ${b.agentId.padEnd(16)} ${b.address.slice(0, 10)}…  ${b.usdc} USDC`,
+    ),
   ]);
 
   // ── Step 1: seller agent registers the listing ──────────────────────────
@@ -272,8 +344,8 @@ async function runOnce(): Promise<void> {
     description: listingTpl.description,
   };
 
-  log(`[buyers] launching ${BUYER_PERSONAS.length} agents in parallel…`);
-  const buyers = BUYER_PERSONAS.map((p) =>
+  log(`[buyers] launching ${personas.length} agents in parallel…`);
+  const buyers = personas.map((p) =>
     buildBuyerAgent(p, {
       apiKey: buyerCfg.GEMINI_API_KEY,
       model: buyerCfg.GEMINI_MODEL,
@@ -281,16 +353,18 @@ async function runOnce(): Promise<void> {
     }),
   );
   const settled = await Promise.allSettled(
-    BUYER_PERSONAS.map((p, i) => runBuyerWithPersona(p, buyers[i]!, listingForBuyers)),
+    personas.map((p, i) => runBuyerWithPersona(p, buyers[i]!, listingForBuyers)),
   );
 
   const placed: BuyerRunResult[] = [];
   for (let i = 0; i < settled.length; i++) {
     const r = settled[i]!;
-    const persona = BUYER_PERSONAS[i]!;
+    const persona = personas[i]!;
     if (r.status === "fulfilled") {
       const v = r.value;
-      log(`[${persona.agentId}] iter=${v.iterations} tools=[${v.toolCalls.join(", ")}] · ${v.output}`);
+      log(
+        `[${persona.agentId}] iter=${v.iterations} tools=[${v.toolCalls.join(", ")}] · ${v.output}`,
+      );
       if (v.toolCalls.includes("placeBid")) placed.push(v);
     } else {
       log(`[${persona.agentId}] FAILED: ${(r.reason as Error)?.message ?? String(r.reason)}`);
@@ -300,7 +374,7 @@ async function runOnce(): Promise<void> {
   if (placed.length === 0) {
     throw new Error("No buyer agent successfully placed a bid");
   }
-  log(`[buyers] ${placed.length}/${BUYER_PERSONAS.length} bids reached the Exchange`);
+  log(`[buyers] ${placed.length}/${personas.length} bids reached the Exchange`);
 
   // ── Step 3: orchestrator clears the auction ────────────────────────────
   log("[exchange] clearing auction…");
