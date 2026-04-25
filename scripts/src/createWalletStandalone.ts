@@ -1,6 +1,5 @@
-import { initiateDeveloperControlledWalletsClient } from "@circle-fin/developer-controlled-wallets";
-
 import { loadRootEnv } from "@ade/shared/env";
+import { initiateDeveloperControlledWalletsClient } from "@circle-fin/developer-controlled-wallets";
 
 interface CliArgs {
   walletSetId?: string;

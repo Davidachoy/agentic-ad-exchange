@@ -1,9 +1,13 @@
 import { randomBytes, randomUUID } from "node:crypto";
 
-import { BidRequestSchema, MAX_CLEARING_PRICE_USDC, NANOPAYMENT_UNIT_USDC } from "@ade/shared";
+import {
+  ARC_TESTNET_EXPLORER_BASE,
+  BidRequestSchema,
+  MAX_CLEARING_PRICE_USDC,
+  NANOPAYMENT_UNIT_USDC,
+} from "@ade/shared";
 
 const USDC_UNITS = 1_000_000n;
-const ARC_EXPLORER_BASE = "https://testnet.arcscan.app" as const;
 
 export interface RunDemoCycleDeps {
   exchangeApiUrl: string;
@@ -59,10 +63,10 @@ export async function runDemoCycle(deps: RunDemoCycleDeps): Promise<DemoCycleRes
     throw new Error(`POST /bid failed: ${bidRes.status} ${JSON.stringify(body)}`);
   }
 
-  const auctionRes = await fetch(
-    `${deps.exchangeApiUrl}/auction/run/${deps.listingId}`,
-    { method: "POST", headers: { "Content-Type": "application/json" } },
-  );
+  const auctionRes = await fetch(`${deps.exchangeApiUrl}/auction/run/${deps.listingId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
   if (!auctionRes.ok) {
     const body = await auctionRes.json().catch(() => null);
     throw new Error(
@@ -81,7 +85,7 @@ export async function runDemoCycle(deps: RunDemoCycleDeps): Promise<DemoCycleRes
     clearingPrice: auctionResult.clearingPriceUsdc,
     auctionId: auctionResult.auctionId,
     txHash,
-    explorerUrl: txHash ? `${ARC_EXPLORER_BASE}/tx/${txHash}` : "(no tx hash reported)",
+    explorerUrl: txHash ? `${ARC_TESTNET_EXPLORER_BASE}/tx/${txHash}` : "(no tx hash reported)",
     status: receipt.status,
   };
 }

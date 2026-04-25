@@ -41,6 +41,14 @@ export const ARC_TESTNET_CHAIN_ID = 5042002 as const;
  */
 export const ARC_TESTNET_USDC = "0x3600000000000000000000000000000000000000" as const;
 
+/**
+ * Arc testnet block-explorer host. Used by the UI ledger and by demoLoad
+ * cycle results (`/tx/<hash>`, `/address/<addr>`). Verified from
+ * https://testnet.arcscan.app on 2026-04-25.
+ * Mainnet host differs — see features/mainnet-cutover.md before flipping.
+ */
+export const ARC_TESTNET_EXPLORER_BASE = "https://testnet.arcscan.app" as const;
+
 /** SSE event names the server emits; the UI subscribes by name. */
 export const STREAM_EVENTS = {
   connected: "connected",

@@ -13,6 +13,9 @@ build/
 coverage/
 *.tsbuildinfo
 
+# Demo-load manifest output (judge-readable artifact, regenerated each run)
+scripts/.demo-output/
+
 # Environment
 .env
 .env.local
@@ -34,3 +37,9 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# misc
+features/
+PRPs/
+.claude/
+ui/.vite/

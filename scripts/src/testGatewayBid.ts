@@ -1,5 +1,5 @@
-import { GatewayClient, type SupportedChainName } from "@circle-fin/x402-batching/client";
 import { loadRootEnv } from "@ade/shared/env";
+import { GatewayClient, type SupportedChainName } from "@circle-fin/x402-batching/client";
 
 loadRootEnv();
 
@@ -43,7 +43,11 @@ const bid = {
   targeting: { adType: "display", format: "banner", size: "300x250", contextTags: ["test"] },
   bidAmountUsdc: "0.005",
   budgetRemainingUsdc: "1.000000",
-  nonce: "0x" + crypto.getRandomValues(new Uint8Array(32)).reduce((h, b) => h + b.toString(16).padStart(2, "0"), ""),
+  nonce:
+    "0x" +
+    crypto
+      .getRandomValues(new Uint8Array(32))
+      .reduce((h, b) => h + b.toString(16).padStart(2, "0"), ""),
   createdAt: new Date().toISOString(),
 };
 

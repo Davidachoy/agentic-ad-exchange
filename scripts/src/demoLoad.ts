@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import { promises as fs } from "node:fs";
+import path from "node:path";
 
 import { FLOOR_PRICE_MIN_USDC, MAX_CLEARING_PRICE_USDC } from "@ade/shared";
 import { createCircleClient, type CircleClient } from "@ade/wallets";
@@ -13,6 +15,19 @@ const USDC_UNITS = 1_000_000n;
  * blocked by a dust shortfall on the buyer DCW. */
 const PREFLIGHT_HEADROOM_USDC = "0.050000" as const;
 
+/**
+ * One row of the manifest written to `scripts/.demo-output/settlements.json`.
+ * Producer (writeSettlementManifest) and consumer (judges, the demo video
+ * narration) are both inside this repo — a zod schema would be overkill.
+ */
+export interface SettlementManifestEntry {
+  cycle: number;
+  txHash: string;
+  explorerUrl: string;
+  clearingPrice: string;
+  status: string;
+}
+
 export interface DemoLoadDeps {
   config?: ScriptsConfig;
   /** Used only for the preflight balance check; the cycle itself goes through HTTP. */
@@ -20,6 +35,12 @@ export interface DemoLoadDeps {
   floorUsdc?: string;
   rand?: () => number;
   logLine?: (msg: string, meta?: Record<string, unknown>) => void;
+  /**
+   * Override the manifest writer for tests. Defaults to writing to
+   * `scripts/.demo-output/settlements.json`. Tests inject a spy so they
+   * don't have to mock node:fs.
+   */
+  writeManifest?: (results: DemoCycleResult[]) => Promise<void>;
 }
 
 export interface DemoLoadResult {
@@ -44,6 +65,7 @@ export async function runDemoLoad(deps: DemoLoadDeps = {}): Promise<DemoLoadResu
   const exchangeApiUrl = config.EXCHANGE_API_URL ?? "http://localhost:4021";
   const client = deps.client ?? createCircleClient({ env: process.env });
   const logLine = deps.logLine ?? log;
+  const writeManifest = deps.writeManifest ?? defaultWriteManifest;
 
   // Preflight: verify buyer balance covers all cycles before starting.
   const balance = await client.getBalance(BUYER_WALLET_ID);
@@ -95,12 +117,34 @@ export async function runDemoLoad(deps: DemoLoadDeps = {}): Promise<DemoLoadResu
     );
   }
 
+  await writeManifest(results);
+
   const totalUsdcSettled = fromAtomic(totalAtomic);
   banner(
     "Demo Load — complete",
     buildMarginExplainer({ cycles: results.length, totalUsdcSettled }),
   );
   return { cycles: results.length, totalUsdcSettled, results };
+}
+
+/**
+ * Default manifest writer: emits `scripts/.demo-output/settlements.json` with
+ * one entry per cycle (including failed ones, so the count matches
+ * DEMO_LOAD_CYCLES exactly). The directory is gitignored.
+ */
+async function defaultWriteManifest(results: DemoCycleResult[]): Promise<void> {
+  const dir = path.resolve(process.cwd(), "scripts", ".demo-output");
+  await fs.mkdir(dir, { recursive: true });
+  const entries: SettlementManifestEntry[] = results.map((r, i) => ({
+    cycle: i + 1,
+    txHash: r.txHash,
+    explorerUrl: r.explorerUrl,
+    clearingPrice: r.clearingPrice,
+    status: r.status,
+  }));
+  const out = path.join(dir, "settlements.json");
+  await fs.writeFile(out, JSON.stringify(entries, null, 2) + "\n", "utf8");
+  log(`Wrote ${entries.length} settlements → scripts/.demo-output/settlements.json`);
 }
 
 async function registerDemoListing(opts: {

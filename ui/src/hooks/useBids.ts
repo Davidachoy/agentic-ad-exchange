@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-
 import type { BidRequest } from "@ade/shared";
+import { useCallback, useEffect, useState } from "react";
 
 import { getBids } from "../api/client.js";
 
