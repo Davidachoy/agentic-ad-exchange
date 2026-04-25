@@ -10,6 +10,7 @@ import { createAuctionRouter } from "./auction.js";
 import { createBidRouter } from "./bid.js";
 import { createHealthRouter } from "./health.js";
 import { createInventoryRouter } from "./inventory.js";
+import { createSettlementRouter } from "./settlements.js";
 import { createStreamRouter } from "./stream.js";
 
 export interface RegisterRoutesDeps {
@@ -43,5 +44,6 @@ export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
       buyerWalletId: deps.buyerWalletId,
     }),
   );
+  app.use(createSettlementRouter({ settlementStore: deps.settlementStore }));
   app.use(createStreamRouter({ eventBus: deps.eventBus }));
 }

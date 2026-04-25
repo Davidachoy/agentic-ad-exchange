@@ -13,6 +13,16 @@ export interface BidDeps {
 
 export function createBidRouter(deps: BidDeps): Router {
   const router = Router();
+
+  router.get("/bids", async (_req, res, next) => {
+    try {
+      const items = await deps.bidStore.list();
+      res.json({ items });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.post("/bid", createBidRateLimiter(deps.rateLimitPerMin), async (req, res, next) => {
     try {
       const bid = BidRequestSchema.parse(req.body);
