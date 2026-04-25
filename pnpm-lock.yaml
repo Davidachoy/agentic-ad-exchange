@@ -112,6 +112,12 @@ importers:
 
   scripts:
     dependencies:
+      '@ade/agent-buyer':
+        specifier: workspace:*
+        version: link:../agents/buyer
+      '@ade/agent-seller':
+        specifier: workspace:*
+        version: link:../agents/seller
       '@ade/server':
         specifier: workspace:*
         version: link:../server
