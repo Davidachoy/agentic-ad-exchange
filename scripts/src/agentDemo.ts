@@ -1,25 +1,20 @@
-import { loadBuyerConfig } from "@ade/agent-buyer";
-import { resolvePersonasFromEnv, runAgentAuction } from "@ade/server";
+import { resolvePersonasFromEnv, type AgentAuctionResult } from "@ade/server";
 import { createCircleClient } from "@ade/wallets";
 
 import { loadScriptsConfig } from "./config.js";
 import { banner, log } from "./logger.js";
 
 /**
- * CLI wrapper around `runAgentAuction` (defined in @ade/server). Resolves the
- * persona wallets from .env.local, prints a balance preflight, runs one full
- * Gemini-driven auction cycle against the local Exchange, and prints the
- * result. The same orchestrator is exposed via POST /demo/agent-run so the UI
- * can trigger it without a terminal.
+ * CLI wrapper around the multi-agent auction. The orchestrator reads existing
+ * inventory from the Exchange's in-memory listingStore, so the script cannot
+ * call `runAgentAuction` directly — instead it POSTs to /demo/agent-run, the
+ * same route the UI's "Run Multi-Agent Auction" button uses. Keeps the two
+ * trigger paths behaviorally identical.
  */
 
 async function runOnce(): Promise<void> {
   const config = loadScriptsConfig();
   const exchangeUrl = config.EXCHANGE_API_URL ?? "http://localhost:4021";
-  const sellerWallet = config.SELLER_WALLET_ADDRESS;
-  if (!sellerWallet) {
-    throw new Error("agent:demo requires SELLER_WALLET_ADDRESS in .env.local");
-  }
 
   const health = await fetch(`${exchangeUrl}/health`).catch(() => null);
   if (!health || !health.ok) {
@@ -34,7 +29,6 @@ async function runOnce(): Promise<void> {
       "No personas resolved. Set BUYER_LUXURYCO/GROWTHCO/RETAILCO_WALLET_ID + _ADDRESS in .env.local.",
     );
   }
-  const buyerCfg = loadBuyerConfig();
   const circle = createCircleClient({ env: process.env });
 
   const balances = await Promise.all(
@@ -61,12 +55,15 @@ async function runOnce(): Promise<void> {
     ),
   ]);
 
-  const result = await runAgentAuction({
-    exchangeUrl,
-    sellerWallet,
-    personas,
-    gemini: { apiKey: buyerCfg.GEMINI_API_KEY, model: buyerCfg.GEMINI_MODEL },
+  const res = await fetch(`${exchangeUrl}/demo/agent-run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
   });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`POST /demo/agent-run failed: ${res.status} ${body}`);
+  }
+  const result = (await res.json()) as AgentAuctionResult;
 
   log(`[seller] ${result.sellerOutput}`);
   for (const b of result.bids) {

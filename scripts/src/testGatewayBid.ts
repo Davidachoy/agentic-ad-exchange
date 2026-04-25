@@ -11,7 +11,6 @@ if (!privateKey) throw new Error("BUYER_PRIVATE_KEY not set");
 // Intercept fetch to log the second request/response pair
 const origFetch = globalThis.fetch;
 let requestCount = 0;
-// @ts-ignore — patching global fetch for debug tracing
 globalThis.fetch = async (input, init) => {
   requestCount++;
   const n = requestCount;
