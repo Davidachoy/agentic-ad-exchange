@@ -21,6 +21,8 @@ export interface AuctionRunDeps {
   /** null when Circle is not configured — settlement receipt is stored as "failed". */
   circleClient: CircleClient | null;
   buyerWalletId: string | undefined;
+  /** Lowercased winner-address → walletId. Falls back to buyerWalletId if no match. */
+  buyerWalletRouting?: ReadonlyMap<string, string>;
 }
 
 export function createAuctionRouter(deps: AuctionRunDeps): Router {
@@ -91,13 +93,18 @@ export function createAuctionRouter(deps: AuctionRunDeps): Router {
           createdAt: now,
         };
 
+        // Pick the funding wallet: prefer per-persona routing by winner address,
+        // fall back to the global pool walletId.
+        const routedWalletId =
+          deps.buyerWalletRouting?.get(winner.buyerWallet.toLowerCase()) ?? deps.buyerWalletId;
+
         let receipt;
-        if (!deps.circleClient || !deps.buyerWalletId) {
+        if (!deps.circleClient || !routedWalletId) {
           receipt = SettlementReceiptSchema.parse({ ...receiptBase, status: "failed" });
         } else {
           try {
             const tx = await deps.circleClient.transfer({
-              walletId: deps.buyerWalletId,
+              walletId: routedWalletId,
               destinationAddress: listing.sellerWallet,
               amountUsdc: clearingPriceUsdc,
             });
@@ -110,7 +117,14 @@ export function createAuctionRouter(deps: AuctionRunDeps): Router {
               arcTxHash: txReceipt.txHash,
               confirmedAt: new Date().toISOString(),
             });
-          } catch {
+          } catch (settlementErr) {
+            // TEMP: surface the swallowed Circle transfer error during demo bring-up.
+            console.error("settlement_transfer_failed", {
+              walletId: routedWalletId,
+              destinationAddress: listing.sellerWallet,
+              amountUsdc: clearingPriceUsdc,
+              err: settlementErr,
+            });
             receipt = SettlementReceiptSchema.parse({ ...receiptBase, status: "failed" });
           }
         }

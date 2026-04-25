@@ -27,6 +27,23 @@ export interface AppDeps {
   /** Injected in production; null in tests that don't exercise settlement. */
   circleClient?: CircleClient | null;
   buyerWalletId?: string;
+  /**
+   * Optional address-keyed Circle wallet id map. When the winning bid's
+   * `buyerWallet` matches a key here, settlement uses that wallet; otherwise
+   * the route falls back to `buyerWalletId`.
+   */
+  buyerWalletRouting?: ReadonlyMap<string, string>;
+  /**
+   * Optional self-contained agent-demo dependencies. When set, the server
+   * exposes POST /demo/agent-run which orchestrates a full Gemini-driven
+   * cycle (seller registers → buyers bid → auction clears).
+   */
+  demo?: {
+    exchangeUrl: string;
+    sellerWallet?: string;
+    personas: import("./demo/runAgentAuction.js").ResolvedPersona[];
+    gemini?: { apiKey: string; model: string };
+  };
 }
 
 export interface AppHandles {
@@ -63,6 +80,8 @@ export function createApp(deps: AppDeps): AppHandles {
     rateLimitPerMin: deps.bidRateLimitPerMin,
     circleClient: deps.circleClient ?? null,
     buyerWalletId: deps.buyerWalletId,
+    buyerWalletRouting: deps.buyerWalletRouting,
+    demo: deps.demo,
   });
 
   app.use(errorHandler);

@@ -58,6 +58,29 @@ const ScriptsEnvSchema = z.object({
   DEPOSIT_TIMEOUT_MS: blankToUndefined(z.coerce.number().int().positive().default(1_500_000)),
   DEMO_LOAD_CYCLES: blankToUndefined(z.coerce.number().int().min(50).default(50)),
   EXCHANGE_API_URL: blankToUndefined(z.string().url().default("http://localhost:4021")),
+  // Per-persona buyer wallets for the multi-agent demo. When all three are
+  // set, the orchestrator dispatches each persona against its own wallet.
+  BUYER_LUXURYCO_WALLET_ID: blankToUndefined(z.string().min(1).optional()),
+  BUYER_LUXURYCO_WALLET_ADDRESS: blankToUndefined(
+    z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/)
+      .optional(),
+  ),
+  BUYER_GROWTHCO_WALLET_ID: blankToUndefined(z.string().min(1).optional()),
+  BUYER_GROWTHCO_WALLET_ADDRESS: blankToUndefined(
+    z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/)
+      .optional(),
+  ),
+  BUYER_RETAILCO_WALLET_ID: blankToUndefined(z.string().min(1).optional()),
+  BUYER_RETAILCO_WALLET_ADDRESS: blankToUndefined(
+    z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/)
+      .optional(),
+  ),
 });
 
 export type ScriptsConfig = z.infer<typeof ScriptsEnvSchema>;

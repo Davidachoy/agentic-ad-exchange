@@ -19,3 +19,15 @@ export type { EventBus, EventPayloads } from "./events/bus.js";
 export { createListingStore, createBidStore, createSettlementStore } from "./state/stores.js";
 export type { ListingStore, BidStore, SettlementStore } from "./state/stores.js";
 export { logger } from "./logger.js";
+export {
+  PERSONA_TEMPLATES,
+  resolvePersonasFromEnv,
+  runAgentAuction,
+} from "./demo/runAgentAuction.js";
+export type {
+  AgentAuctionDeps,
+  AgentAuctionResult,
+  BidLog,
+  PersonaTemplate,
+  ResolvedPersona,
+} from "./demo/runAgentAuction.js";

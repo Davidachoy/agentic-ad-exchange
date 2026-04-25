@@ -19,6 +19,17 @@ const OriginListSchema = z
       .filter(Boolean),
   );
 
+const blankToUndefined = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), schema);
+
+const optionalAddr = blankToUndefined(
+  z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/)
+    .optional(),
+);
+const optionalWalletId = blankToUndefined(z.string().min(1).optional());
+
 const ServerEnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(4021),
@@ -28,10 +39,21 @@ const ServerEnvSchema = z.object({
   ARC_CHAIN_ID: z.coerce.number().int().positive().default(ARC_TESTNET_CHAIN_ID),
   // Reason: blank strings from .env placeholders ("BUYER_WALLET_ID=") must be
   // treated as absent so the server starts without a funded wallet configured.
-  BUYER_WALLET_ID: z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    z.string().min(1).optional(),
-  ),
+  BUYER_WALLET_ID: optionalWalletId,
+  // Per-persona buyer wallets — when set, the auction route routes settlement
+  // through the wallet whose address matches the winning bid's buyerWallet.
+  // Falls back to BUYER_WALLET_ID when no persona match is found.
+  BUYER_LUXURYCO_WALLET_ID: optionalWalletId,
+  BUYER_LUXURYCO_WALLET_ADDRESS: optionalAddr,
+  BUYER_GROWTHCO_WALLET_ID: optionalWalletId,
+  BUYER_GROWTHCO_WALLET_ADDRESS: optionalAddr,
+  BUYER_RETAILCO_WALLET_ID: optionalWalletId,
+  BUYER_RETAILCO_WALLET_ADDRESS: optionalAddr,
+  // Demo deps for POST /demo/agent-run. Optional at startup; the route
+  // returns 503 if any are missing when called.
+  SELLER_WALLET_ADDRESS: optionalAddr,
+  GEMINI_API_KEY: blankToUndefined(z.string().min(1).optional()),
+  GEMINI_MODEL: blankToUndefined(z.string().min(1).default("gemini-2.5-flash")),
   MAX_CLEARING_PRICE_USDC: z
     .string()
     .regex(/^\d+(?:\.\d{1,6})?$/)
@@ -42,6 +64,27 @@ const ServerEnvSchema = z.object({
 });
 
 export type ServerConfig = z.infer<typeof ServerEnvSchema>;
+
+/**
+ * Map of lowercased buyer wallet address → Circle DCW wallet id. The auction
+ * route consults this when settling: the winning bid's `buyerWallet` is
+ * matched against the map to pick the funding wallet for the on-chain
+ * transfer. Empty when no persona wallets are configured.
+ */
+export type BuyerWalletRouting = ReadonlyMap<string, string>;
+
+export function buildBuyerWalletRouting(config: ServerConfig): BuyerWalletRouting {
+  const m = new Map<string, string>();
+  const pairs: Array<[string | undefined, string | undefined]> = [
+    [config.BUYER_LUXURYCO_WALLET_ADDRESS, config.BUYER_LUXURYCO_WALLET_ID],
+    [config.BUYER_GROWTHCO_WALLET_ADDRESS, config.BUYER_GROWTHCO_WALLET_ID],
+    [config.BUYER_RETAILCO_WALLET_ADDRESS, config.BUYER_RETAILCO_WALLET_ID],
+  ];
+  for (const [addr, id] of pairs) {
+    if (addr && id) m.set(addr.toLowerCase(), id);
+  }
+  return m;
+}
 
 export function loadServerConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   loadRootEnv();
