@@ -135,6 +135,12 @@ export function App(): JSX.Element {
             onRegister={handleRegisterListing}
             registering={registering}
           />
+          <BuyerPanel
+            bids={bids}
+            lastAuction={lastAuction}
+            lastReceipt={lastReceipt}
+            activeListing={activeListing}
+          />
           <AuctionPanel
             listings={listings}
             activeListingId={activeListingId}
@@ -145,12 +151,6 @@ export function App(): JSX.Element {
             lastReceipt={lastReceipt}
             onRunAgentDemo={handleRunAgentDemo}
             agentDemoRunning={agentDemoRunning}
-          />
-          <BuyerPanel
-            bids={bids}
-            lastAuction={lastAuction}
-            lastReceipt={lastReceipt}
-            activeListing={activeListing}
           />
         </div>
 
