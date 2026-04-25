@@ -50,3 +50,27 @@ export async function runAuction(
 export async function getSettlements(): Promise<{ items: SettlementReceipt[] }> {
   return apiFetch("/settlements");
 }
+
+export interface AgentDemoBidLog {
+  agentId: string;
+  bidId: string;
+  output: string;
+  iterations: number;
+  toolCalls: string[];
+  placed: boolean;
+}
+
+export interface AgentDemoResult {
+  listingId: string;
+  listingVertical: string;
+  listingTags: string[];
+  floorUsdc: string;
+  sellerOutput: string;
+  bids: AgentDemoBidLog[];
+  winner?: { agentId: string; winningBidUsdc: string; clearingPriceUsdc: string };
+  settlement?: { status: string; arcTxHash?: string };
+}
+
+export async function triggerAgentDemo(): Promise<AgentDemoResult> {
+  return apiFetch("/demo/agent-run", { method: "POST" });
+}

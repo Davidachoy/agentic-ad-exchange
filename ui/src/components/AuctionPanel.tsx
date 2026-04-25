@@ -8,6 +8,8 @@ export interface AuctionPanelProps {
   running: boolean;
   lastAuction: AuctionResult | null;
   lastReceipt: SettlementReceipt | null;
+  onRunAgentDemo: () => Promise<void>;
+  agentDemoRunning: boolean;
 }
 
 export function AuctionPanel({
@@ -18,6 +20,8 @@ export function AuctionPanel({
   running,
   lastAuction,
   lastReceipt,
+  onRunAgentDemo,
+  agentDemoRunning,
 }: AuctionPanelProps): JSX.Element {
   const noListings = listings.length === 0;
 
@@ -74,8 +78,21 @@ export function AuctionPanel({
         disabled={noListings || running}
         className="mt-3 w-full rounded-lg border border-teal-700/50 bg-teal-900/20 px-4 py-2.5 text-sm font-medium text-teal-300 transition-colors hover:bg-teal-900/40 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {running ? "Running auction…" : "▶ Run Auction"}
+        {running ? "Running auction…" : "▶ Run Auction (manual bids)"}
       </button>
+
+      <button
+        onClick={() => void onRunAgentDemo()}
+        disabled={agentDemoRunning}
+        className="mt-2 w-full rounded-lg border border-fuchsia-700/60 bg-gradient-to-r from-fuchsia-900/30 to-purple-900/30 px-4 py-2.5 text-sm font-semibold text-fuchsia-200 transition-colors hover:from-fuchsia-900/50 hover:to-purple-900/50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {agentDemoRunning
+          ? "Agents bidding via Gemini…"
+          : "✨ Run Multi-Agent Auction (Gemini)"}
+      </button>
+      <p className="mt-1 text-center text-xs text-slate-500">
+        Seller agent + 3 buyer agents · real LLM reasoning + on-chain settlement
+      </p>
 
       {/* Last auction result */}
       {lastAuction ? (

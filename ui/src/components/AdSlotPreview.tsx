@@ -9,19 +9,26 @@ interface Creative {
 }
 
 const CREATIVES: Record<string, Creative> = {
-  "buyer-agent-alpha": {
-    headline: "AI Analytics Platform",
-    body: "Real-time insights for modern teams",
-    cta: "Start Free Trial →",
-    bgFrom: "#1d4ed8",
-    bgTo: "#7c3aed",
+  "buyer-luxuryco": {
+    headline: "LuxuryCo · AW26 Collection",
+    body: "Italian craftsmanship, redefined",
+    cta: "Shop the Edit →",
+    bgFrom: "#831843",
+    bgTo: "#0c0a09",
   },
-  "buyer-agent-beta": {
-    headline: "DevTools Pro",
-    body: "Ship faster with smart automation",
-    cta: "Get Started →",
+  "buyer-growthco": {
+    headline: "GrowthCo · DevOps Platform",
+    body: "Ship 10× faster with smart pipelines",
+    cta: "Start Free Trial →",
     bgFrom: "#065f46",
     bgTo: "#1d4ed8",
+  },
+  "buyer-retailco": {
+    headline: "RetailCo · Cart Recovery",
+    body: "Your saved items — 20% off today",
+    cta: "Complete Order →",
+    bgFrom: "#b45309",
+    bgTo: "#7c2d12",
   },
 };
 

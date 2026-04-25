@@ -49,6 +49,11 @@ const ServerEnvSchema = z.object({
   BUYER_GROWTHCO_WALLET_ADDRESS: optionalAddr,
   BUYER_RETAILCO_WALLET_ID: optionalWalletId,
   BUYER_RETAILCO_WALLET_ADDRESS: optionalAddr,
+  // Demo deps for POST /demo/agent-run. Optional at startup; the route
+  // returns 503 if any are missing when called.
+  SELLER_WALLET_ADDRESS: optionalAddr,
+  GEMINI_API_KEY: blankToUndefined(z.string().min(1).optional()),
+  GEMINI_MODEL: blankToUndefined(z.string().min(1).default("gemini-2.5-flash")),
   MAX_CLEARING_PRICE_USDC: z
     .string()
     .regex(/^\d+(?:\.\d{1,6})?$/)

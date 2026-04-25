@@ -33,6 +33,17 @@ export interface AppDeps {
    * the route falls back to `buyerWalletId`.
    */
   buyerWalletRouting?: ReadonlyMap<string, string>;
+  /**
+   * Optional self-contained agent-demo dependencies. When set, the server
+   * exposes POST /demo/agent-run which orchestrates a full Gemini-driven
+   * cycle (seller registers → buyers bid → auction clears).
+   */
+  demo?: {
+    exchangeUrl: string;
+    sellerWallet?: string;
+    personas: import("./demo/runAgentAuction.js").ResolvedPersona[];
+    gemini?: { apiKey: string; model: string };
+  };
 }
 
 export interface AppHandles {
@@ -70,6 +81,7 @@ export function createApp(deps: AppDeps): AppHandles {
     circleClient: deps.circleClient ?? null,
     buyerWalletId: deps.buyerWalletId,
     buyerWalletRouting: deps.buyerWalletRouting,
+    demo: deps.demo,
   });
 
   app.use(errorHandler);

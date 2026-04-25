@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 
-import type { AdInventoryListing, BidRequest } from "@ade/shared";
+import type { AdInventoryListing } from "@ade/shared";
 
-import { postBid, postInventory, runAuction } from "./api/client.js";
+import { postInventory, runAuction, triggerAgentDemo } from "./api/client.js";
 import { AuctionFeed } from "./components/AuctionFeed.js";
 import { AuctionPanel } from "./components/AuctionPanel.js";
 import { BuyerPanel } from "./components/BuyerPanel.js";
@@ -13,15 +13,7 @@ import { useAuctionStream } from "./hooks/useAuctionStream.js";
 import { useBids } from "./hooks/useBids.js";
 import { useInventory } from "./hooks/useInventory.js";
 
-function randomNonce(): string {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return "0x" + Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
 const SELLER_WALLET = "0xcc00000000000000000000000000000000000003";
-const BUYER_A_WALLET = "0xaa00000000000000000000000000000000000001";
-const BUYER_B_WALLET = "0xbb00000000000000000000000000000000000002";
 
 export function App(): JSX.Element {
   const { connected, settlementCount, auctions, lastAuction, lastReceipt } = useAuctionStream();
@@ -29,11 +21,10 @@ export function App(): JSX.Element {
   const { bids, refresh: refreshBids } = useBids();
 
   const [registering, setRegistering] = useState(false);
-  const [biddingA, setBiddingA] = useState(false);
-  const [biddingB, setBiddingB] = useState(false);
   const [running, setRunning] = useState(false);
+  const [agentDemoRunning, setAgentDemoRunning] = useState(false);
+  const [agentDemoError, setAgentDemoError] = useState<string | null>(null);
   const [activeListingId, setActiveListingId] = useState<string | null>(null);
-  const [anyBidPlaced, setAnyBidPlaced] = useState(false);
 
   useEffect(() => {
     if (!activeListingId && listings.length > 0) {
@@ -66,36 +57,6 @@ export function App(): JSX.Element {
     }
   }
 
-  async function handlePlaceBid(buyer: "A" | "B"): Promise<void> {
-    const isA = buyer === "A";
-    const setter = isA ? setBiddingA : setBiddingB;
-    setter(true);
-    try {
-      const bid: BidRequest = {
-        bidId: crypto.randomUUID(),
-        buyerAgentId: isA ? "buyer-agent-alpha" : "buyer-agent-beta",
-        buyerWallet: isA ? BUYER_A_WALLET : BUYER_B_WALLET,
-        targeting: {
-          adType: "display",
-          format: "banner",
-          size: "300x250",
-          contextTags: isA ? ["tech", "ai"] : ["dev", "tools"],
-        },
-        bidAmountUsdc: isA ? "0.008" : "0.006",
-        budgetRemainingUsdc: "1.000",
-        nonce: randomNonce(),
-        createdAt: new Date().toISOString(),
-      };
-      await postBid(bid);
-      setAnyBidPlaced(true);
-      await refreshBids();
-    } catch (err) {
-      console.error("Place bid failed:", err);
-    } finally {
-      setter(false);
-    }
-  }
-
   async function handleRunAuction(): Promise<void> {
     if (!activeListingId) return;
     setRunning(true);
@@ -109,7 +70,23 @@ export function App(): JSX.Element {
     }
   }
 
-  const step2Done = anyBidPlaced || bids.length > 0;
+  async function handleRunAgentDemo(): Promise<void> {
+    setAgentDemoRunning(true);
+    setAgentDemoError(null);
+    try {
+      const result = await triggerAgentDemo();
+      // Bids are drained after auction; refresh inventory + bids so UI mirrors state.
+      await Promise.all([refreshInventory(), refreshBids()]);
+      // Auto-select the new listing so AdSlotPreview renders against it.
+      setActiveListingId(result.listingId);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setAgentDemoError(msg);
+    } finally {
+      setAgentDemoRunning(false);
+    }
+  }
+
   const step3Done = lastAuction != null;
   const step4Done = lastReceipt?.status === "confirmed";
 
@@ -136,14 +113,20 @@ export function App(): JSX.Element {
 
         {/* Happy path guide */}
         <div className="mb-6 flex items-center gap-2 overflow-x-auto rounded-xl border border-slate-800 bg-exchange-card px-5 py-3.5">
-          <FlowStep n={1} label="Register ad slot" done={listings.length > 0} />
+          <FlowStep n={1} label="Seller lists" done={listings.length > 0} />
           <FlowArrow />
-          <FlowStep n={2} label="Place bids" done={step2Done} />
+          <FlowStep n={2} label="Buyers bid" done={bids.length > 0 || lastAuction != null} />
           <FlowArrow />
-          <FlowStep n={3} label="Run auction" done={step3Done} />
+          <FlowStep n={3} label="Auction clears" done={step3Done} />
           <FlowArrow />
           <FlowStep n={4} label="Ad goes live" done={step4Done} />
         </div>
+
+        {agentDemoError && (
+          <div className="mb-4 rounded-lg border border-exchange-warn/40 bg-exchange-warn/10 p-3 text-xs text-exchange-warn">
+            Agent demo failed: {agentDemoError}
+          </div>
+        )}
 
         {/* Main panels */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -160,12 +143,11 @@ export function App(): JSX.Element {
             running={running}
             lastAuction={lastAuction}
             lastReceipt={lastReceipt}
+            onRunAgentDemo={handleRunAgentDemo}
+            agentDemoRunning={agentDemoRunning}
           />
           <BuyerPanel
             bids={bids}
-            onPlaceBid={handlePlaceBid}
-            biddingA={biddingA}
-            biddingB={biddingB}
             lastAuction={lastAuction}
             lastReceipt={lastReceipt}
             activeListing={activeListing}
