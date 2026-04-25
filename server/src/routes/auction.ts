@@ -117,7 +117,14 @@ export function createAuctionRouter(deps: AuctionRunDeps): Router {
               arcTxHash: txReceipt.txHash,
               confirmedAt: new Date().toISOString(),
             });
-          } catch {
+          } catch (settlementErr) {
+            // TEMP: surface the swallowed Circle transfer error during demo bring-up.
+            console.error("settlement_transfer_failed", {
+              walletId: routedWalletId,
+              destinationAddress: listing.sellerWallet,
+              amountUsdc: clearingPriceUsdc,
+              err: settlementErr,
+            });
             receipt = SettlementReceiptSchema.parse({ ...receiptBase, status: "failed" });
           }
         }
