@@ -33,10 +33,7 @@ function buildTools(exchangeUrl: string): AgentTool<unknown, unknown>[] {
 
 /**
  * Wire the seller agent against Google Gemini direct. The seller's typed
- * config (`loadSellerConfig`) already requires `GEMINI_API_KEY` and
- * `GEMINI_MODEL`; unlike the buyer the seller is single-provider today, so
- * the config is flat (no nested `.gemini` namespace). Mirror the buyer's
- * nested shape if/when an AIMLAPI seller ships.
+ * config (`loadSellerConfig`) requires `GEMINI_API_KEY` and `GEMINI_MODEL`.
  */
 export function createSellerAgentWithGemini(
   overrides: { config?: SellerAgentConfig } = {},
