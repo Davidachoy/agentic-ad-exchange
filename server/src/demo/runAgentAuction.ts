@@ -263,10 +263,24 @@ export async function runAgentAuction(deps: AgentAuctionDeps): Promise<AgentAuct
     `- createdAt: "${sellerNow}"`,
   ].join("\n");
 
+  // Gemini's FunctionCallingMode.AUTO occasionally returns text instead of a
+  // tool call. Retry the seller's run a few times if listInventory wasn't
+  // invoked — each retry resets the chat session in the Gemini adapter, so
+  // attempts are independent. The retry is cheap relative to the cost of a
+  // demo-time stack trace.
   const seller = createSellerAgentWithGemini();
-  const sellerResult = await seller.run(sellerPrompt);
-  if (!sellerResult.toolCalls.includes("listInventory")) {
-    throw new Error("Seller agent did not call listInventory");
+  const SELLER_MAX_ATTEMPTS = 3;
+  let sellerResult: Awaited<ReturnType<typeof seller.run>> | undefined;
+  for (let attempt = 1; attempt <= SELLER_MAX_ATTEMPTS; attempt++) {
+    sellerResult = await seller.run(sellerPrompt);
+    if (sellerResult.toolCalls.includes("listInventory")) break;
+  }
+  if (!sellerResult || !sellerResult.toolCalls.includes("listInventory")) {
+    throw new Error(
+      `Seller agent did not call listInventory after ${SELLER_MAX_ATTEMPTS} attempts. ` +
+        `Last toolCalls=[${sellerResult?.toolCalls.join(",") ?? ""}], ` +
+        `output=${JSON.stringify(sellerResult?.output ?? "")}`,
+    );
   }
 
   // Step 2: buyer agents compete in parallel
