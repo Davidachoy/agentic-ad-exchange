@@ -1,6 +1,7 @@
 import { randomBytes, randomUUID } from "node:crypto";
 
 import {
+  buildGatewayClient,
   createBuyerAgent,
   createCheckBalanceTool,
   createGeminiLlmAdapter,
@@ -10,6 +11,7 @@ import {
   type BuyerAgent,
 } from "@ade/agent-buyer";
 import { createSellerAgentWithGemini } from "@ade/agent-seller";
+import type { GatewayClient } from "@circle-fin/x402-batching/client";
 
 /**
  * In-server orchestrator that drives one full multi-agent auction cycle:
@@ -136,10 +138,15 @@ function nonce(): string {
 
 function buildBuyerAgentForPersona(
   persona: ResolvedPersona,
-  cfg: { apiKey: string; model: string; exchangeUrl: string },
+  cfg: {
+    apiKey: string;
+    model: string;
+    exchangeUrl: string;
+    gatewayClient?: GatewayClient;
+  },
 ): BuyerAgent {
   const tools: BuyerAgentTool<unknown, unknown>[] = [
-    createPlaceBidTool({ exchangeUrl: cfg.exchangeUrl }),
+    createPlaceBidTool({ exchangeUrl: cfg.exchangeUrl, gatewayClient: cfg.gatewayClient }),
     createCheckBalanceTool({ exchangeUrl: cfg.exchangeUrl }),
     createReviewAuctionTool({ exchangeUrl: cfg.exchangeUrl }),
   ];
@@ -222,6 +229,12 @@ export interface AgentAuctionDeps {
   sellerWallet: string;
   personas: ResolvedPersona[];
   gemini: { apiKey: string; model: string };
+  /**
+   * Shared EOA private key used to sign x402 payment authorizations for every
+   * persona's bid. Optional: when absent, bids fall through to plain fetch and
+   * will be 402'd by the gateway middleware on /bid.
+   */
+  buyerPrivateKey?: `0x${string}`;
   rng?: () => number;
 }
 
@@ -263,11 +276,19 @@ export async function runAgentAuction(deps: AgentAuctionDeps): Promise<AgentAuct
     tags: tpl.contextTags,
     description: tpl.description,
   };
+  // Build one shared GatewayClient when a buyer EOA key is configured; every
+  // persona's placeBid tool reuses it so bids carry a Payment-Signature
+  // header and clear the x402 nanopayments middleware on /bid. Settlement on
+  // the auction route still routes per-persona via buyerWalletRouting.
+  const gatewayClient = deps.buyerPrivateKey
+    ? buildGatewayClient(deps.buyerPrivateKey, "arcTestnet")
+    : undefined;
   const buyers = deps.personas.map((p) =>
     buildBuyerAgentForPersona(p, {
       apiKey: deps.gemini.apiKey,
       model: deps.gemini.model,
       exchangeUrl: deps.exchangeUrl,
+      gatewayClient,
     }),
   );
   const settled = await Promise.allSettled(

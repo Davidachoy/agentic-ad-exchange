@@ -49,6 +49,7 @@ function main(): void {
       sellerWallet: config.SELLER_WALLET_ADDRESS,
       personas,
       gemini,
+      buyerPrivateKey: config.BUYER_PRIVATE_KEY as `0x${string}` | undefined,
     },
   });
 

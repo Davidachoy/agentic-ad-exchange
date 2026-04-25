@@ -7,6 +7,7 @@ export interface DemoDeps {
   sellerWallet?: string;
   personas: ResolvedPersona[];
   gemini?: { apiKey: string; model: string };
+  buyerPrivateKey?: `0x${string}`;
 }
 
 export function createDemoRouter(deps: DemoDeps): Router {
@@ -27,6 +28,7 @@ export function createDemoRouter(deps: DemoDeps): Router {
         sellerWallet: deps.sellerWallet,
         personas: deps.personas,
         gemini: deps.gemini,
+        buyerPrivateKey: deps.buyerPrivateKey,
       });
       res.status(200).json(result);
     } catch (err) {

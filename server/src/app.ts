@@ -46,6 +46,15 @@ export interface AppDeps {
     sellerWallet?: string;
     personas: import("./demo/runAgentAuction.js").ResolvedPersona[];
     gemini?: { apiKey: string; model: string };
+    /**
+     * Shared EOA private key used by GatewayClient to sign x402 payment
+     * authorizations for every persona's bid in the demo cycle. When absent,
+     * bids fall through to plain fetch and will be rejected by the gateway
+     * middleware on /bid (402). Reason: Circle DCWs don't expose private keys,
+     * so demo bid-fees use one shared EOA while settlement still routes per
+     * persona via buyerWalletRouting. See features/x402-bid-middleware.md.
+     */
+    buyerPrivateKey?: `0x${string}`;
   };
 }
 

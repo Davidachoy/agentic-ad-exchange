@@ -34,6 +34,7 @@ export interface RegisterRoutesDeps {
     sellerWallet?: string;
     personas: ResolvedPersona[];
     gemini?: { apiKey: string; model: string };
+    buyerPrivateKey?: `0x${string}`;
   };
 }
 
@@ -68,6 +69,7 @@ export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
         sellerWallet: deps.demo.sellerWallet,
         personas: deps.demo.personas,
         gemini: deps.demo.gemini,
+        buyerPrivateKey: deps.demo.buyerPrivateKey,
       }),
     );
   }
