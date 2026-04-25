@@ -11,6 +11,7 @@
     "register:entity-secret": "tsx src/registerEntitySecret.ts",
     "create:wallet-set": "tsx src/createWalletSet.ts",
     "create:wallets": "tsx src/createWallets.ts",
+    "create:wallet": "tsx src/createWalletStandalone.ts",
     "fund:wallets": "tsx src/fundWallets.ts",
     "show:address": "tsx src/showAddress.ts",
     "deposit:gateway": "tsx src/depositGateway.ts",
