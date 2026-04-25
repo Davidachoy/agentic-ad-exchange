@@ -26,11 +26,33 @@ export function App(): JSX.Element {
   const [agentDemoError, setAgentDemoError] = useState<string | null>(null);
   const [activeListingId, setActiveListingId] = useState<string | null>(null);
 
+  // Drives the FlowStep visualization for the *current* cycle. Set when an
+  // auction event arrives, cleared 2.5s after the matching settlement so the
+  // indicator resets between runs. Independent of lastAuction/lastReceipt,
+  // which the side panels keep showing as "Last Result".
+  const [cycleAuctionId, setCycleAuctionId] = useState<string | null>(null);
+
   useEffect(() => {
     if (!activeListingId && listings.length > 0) {
       setActiveListingId(listings[0]?.listingId ?? null);
     }
   }, [listings, activeListingId]);
+
+  useEffect(() => {
+    if (lastAuction) setCycleAuctionId(lastAuction.auctionId);
+  }, [lastAuction?.auctionId]);
+
+  useEffect(() => {
+    if (
+      lastReceipt?.status === "confirmed" &&
+      cycleAuctionId !== null &&
+      lastReceipt.auctionId === cycleAuctionId
+    ) {
+      const t = window.setTimeout(() => setCycleAuctionId(null), 2500);
+      return () => window.clearTimeout(t);
+    }
+    return undefined;
+  }, [lastReceipt?.receiptId, lastReceipt?.status, lastReceipt?.auctionId, cycleAuctionId]);
 
   const activeListing = listings.find((l) => l.listingId === activeListingId) ?? null;
 
@@ -60,6 +82,7 @@ export function App(): JSX.Element {
   async function handleRunAuction(): Promise<void> {
     if (!activeListingId) return;
     setRunning(true);
+    setCycleAuctionId(null);
     try {
       await runAuction(activeListingId);
       await refreshBids();
@@ -73,6 +96,7 @@ export function App(): JSX.Element {
   async function handleRunAgentDemo(): Promise<void> {
     setAgentDemoRunning(true);
     setAgentDemoError(null);
+    setCycleAuctionId(null);
     try {
       const result = await triggerAgentDemo();
       // Bids are drained after auction; refresh inventory + bids so UI mirrors state.
@@ -87,8 +111,10 @@ export function App(): JSX.Element {
     }
   }
 
-  const step3Done = lastAuction != null;
-  const step4Done = lastReceipt?.status === "confirmed";
+  const cycleActive = cycleAuctionId !== null;
+  const step2Done = cycleActive && (bids.length > 0 || lastAuction != null);
+  const step3Done = cycleActive && lastAuction != null;
+  const step4Done = cycleActive && lastReceipt?.status === "confirmed";
 
   return (
     <div className="min-h-screen bg-exchange-bg text-slate-100">
@@ -115,7 +141,7 @@ export function App(): JSX.Element {
         <div className="mb-6 flex items-center gap-2 overflow-x-auto rounded-xl border border-slate-800 bg-exchange-card px-5 py-3.5">
           <FlowStep n={1} label="Seller lists" done={listings.length > 0} />
           <FlowArrow />
-          <FlowStep n={2} label="Buyers bid" done={bids.length > 0 || lastAuction != null} />
+          <FlowStep n={2} label="Buyers bid" done={step2Done} />
           <FlowArrow />
           <FlowStep n={3} label="Auction clears" done={step3Done} />
           <FlowArrow />
