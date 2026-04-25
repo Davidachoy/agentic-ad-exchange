@@ -1,5 +1,7 @@
 import express, { type Express } from "express";
 
+import type { CircleClient } from "@ade/wallets";
+
 import { createEventBus, type EventBus } from "./events/bus.js";
 import { createCorsMiddleware } from "./middleware/corsAllowList.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -22,6 +24,9 @@ export interface AppDeps {
   settlementStore?: SettlementStore;
   nonceStore?: NonceStore;
   eventBus?: EventBus;
+  /** Injected in production; null in tests that don't exercise settlement. */
+  circleClient?: CircleClient | null;
+  buyerWalletId?: string;
 }
 
 export interface AppHandles {
@@ -52,9 +57,12 @@ export function createApp(deps: AppDeps): AppHandles {
   registerRoutes(app, {
     listingStore,
     bidStore,
+    settlementStore,
     nonceStore,
     eventBus,
     rateLimitPerMin: deps.bidRateLimitPerMin,
+    circleClient: deps.circleClient ?? null,
+    buyerWalletId: deps.buyerWalletId,
   });
 
   app.use(errorHandler);

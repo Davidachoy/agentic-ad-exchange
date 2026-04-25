@@ -6,6 +6,17 @@ import { rateLimit } from "express-rate-limit";
  * Reason: demo agents share a loopback IP, so wallet-keyed limiting is the
  * correct blast-radius unit (one misbehaving agent shouldn't starve the rest).
  */
+/** Rate limit auction runs per listingId — caps at hackathon's 1–5 Hz cadence. */
+export function createAuctionRateLimiter(perSecond: number): RequestHandler {
+  return rateLimit({
+    windowMs: 1_000,
+    limit: perSecond,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    keyGenerator: (req) => `listing:${(req.params as Record<string, string>).listingId ?? "unknown"}`,
+  });
+}
+
 export function createBidRateLimiter(perMinute: number): RequestHandler {
   return rateLimit({
     windowMs: 60_000,

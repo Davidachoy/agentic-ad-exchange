@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { FLOOR_PRICE_MIN_USDC, MAX_CLEARING_PRICE_USDC } from "@ade/shared";
 import { createCircleClient, type CircleClient } from "@ade/wallets";
 
@@ -13,6 +15,7 @@ const PREFLIGHT_HEADROOM_USDC = "0.050000" as const;
 
 export interface DemoLoadDeps {
   config?: ScriptsConfig;
+  /** Used only for the preflight balance check; the cycle itself goes through HTTP. */
   client?: CircleClient;
   floorUsdc?: string;
   rand?: () => number;
@@ -29,18 +32,20 @@ export async function runDemoLoad(deps: DemoLoadDeps = {}): Promise<DemoLoadResu
   const config = deps.config ?? loadScriptsConfig();
   assertTestnet(config);
 
-  const { BUYER_WALLET_ID, BUYER_WALLET_ADDRESS, SELLER_WALLET_ID, SELLER_WALLET_ADDRESS } = config;
-  if (!BUYER_WALLET_ID || !BUYER_WALLET_ADDRESS || !SELLER_WALLET_ID || !SELLER_WALLET_ADDRESS) {
+  const { BUYER_WALLET_ID, BUYER_WALLET_ADDRESS, SELLER_WALLET_ADDRESS } = config;
+  if (!BUYER_WALLET_ID || !BUYER_WALLET_ADDRESS || !SELLER_WALLET_ADDRESS) {
     throw new Error(
-      "Missing wallet env vars. demoLoad requires BUYER_WALLET_ID, BUYER_WALLET_ADDRESS, SELLER_WALLET_ID, SELLER_WALLET_ADDRESS — run create:wallets and copy the banner into .env.local.",
+      "Missing wallet env vars. demoLoad requires BUYER_WALLET_ID, BUYER_WALLET_ADDRESS, SELLER_WALLET_ADDRESS — run create:wallets and copy the banner into .env.local.",
     );
   }
 
   const cycles = config.DEMO_LOAD_CYCLES;
   const floorUsdc = deps.floorUsdc ?? FLOOR_PRICE_MIN_USDC;
+  const exchangeApiUrl = config.EXCHANGE_API_URL ?? "http://localhost:4021";
   const client = deps.client ?? createCircleClient({ env: process.env });
   const logLine = deps.logLine ?? log;
 
+  // Preflight: verify buyer balance covers all cycles before starting.
   const balance = await client.getBalance(BUYER_WALLET_ID);
   const requiredAtomic =
     toAtomic(MAX_CLEARING_PRICE_USDC) * BigInt(cycles) + toAtomic(PREFLIGHT_HEADROOM_USDC);
@@ -50,8 +55,16 @@ export async function runDemoLoad(deps: DemoLoadDeps = {}): Promise<DemoLoadResu
     );
   }
 
+  // Register a demo listing so the auction route has a listing to match bids against.
+  const listingId = await registerDemoListing({
+    exchangeApiUrl,
+    sellerWallet: SELLER_WALLET_ADDRESS,
+    floorUsdc,
+  });
+
   banner("Demo Load — starting", [
     `Cycles: ${cycles}  (≥ 50 satisfies hackathon gate)`,
+    `Exchange: ${exchangeApiUrl}`,
     `Buyer: ${BUYER_WALLET_ADDRESS}`,
     `Seller: ${SELLER_WALLET_ADDRESS}`,
     `Floor: ${floorUsdc} USDC   Cap: ${MAX_CLEARING_PRICE_USDC} USDC/action`,
@@ -61,10 +74,9 @@ export async function runDemoLoad(deps: DemoLoadDeps = {}): Promise<DemoLoadResu
   let totalAtomic = 0n;
   for (let i = 1; i <= cycles; i++) {
     const result = await runDemoCycle({
-      circle: client,
-      buyerWalletId: BUYER_WALLET_ID,
+      exchangeApiUrl,
+      listingId,
       buyerAddress: BUYER_WALLET_ADDRESS,
-      sellerAddress: SELLER_WALLET_ADDRESS,
       floorUsdc,
       rand: deps.rand,
     });
@@ -72,7 +84,7 @@ export async function runDemoLoad(deps: DemoLoadDeps = {}): Promise<DemoLoadResu
     totalAtomic += toAtomic(result.clearingPrice);
     logLine(`[${i}/${cycles}] tx=${result.txHash}`, {
       clearingUsdc: result.clearingPrice,
-      state: result.state,
+      status: result.status,
       explorer: result.explorerUrl,
     });
   }
@@ -89,6 +101,34 @@ export async function runDemoLoad(deps: DemoLoadDeps = {}): Promise<DemoLoadResu
     buildMarginExplainer({ cycles: results.length, totalUsdcSettled }),
   );
   return { cycles: results.length, totalUsdcSettled, results };
+}
+
+async function registerDemoListing(opts: {
+  exchangeApiUrl: string;
+  sellerWallet: string;
+  floorUsdc: string;
+}): Promise<string> {
+  const listingId = randomUUID();
+  const res = await fetch(`${opts.exchangeApiUrl}/inventory`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      listingId,
+      sellerAgentId: "demo-seller",
+      sellerWallet: opts.sellerWallet,
+      adType: "display",
+      format: "banner",
+      size: "300x250",
+      contextualExclusions: [],
+      floorPriceUsdc: opts.floorUsdc,
+      createdAt: new Date().toISOString(),
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(`Failed to register demo listing: ${res.status} ${JSON.stringify(body)}`);
+  }
+  return listingId;
 }
 
 function toAtomic(usdc: string): bigint {

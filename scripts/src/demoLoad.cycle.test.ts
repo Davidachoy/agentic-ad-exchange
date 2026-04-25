@@ -1,51 +1,49 @@
-import type { CircleClient } from "@ade/wallets";
 import { describe, expect, it, vi } from "vitest";
 
 import { pickBidAmount, runDemoCycle } from "./demoLoad.cycle.js";
 
-function mockCircle(overrides: Partial<CircleClient> = {}): CircleClient {
-  return {
-    config: {} as unknown as CircleClient["config"],
-    createWalletSet: vi.fn(),
-    createWallet: vi.fn(),
-    getBalance: vi.fn(),
-    listTransactions: vi.fn(),
-    transfer: vi.fn(async () => ({ transactionId: "tx-abc", status: "queued" as const })),
-    waitForTx: vi.fn(async () => ({
-      transactionId: "tx-abc",
-      txHash: `0x${"c".repeat(64)}`,
-      state: "COMPLETE" as const,
-      blockchain: "ARC-TESTNET",
-    })),
-    ...overrides,
-  } as CircleClient;
-}
-
 const buyer = `0x${"1".repeat(40)}`;
-const seller = `0x${"2".repeat(40)}`;
+
+const mockAuctionResponse = {
+  auctionResult: {
+    auctionId: "auction-123",
+    clearingPriceUsdc: "0.005000",
+  },
+  receipt: {
+    status: "COMPLETE",
+    arcTxHash: `0x${"c".repeat(64)}`,
+  },
+};
 
 describe("runDemoCycle", () => {
   it("settles one bid/auction/transfer cycle (happy path)", async () => {
-    const circle = mockCircle();
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      const urlStr = url instanceof Request ? url.url : url.toString();
+      if (urlStr.includes("/bid")) {
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      }
+      if (urlStr.includes("/auction/run/")) {
+        return new Response(JSON.stringify(mockAuctionResponse), { status: 200 });
+      }
+      return new Response("not found", { status: 404 });
+    });
+
     const result = await runDemoCycle({
-      circle,
-      buyerWalletId: "buyer-w",
+      exchangeApiUrl: "http://localhost:3000",
+      listingId: "listing-1",
       buyerAddress: buyer,
-      sellerAddress: seller,
       floorUsdc: "0.001",
       rand: () => 0.5,
     });
-    expect(result.state).toBe("COMPLETE");
+
+    expect(result.status).toBe("COMPLETE");
     expect(result.txHash).toMatch(/^0x[a-f0-9]{64}$/);
     expect(result.explorerUrl).toContain("/tx/0x");
-    // Clearing price must be capped at MAX_CLEARING_PRICE_USDC = "0.01".
-    expect(result.clearingPrice).toMatch(/^0\.0[01][0-9]{4}$/);
-    expect(circle.transfer).toHaveBeenCalledWith(
-      expect.objectContaining({
-        walletId: "buyer-w",
-        destinationAddress: seller,
-      }),
-    );
+    expect(result.clearingPrice).toBe("0.005000");
+    expect(result.auctionId).toBe("auction-123");
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+
+    fetchSpy.mockRestore();
   });
 
   it("clamps bid to the $0.01 cap when rand returns 0 near the cap (edge)", () => {
@@ -53,21 +51,28 @@ describe("runDemoCycle", () => {
     expect(pickBidAmount("0.001", () => 0)).toBe("0.010000");
   });
 
-  it("propagates waitForTx failures without partial accounting (failure)", async () => {
-    const circle = mockCircle({
-      waitForTx: vi.fn(async () => {
-        throw new Error("FAILED");
-      }),
+  it("propagates auction/run failures (failure)", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => {
+      const urlStr = url instanceof Request ? url.url : url.toString();
+      if (urlStr.includes("/bid")) {
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      }
+      if (urlStr.includes("/auction/run/")) {
+        return new Response(JSON.stringify({ error: "FAILED" }), { status: 500 });
+      }
+      return new Response("not found", { status: 404 });
     });
+
     await expect(
       runDemoCycle({
-        circle,
-        buyerWalletId: "buyer-w",
+        exchangeApiUrl: "http://localhost:3000",
+        listingId: "listing-1",
         buyerAddress: buyer,
-        sellerAddress: seller,
         floorUsdc: "0.001",
         rand: () => 0.3,
       }),
-    ).rejects.toThrow(/FAILED/);
+    ).rejects.toThrow(/failed: 500/);
+
+    fetchSpy.mockRestore();
   });
 });

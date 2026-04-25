@@ -57,6 +57,7 @@ const ScriptsEnvSchema = z.object({
   ),
   DEPOSIT_TIMEOUT_MS: blankToUndefined(z.coerce.number().int().positive().default(1_500_000)),
   DEMO_LOAD_CYCLES: blankToUndefined(z.coerce.number().int().min(50).default(50)),
+  EXCHANGE_API_URL: blankToUndefined(z.string().url().default("http://localhost:4021")),
 });
 
 export type ScriptsConfig = z.infer<typeof ScriptsEnvSchema>;
