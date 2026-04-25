@@ -46,7 +46,6 @@ function main(): void {
     buyerWalletRouting,
     demo: {
       exchangeUrl: `http://localhost:${config.PORT}`,
-      sellerWallet: config.SELLER_WALLET_ADDRESS,
       personas,
       gemini,
       buyerPrivateKey: config.BUYER_PRIVATE_KEY as `0x${string}` | undefined,
@@ -61,7 +60,7 @@ function main(): void {
         corsAllowOrigins: config.CORS_ALLOW_ORIGINS,
         gatewayEnabled: Boolean(gateway),
         personaWallets: buyerWalletRouting.size,
-        demoEnabled: Boolean(gemini && config.SELLER_WALLET_ADDRESS && personas.length > 0),
+        demoEnabled: Boolean(gemini && personas.length > 0),
       },
       "exchange_server_listening",
     );

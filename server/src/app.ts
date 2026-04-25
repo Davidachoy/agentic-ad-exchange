@@ -38,12 +38,11 @@ export interface AppDeps {
   buyerWalletRouting?: ReadonlyMap<string, string>;
   /**
    * Optional self-contained agent-demo dependencies. When set, the server
-   * exposes POST /demo/agent-run which orchestrates a full Gemini-driven
-   * cycle (seller registers → buyers bid → auction clears).
+   * exposes POST /demo/agent-run which runs buyer agents against an existing
+   * listing in inventory (seller registration is a separate UI flow).
    */
   demo?: {
     exchangeUrl: string;
-    sellerWallet?: string;
     personas: import("./demo/runAgentAuction.js").ResolvedPersona[];
     gemini?: { apiKey: string; model: string };
     /**

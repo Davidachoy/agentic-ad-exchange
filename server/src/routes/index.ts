@@ -31,7 +31,6 @@ export interface RegisterRoutesDeps {
   buyerWalletRouting?: ReadonlyMap<string, string>;
   demo?: {
     exchangeUrl: string;
-    sellerWallet?: string;
     personas: ResolvedPersona[];
     gemini?: { apiKey: string; model: string };
     buyerPrivateKey?: `0x${string}`;
@@ -66,7 +65,7 @@ export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
     app.use(
       createDemoRouter({
         exchangeUrl: deps.demo.exchangeUrl,
-        sellerWallet: deps.demo.sellerWallet,
+        listingStore: deps.listingStore,
         personas: deps.demo.personas,
         gemini: deps.demo.gemini,
         buyerPrivateKey: deps.demo.buyerPrivateKey,
