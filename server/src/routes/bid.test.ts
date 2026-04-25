@@ -1,7 +1,9 @@
+import type { RequestHandler } from "express";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 
 import { createApp } from "../app.js";
+import type { GatewayMiddlewareAdapter } from "../middleware/nanopayments.js";
 
 const wallet = (s: string) => `0x${s.padStart(40, "0")}`;
 const nonce = (s: string) => `0x${s.padStart(64, "0")}`;
@@ -44,6 +46,35 @@ describe("POST /bid", () => {
       .send({ ...validBid, bidId: "33333333-3333-4333-8333-333333333333" });
     expect(res.status).toBe(409);
     expect(res.body.error).toBe("nonce_reused");
+  });
+
+  it("accepts bid when gateway middleware passes through (happy with payment)", async () => {
+    const passingGateway: GatewayMiddlewareAdapter = {
+      require: (): RequestHandler => (_req, _res, next) => next(),
+    };
+    const { app } = createApp({
+      corsAllowOrigins: ["http://localhost:5173"],
+      bidRateLimitPerMin: 120,
+      gateway: passingGateway,
+    });
+    const res = await request(app).post("/bid").send(validBid);
+    expect(res.status).toBe(202);
+  });
+
+  it("402s when gateway middleware rejects payment (failure)", async () => {
+    const rejectingGateway: GatewayMiddlewareAdapter = {
+      require: (): RequestHandler => (_req, res) => {
+        res.status(402).json({ error: "payment_required" });
+      },
+    };
+    const { app } = createApp({
+      corsAllowOrigins: ["http://localhost:5173"],
+      bidRateLimitPerMin: 120,
+      gateway: rejectingGateway,
+    });
+    const res = await request(app).post("/bid").send(validBid);
+    expect(res.status).toBe(402);
+    expect(res.body.error).toBe("payment_required");
   });
 
   it("429s once per-wallet rate limit is exceeded (failure)", async () => {

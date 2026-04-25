@@ -3,6 +3,7 @@ import type { Express } from "express";
 import type { CircleClient } from "@ade/wallets";
 
 import type { EventBus } from "../events/bus.js";
+import type { GatewayMiddlewareAdapter } from "../middleware/nanopayments.js";
 import type { NonceStore } from "../nonces/store.js";
 import type { BidStore, ListingStore, SettlementStore } from "../state/stores.js";
 
@@ -21,6 +22,8 @@ export interface RegisterRoutesDeps {
   rateLimitPerMin: number;
   circleClient: CircleClient | null;
   buyerWalletId: string | undefined;
+  /** When present, POST /bid is gated on a sub-cent x402 nanopayment. */
+  gateway?: GatewayMiddlewareAdapter;
 }
 
 export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
@@ -31,6 +34,7 @@ export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
       bidStore: deps.bidStore,
       nonceStore: deps.nonceStore,
       rateLimitPerMin: deps.rateLimitPerMin,
+      gateway: deps.gateway,
     }),
   );
   app.use(

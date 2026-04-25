@@ -5,6 +5,7 @@ import type { CircleClient } from "@ade/wallets";
 import { createEventBus, type EventBus } from "./events/bus.js";
 import { createCorsMiddleware } from "./middleware/corsAllowList.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import type { GatewayMiddlewareAdapter } from "./middleware/nanopayments.js";
 import { createInMemoryNonceStore, type NonceStore } from "./nonces/store.js";
 import { registerRoutes } from "./routes/index.js";
 import {
@@ -27,6 +28,8 @@ export interface AppDeps {
   /** Injected in production; null in tests that don't exercise settlement. */
   circleClient?: CircleClient | null;
   buyerWalletId?: string;
+  /** When present, POST /bid is gated on a sub-cent x402 nanopayment. */
+  gateway?: GatewayMiddlewareAdapter;
 }
 
 export interface AppHandles {
@@ -63,6 +66,7 @@ export function createApp(deps: AppDeps): AppHandles {
     rateLimitPerMin: deps.bidRateLimitPerMin,
     circleClient: deps.circleClient ?? null,
     buyerWalletId: deps.buyerWalletId,
+    gateway: deps.gateway,
   });
 
   app.use(errorHandler);

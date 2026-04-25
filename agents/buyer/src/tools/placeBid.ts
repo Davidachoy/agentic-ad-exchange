@@ -1,4 +1,5 @@
 import { BidRequestSchema, type BidRequest } from "@ade/shared";
+import { GatewayClient, type SupportedChainName } from "@circle-fin/x402-batching/client";
 import { z } from "zod";
 
 import type { AgentTool } from "./types.js";
@@ -12,6 +13,12 @@ export interface PlaceBidDeps {
   exchangeUrl: string;
   /** Injectable fetch for tests. */
   fetchImpl?: typeof fetch;
+  /**
+   * When present, POST /bid is gated by x402. GatewayClient handles the 402
+   * automatically: signs an EIP-3009 authorization and retries with the
+   * Payment-Signature header. The private key never reaches the LLM layer.
+   */
+  gatewayClient?: GatewayClient;
 }
 
 export function createPlaceBidTool(
@@ -25,7 +32,23 @@ export function createPlaceBidTool(
     inputSchema: BidRequestSchema,
     outputSchema: OutputSchema,
     async invoke(input) {
-      const res = await fetcher(`${deps.exchangeUrl}/bid`, {
+      const url = `${deps.exchangeUrl}/bid`;
+
+      if (deps.gatewayClient) {
+        // Reason: GatewayClient sets Content-Type: application/json internally.
+        // Passing it again creates a duplicate that joins as
+        // "application/json, application/json", breaking Express body-parser.
+        const result = await deps.gatewayClient.pay<{ bidId: string }>(url, {
+          method: "POST",
+          body: input,
+        });
+        if (result.status === 202) {
+          return OutputSchema.parse({ bidId: result.data.bidId, accepted: true });
+        }
+        return OutputSchema.parse({ bidId: input.bidId, accepted: false });
+      }
+
+      const res = await fetcher(url, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(input),
@@ -37,4 +60,13 @@ export function createPlaceBidTool(
       return OutputSchema.parse({ bidId: input.bidId, accepted: false });
     },
   };
+}
+
+/**
+ * Build a GatewayClient for use in placeBid.
+ * Kept separate so callers that don't have a private key can omit it
+ * and fall back to the plain-fetch path.
+ */
+export function buildGatewayClient(privateKey: `0x${string}`, chain: SupportedChainName): GatewayClient {
+  return new GatewayClient({ chain, privateKey });
 }

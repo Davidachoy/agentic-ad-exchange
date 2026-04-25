@@ -19,6 +19,9 @@ const OriginListSchema = z
       .filter(Boolean),
   );
 
+const blankToUndefined = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), schema);
+
 const ServerEnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(4021),
@@ -32,6 +35,23 @@ const ServerEnvSchema = z.object({
     (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
     z.string().min(1).optional(),
   ),
+  // Seller's EVM address — required for Gateway middleware to credit payments.
+  SELLER_WALLET_ADDRESS: blankToUndefined(
+    z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "must be 0x-prefixed 40 hex chars")
+      .optional(),
+  ),
+  // EOA private key used by GatewayClient to sign x402 payment authorizations
+  // in demo/script runs. Never logged or surfaced to the LLM layer.
+  BUYER_PRIVATE_KEY: blankToUndefined(
+    z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{64}$/, "must be 0x-prefixed 64 hex chars")
+      .optional(),
+  ),
+  // Override the Circle Gateway facilitator endpoint. Defaults to Arc testnet.
+  GATEWAY_FACILITATOR_URL: blankToUndefined(z.string().url().optional()),
   MAX_CLEARING_PRICE_USDC: z
     .string()
     .regex(/^\d+(?:\.\d{1,6})?$/)
