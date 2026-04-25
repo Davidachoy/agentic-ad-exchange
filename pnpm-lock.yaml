@@ -78,9 +78,15 @@ importers:
 
   agents/seller:
     dependencies:
+      '@ade/agent-buyer':
+        specifier: workspace:*
+        version: link:../buyer
       '@ade/shared':
         specifier: workspace:*
         version: link:../../shared
+      '@google/generative-ai':
+        specifier: ^0.24.1
+        version: 0.24.1
       '@langchain/google-genai':
         specifier: ^2.0.0
         version: 2.1.28(@langchain/core@1.1.41(ws@8.20.0))

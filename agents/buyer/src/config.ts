@@ -29,7 +29,7 @@ const AimlApiEnvSchema = z.object({
 
 const GeminiEnvSchema = z.object({
   GEMINI_API_KEY: z.string().min(1),
-  GEMINI_MODEL: z.string().min(1).default("gemini-2.0-flash"),
+  GEMINI_MODEL: z.string().min(1).default("gemini-2.5-flash"),
 });
 
 export type BuyerAgentConfig = z.infer<typeof BaseEnvSchema> & {

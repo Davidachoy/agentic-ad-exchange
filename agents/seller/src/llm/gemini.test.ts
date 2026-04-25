@@ -1,3 +1,4 @@
+import { AdInventoryListingSchema, type AdInventoryListing } from "@ade/shared";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
@@ -37,37 +38,54 @@ function mockClient(replies: ScriptedReply[]): {
   };
 }
 
-const echoTool: AgentTool<{ walletId: string }, { walletId: string; usdc: string }> = {
-  name: "checkBalance",
-  description: "Read the buyer wallet's on-chain USDC balance.",
-  inputSchema: z.object({ walletId: z.string().min(1) }),
-  outputSchema: z.object({ walletId: z.string().min(1), usdc: z.string() }),
+const wallet = (s: string): string => `0x${s.padStart(40, "0")}`;
+
+const listing: AdInventoryListing = {
+  listingId: "11111111-1111-4111-8111-111111111111",
+  sellerAgentId: "seller-1",
+  sellerWallet: wallet("1"),
+  adType: "display",
+  format: "banner",
+  size: "300x250",
+  contextualExclusions: [],
+  floorPriceUsdc: "0.001",
+  createdAt: "2026-04-22T12:00:00Z",
+};
+
+const ListInventoryOutput = z.object({
+  listingId: z.string().uuid(),
+  accepted: z.boolean(),
+});
+
+const listInventoryTool: AgentTool<AdInventoryListing, z.infer<typeof ListInventoryOutput>> = {
+  name: "listInventory",
+  description:
+    "Register an ad inventory listing with the Exchange (ad type, format, size, floor price, contextual exclusions).",
+  inputSchema: AdInventoryListingSchema,
+  outputSchema: ListInventoryOutput,
   async invoke(input) {
-    return { walletId: input.walletId, usdc: "0.100000" };
+    return { listingId: input.listingId, accepted: true };
   },
 };
 
-describe("createGeminiLlmAdapter", () => {
+describe("createGeminiLlmAdapter (seller)", () => {
   it("returns a tool call when Gemini emits functionCalls (happy)", async () => {
     const { client, getGenerativeModel, sendMessage } = mockClient([
-      { calls: [{ name: "checkBalance", args: { walletId: "w-1" } }] },
+      { calls: [{ name: "listInventory", args: listing }] },
     ]);
     const adapter = createGeminiLlmAdapter({
       apiKey: "test-key",
-      model: "gemini-2.5-flash",
-      tools: [echoTool],
+      model: "gemini-1.5-flash",
+      tools: [listInventoryTool],
       clientFactory: () => client,
     });
 
     const decision = await adapter.step({
       system: "sys",
-      messages: [{ role: "user", content: "check my balance" }],
+      messages: [{ role: "user", content: "list a 300x250 banner with floor 0.001" }],
     });
 
-    expect(decision.toolCall).toEqual({
-      name: "checkBalance",
-      args: { walletId: "w-1" },
-    });
+    expect(decision.toolCall).toEqual({ name: "listInventory", args: listing });
     expect(decision.final).toBeUndefined();
 
     // function declarations built from the tool's zod input schema
@@ -75,51 +93,51 @@ describe("createGeminiLlmAdapter", () => {
       tools: Array<{ functionDeclarations: Array<{ name: string }> }>;
       systemInstruction: string;
     };
-    expect(modelArgs.tools[0].functionDeclarations[0].name).toBe("checkBalance");
+    expect(modelArgs.tools[0].functionDeclarations[0].name).toBe("listInventory");
     expect(modelArgs.systemInstruction).toBe("sys");
     expect(sendMessage).toHaveBeenCalledOnce();
   });
 
   it("translates a follow-up tool message into a Gemini functionResponse (edge)", async () => {
     const { client, sendMessage } = mockClient([
-      { calls: [{ name: "checkBalance", args: { walletId: "w-1" } }] },
-      { text: "All good — balance is 0.1 USDC." },
+      { calls: [{ name: "listInventory", args: listing }] },
+      { text: "Listed." },
     ]);
     const adapter = createGeminiLlmAdapter({
       apiKey: "test-key",
       model: "gemini-1.5-flash",
-      tools: [echoTool],
+      tools: [listInventoryTool],
       clientFactory: () => client,
     });
 
     await adapter.step({
       system: "sys",
-      messages: [{ role: "user", content: "check balance" }],
+      messages: [{ role: "user", content: "list inventory" }],
     });
 
     const decision = await adapter.step({
       system: "sys",
       messages: [
-        { role: "user", content: "check balance" },
+        { role: "user", content: "list inventory" },
         {
           role: "tool",
           content: JSON.stringify({
-            tool: "checkBalance",
-            out: { walletId: "w-1", usdc: "0.100000" },
+            tool: "listInventory",
+            out: { listingId: listing.listingId, accepted: true },
           }),
         },
       ],
     });
 
-    expect(decision.final).toBe("All good — balance is 0.1 USDC.");
+    expect(decision.final).toBe("Listed.");
     expect(decision.toolCall).toBeUndefined();
 
     const secondCallArgs = sendMessage.mock.calls[1][0] as Array<{
       functionResponse?: { name: string; response: unknown };
     }>;
     expect(secondCallArgs[0].functionResponse).toEqual({
-      name: "checkBalance",
-      response: { walletId: "w-1", usdc: "0.100000" },
+      name: "listInventory",
+      response: { listingId: listing.listingId, accepted: true },
     });
   });
 
@@ -128,7 +146,7 @@ describe("createGeminiLlmAdapter", () => {
     const adapter = createGeminiLlmAdapter({
       apiKey: "test-key",
       model: "gemini-1.5-flash",
-      tools: [echoTool],
+      tools: [listInventoryTool],
       clientFactory: () => client,
     });
 

@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const SellerEnvSchema = z.object({
   GEMINI_API_KEY: z.string().min(1),
-  GEMINI_MODEL: z.string().min(1).default("gemini-1.5-flash"),
+  GEMINI_MODEL: z.string().min(1).default("gemini-2.5-flash"),
   EXCHANGE_API_URL: z.string().url().default("http://localhost:4021"),
   SELLER_WALLET_ID: z.string().min(1),
 });
