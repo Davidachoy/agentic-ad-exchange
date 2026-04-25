@@ -1,5 +1,7 @@
 import { initiateDeveloperControlledWalletsClient } from "@circle-fin/developer-controlled-wallets";
 
+import { ARC_TESTNET_USDC } from "@ade/shared";
+
 import type { CircleSdkAdapter } from "./circle.js";
 import type { WalletsConfig } from "./config.js";
 
@@ -79,19 +81,25 @@ export function buildAdapter(client: SdkClient): CircleSdkAdapter {
     },
 
     async createTransfer({ walletId, destinationAddress, amountUsdc }) {
-      // Resolve walletAddress from walletId so we can call the SDK via the
-      // walletAddress + blockchain path, which per PRP Assumption #3 accepts
-      // an implicit USDC token on ARC-TESTNET (no tokenAddress required).
+      // Resolve walletAddress from walletId so we can use the walletAddress +
+      // blockchain path (required when tokenAddress is specified — the walletId
+      // path forces TokenInfo to be non-partial, which conflicts with passing
+      // an explicit contract address alongside the system-token id).
       const walletResp = await client.getWallet({ id: walletId });
       const walletAddress = walletResp.data?.wallet?.address;
       if (!walletAddress) {
         throw new Error(`Circle getWallet(${walletId}) returned no wallet address`);
       }
+      // Reason: explicit tokenAddress pins the Arc testnet ERC-20 USDC precompile
+      // (0x3600…) so Circle never guesses the wrong token. PRP Assumption #3 is
+      // hereby discharged — implicit-USDC was the scaffold fallback; the real
+      // address is now known and passed explicitly.
       const response = await client.createTransaction({
         amount: [amountUsdc],
         destinationAddress,
         walletAddress,
         blockchain: ARC_BLOCKCHAIN,
+        tokenAddress: ARC_TESTNET_USDC,
         fee: { type: "level", config: { feeLevel: "MEDIUM" } },
       });
       const id = response.data?.id;
