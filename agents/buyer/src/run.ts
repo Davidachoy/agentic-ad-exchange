@@ -7,6 +7,23 @@ import { createBuyerAgentWithGemini } from "./index.js";
 
 const sleep = (ms: number): Promise<void> => new Promise<void>((r) => setTimeout(r, ms));
 
+/**
+ * Returns true only when the exchange explicitly reports `{ paused: true }`.
+ * Any error (network blip, 5xx) is treated as "running" — a fail-open default
+ * keeps the demo agent loop moving when the control endpoint is briefly
+ * unreachable rather than silently halting all bidding.
+ */
+async function isPaused(fetcher: typeof fetch, exchangeUrl: string): Promise<boolean> {
+  try {
+    const res = await fetcher(`${exchangeUrl}/control/state`, { method: "GET" });
+    if (!res.ok) return false;
+    const json = (await res.json()) as { paused?: unknown };
+    return json?.paused === true;
+  } catch {
+    return false;
+  }
+}
+
 function buildPrompt(config: BuyerAgentConfig, listing: AdInventoryListing): string {
   return [
     "Sealed-bid second-price auction. Other buyers will bid blind too.",
@@ -66,6 +83,12 @@ export async function runBuyer(deps: RunBuyerDeps = {}): Promise<RunBuyerResult>
   while (deps.maxCycles === undefined || cycles < deps.maxCycles) {
     cycles++;
     try {
+      // Pause check first: skip the whole cycle (no Gemini call, no
+      // /inventory poll) when the demo is paused. On error we treat it as
+      // "running" — better to bid wastefully than to silently halt.
+      if (await isPaused(fetcher, config.EXCHANGE_API_URL)) {
+        log("cycle_paused", { agentId: config.BUYER_AGENT_ID });
+      } else {
       const res = await fetcher(`${config.EXCHANGE_API_URL}/inventory`, { method: "GET" });
       if (!res.ok) {
         log("inventory_fetch_failed", { status: res.status });
@@ -89,6 +112,7 @@ export async function runBuyer(deps: RunBuyerDeps = {}): Promise<RunBuyerResult>
             placed,
           });
         }
+      }
       }
     } catch (e) {
       log("cycle_error", { error: (e as Error).message });

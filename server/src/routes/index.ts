@@ -2,15 +2,18 @@ import type { CircleClient } from "@ade/wallets";
 import type { Express } from "express";
 
 
+import type { AutoClearScheduler } from "../auction/autoClearScheduler.js";
 import type { ResolvedPersona } from "../demo/runAgentAuction.js";
 import type { EventBus } from "../events/bus.js";
 import type { GatewayMiddlewareAdapter } from "../middleware/nanopayments.js";
 import type { NonceStore } from "../nonces/store.js";
+import type { ControlStore } from "../state/controlStore.js";
 import type { BidStore, ListingStore, SettlementStore } from "../state/stores.js";
 
 
 import { createAuctionRouter } from "./auction.js";
 import { createBidRouter } from "./bid.js";
+import { createControlRouter } from "./control.js";
 import { createDemoRouter } from "./demo.js";
 import { createHealthRouter } from "./health.js";
 import { createInventoryRouter } from "./inventory.js";
@@ -36,17 +39,26 @@ export interface RegisterRoutesDeps {
     buyerPrivateKey?: `0x${string}`;
     mode: "in_process" | "external";
   };
+  autoClearScheduler: AutoClearScheduler;
+  controlStore: ControlStore;
 }
 
 export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
   app.use(createHealthRouter());
-  app.use(createInventoryRouter({ listingStore: deps.listingStore }));
+  app.use(
+    createInventoryRouter({
+      listingStore: deps.listingStore,
+      autoClearScheduler: deps.autoClearScheduler,
+      controlStore: deps.controlStore,
+    }),
+  );
   app.use(
     createBidRouter({
       bidStore: deps.bidStore,
       nonceStore: deps.nonceStore,
       rateLimitPerMin: deps.rateLimitPerMin,
       gateway: deps.gateway,
+      controlStore: deps.controlStore,
     }),
   );
   app.use(
@@ -58,10 +70,15 @@ export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
       circleClient: deps.circleClient,
       buyerWalletId: deps.buyerWalletId,
       buyerWalletRouting: deps.buyerWalletRouting,
+      autoClearScheduler: deps.autoClearScheduler,
+      controlStore: deps.controlStore,
     }),
   );
   app.use(createSettlementRouter({ settlementStore: deps.settlementStore }));
   app.use(createStreamRouter({ eventBus: deps.eventBus }));
+  app.use(
+    createControlRouter({ controlStore: deps.controlStore, eventBus: deps.eventBus }),
+  );
   if (deps.demo && deps.demo.mode === "in_process") {
     // Reason: when DEMO_MODE=external, standalone Railway agent services own
     // auction generation. Mounting the demo router here would risk

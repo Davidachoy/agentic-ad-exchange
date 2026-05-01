@@ -42,6 +42,22 @@ const LISTING_TEMPLATES: ReadonlyArray<ListingTemplate> = [
 
 const sleep = (ms: number): Promise<void> => new Promise<void>((r) => setTimeout(r, ms));
 
+/**
+ * Returns true only when the exchange explicitly reports `{ paused: true }`.
+ * Any error (network blip, 5xx) is treated as "running" — fail-open default
+ * keeps the seller loop moving when the control endpoint is briefly unreachable.
+ */
+async function isPaused(fetcher: typeof fetch, exchangeUrl: string): Promise<boolean> {
+  try {
+    const res = await fetcher(`${exchangeUrl}/control/state`, { method: "GET" });
+    if (!res.ok) return false;
+    const json = (await res.json()) as { paused?: unknown };
+    return json?.paused === true;
+  } catch {
+    return false;
+  }
+}
+
 function buildPrompt(template: ListingTemplate): string {
   return [
     "Register a new ad slot via the listInventory tool.",
@@ -71,6 +87,8 @@ export interface RunSellerDeps {
   log?: (msg: string, meta?: Record<string, unknown>) => void;
   /** Capture the prompt sent to the agent each cycle (tests). */
   onPrompt?: (prompt: string) => void;
+  /** Fetch override for the /control/state pause check (tests). */
+  fetchImpl?: typeof fetch;
 }
 
 export interface RunSellerResult {
@@ -81,6 +99,7 @@ export interface RunSellerResult {
 export async function runSeller(deps: RunSellerDeps = {}): Promise<RunSellerResult> {
   const config = deps.config ?? loadSellerConfig();
   const sleepFn = deps.sleepImpl ?? sleep;
+  const fetcher = deps.fetchImpl ?? fetch;
   const log =
     deps.log ??
     ((msg: string, meta?: Record<string, unknown>) =>
@@ -95,12 +114,17 @@ export async function runSeller(deps: RunSellerDeps = {}): Promise<RunSellerResu
     const template = LISTING_TEMPLATES[cycles % LISTING_TEMPLATES.length]!;
     cycles++;
     try {
-      const prompt = buildPrompt(template);
-      deps.onPrompt?.(prompt);
-      const result = await agent.run(prompt);
-      const ok = result.toolCalls.includes("listInventory");
-      if (ok) registered++;
-      log("cycle_done", { vertical: template.vertical, ok, iterations: result.iterations });
+      // Pause check first: skip the cycle (no Gemini call) when paused.
+      if (await isPaused(fetcher, config.EXCHANGE_API_URL)) {
+        log("cycle_paused", { vertical: template.vertical });
+      } else {
+        const prompt = buildPrompt(template);
+        deps.onPrompt?.(prompt);
+        const result = await agent.run(prompt);
+        const ok = result.toolCalls.includes("listInventory");
+        if (ok) registered++;
+        log("cycle_done", { vertical: template.vertical, ok, iterations: result.iterations });
+      }
     } catch (e) {
       log("cycle_error", { error: (e as Error).message });
     }

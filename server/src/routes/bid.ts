@@ -2,8 +2,10 @@ import { BidRequestSchema } from "@ade/shared";
 import { Router, type RequestHandler } from "express";
 
 import type { GatewayMiddlewareAdapter } from "../middleware/nanopayments.js";
+import { createPauseGuard } from "../middleware/pauseGuard.js";
 import { createBidRateLimiter } from "../middleware/rateLimit.js";
 import type { NonceStore } from "../nonces/store.js";
+import type { ControlStore } from "../state/controlStore.js";
 import type { BidStore } from "../state/stores.js";
 
 export interface BidDeps {
@@ -12,6 +14,7 @@ export interface BidDeps {
   rateLimitPerMin: number;
   /** When present, POST /bid requires a sub-cent x402 nanopayment. */
   gateway?: GatewayMiddlewareAdapter;
+  controlStore: ControlStore;
 }
 
 const passThrough: RequestHandler = (_req, _res, next) => next();
@@ -19,6 +22,7 @@ const passThrough: RequestHandler = (_req, _res, next) => next();
 export function createBidRouter(deps: BidDeps): Router {
   const router = Router();
   const paymentGate = deps.gateway?.require("$0.001") ?? passThrough;
+  const pauseGate = createPauseGuard(deps.controlStore);
 
   router.get("/bids", async (_req, res, next) => {
     try {
@@ -31,6 +35,7 @@ export function createBidRouter(deps: BidDeps): Router {
 
   router.post(
     "/bid",
+    pauseGate,
     createBidRateLimiter(deps.rateLimitPerMin),
     paymentGate,
     async (req, res, next) => {

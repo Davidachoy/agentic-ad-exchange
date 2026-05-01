@@ -6,6 +6,7 @@ export interface EventPayloads {
   [STREAM_EVENTS.auctionMatched]: AuctionResult;
   [STREAM_EVENTS.settlementConfirmed]: SettlementReceipt;
   [STREAM_EVENTS.connected]: { at: string };
+  [STREAM_EVENTS.controlChanged]: { paused: boolean; at: string };
 }
 
 /**

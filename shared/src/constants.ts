@@ -54,6 +54,7 @@ export const STREAM_EVENTS = {
   connected: "connected",
   auctionMatched: "auction.matched",
   settlementConfirmed: "settlement.confirmed",
+  controlChanged: "control.changed",
 } as const;
 
 export type StreamEventName = (typeof STREAM_EVENTS)[keyof typeof STREAM_EVENTS];

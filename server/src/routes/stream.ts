@@ -36,10 +36,14 @@ export function createStreamRouter(deps: StreamDeps): Router {
     const offSettled = deps.eventBus.on(STREAM_EVENTS.settlementConfirmed, (payload) => {
       write(STREAM_EVENTS.settlementConfirmed, payload);
     });
+    const offControl = deps.eventBus.on(STREAM_EVENTS.controlChanged, (payload) => {
+      write(STREAM_EVENTS.controlChanged, payload);
+    });
 
     req.on("close", () => {
       offMatched();
       offSettled();
+      offControl();
       res.end();
     });
   });

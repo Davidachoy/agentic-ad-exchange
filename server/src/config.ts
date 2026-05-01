@@ -77,6 +77,10 @@ const ServerEnvSchema = z.object({
   // "external" expects standalone Railway agent services to drive auctions.
   // Default keeps `pnpm dev` behavior unchanged for local development.
   DEMO_MODE: z.enum(["in_process", "external"]).default("in_process"),
+  // 0 disables the per-listing auto-clear timer (manual button only). Default
+  // 8s fits comfortably inside the seller's 30s cadence so listings don't
+  // overlap on the shared single-listing BidStore.
+  AUCTION_AUTO_CLEAR_DELAY_MS: z.coerce.number().int().nonnegative().default(8000),
 });
 
 export type ServerConfig = z.infer<typeof ServerEnvSchema>;
