@@ -15,6 +15,7 @@
     "fund:wallets": "tsx src/fundWallets.ts",
     "show:address": "tsx src/showAddress.ts",
     "deposit:gateway": "tsx src/depositGateway.ts",
+    "gateway:balance": "tsx src/checkGatewayBalance.ts",
     "demo:load": "tsx src/demoLoad.ts",
     "agent:demo": "tsx src/agentDemo.ts"
   },
@@ -25,7 +26,7 @@
     "@ade/shared": "workspace:*",
     "@ade/wallets": "workspace:*",
     "@circle-fin/developer-controlled-wallets": "^10.0.0",
-    "@circle-fin/x402-batching": "^3.0.2",
+    "@circle-fin/x402-batching": "^3.0.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {
