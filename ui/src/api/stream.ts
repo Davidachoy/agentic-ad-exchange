@@ -1,7 +1,10 @@
 import { STREAM_EVENTS, type StreamEventName } from "@ade/shared";
 
+import { uiEnv } from "../env.js";
+
 /**
- * Tiny typed wrapper around EventSource. Vite proxies /events → :4021.
+ * Tiny typed wrapper around EventSource. In dev, Vite proxies /api/events → :4021/events.
+ * In prod, VITE_API_BASE_URL is the absolute server origin.
  */
 export interface StreamHandlers {
   onConnected?: () => void;
@@ -11,7 +14,7 @@ export interface StreamHandlers {
 }
 
 export function subscribeToEvents(handlers: StreamHandlers): () => void {
-  const es = new EventSource("/events");
+  const es = new EventSource(`${uiEnv.VITE_API_BASE_URL}/events`);
   const parse = (e: MessageEvent): unknown => {
     try {
       return JSON.parse(e.data as string);
