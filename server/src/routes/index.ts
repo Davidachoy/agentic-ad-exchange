@@ -2,6 +2,7 @@ import type { CircleClient } from "@ade/wallets";
 import type { Express } from "express";
 
 
+import type { AutoClearScheduler } from "../auction/autoClearScheduler.js";
 import type { ResolvedPersona } from "../demo/runAgentAuction.js";
 import type { EventBus } from "../events/bus.js";
 import type { GatewayMiddlewareAdapter } from "../middleware/nanopayments.js";
@@ -36,11 +37,17 @@ export interface RegisterRoutesDeps {
     buyerPrivateKey?: `0x${string}`;
     mode: "in_process" | "external";
   };
+  autoClearScheduler: AutoClearScheduler;
 }
 
 export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
   app.use(createHealthRouter());
-  app.use(createInventoryRouter({ listingStore: deps.listingStore }));
+  app.use(
+    createInventoryRouter({
+      listingStore: deps.listingStore,
+      autoClearScheduler: deps.autoClearScheduler,
+    }),
+  );
   app.use(
     createBidRouter({
       bidStore: deps.bidStore,
@@ -58,6 +65,7 @@ export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
       circleClient: deps.circleClient,
       buyerWalletId: deps.buyerWalletId,
       buyerWalletRouting: deps.buyerWalletRouting,
+      autoClearScheduler: deps.autoClearScheduler,
     }),
   );
   app.use(createSettlementRouter({ settlementStore: deps.settlementStore }));

@@ -51,6 +51,8 @@ function main(): void {
       buyerPrivateKey: config.BUYER_PRIVATE_KEY as `0x${string}` | undefined,
       mode: config.DEMO_MODE,
     },
+    autoClearDelayMs: config.AUCTION_AUTO_CLEAR_DELAY_MS,
+    logger,
   });
 
   app.listen(config.PORT, () => {
@@ -63,6 +65,7 @@ function main(): void {
         personaWallets: buyerWalletRouting.size,
         demoEnabled: Boolean(gemini && personas.length > 0),
         demoMode: config.DEMO_MODE,
+        autoClearDelayMs: config.AUCTION_AUTO_CLEAR_DELAY_MS,
       },
       "exchange_server_listening",
     );
