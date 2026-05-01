@@ -73,6 +73,10 @@ const ServerEnvSchema = z.object({
     .refine((v) => toAtomic(v) <= toAtomic(MAX_CLEARING_PRICE_USDC), {
       message: `must not exceed ${MAX_CLEARING_PRICE_USDC} USDC (hackathon ≤ $0.01/action rule)`,
     }),
+  // "in_process" runs the in-server demo orchestrator (POST /demo/agent-run);
+  // "external" expects standalone Railway agent services to drive auctions.
+  // Default keeps `pnpm dev` behavior unchanged for local development.
+  DEMO_MODE: z.enum(["in_process", "external"]).default("in_process"),
 });
 
 export type ServerConfig = z.infer<typeof ServerEnvSchema>;

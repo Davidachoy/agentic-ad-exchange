@@ -1,7 +1,7 @@
+import type { CircleClient } from "@ade/wallets";
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 
-import type { CircleClient } from "@ade/wallets";
 
 import { createApp } from "../app.js";
 

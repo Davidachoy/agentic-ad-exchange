@@ -1,6 +1,6 @@
+import type { CircleClient } from "@ade/wallets";
 import express, { type Express } from "express";
 
-import type { CircleClient } from "@ade/wallets";
 
 import { createEventBus, type EventBus } from "./events/bus.js";
 import { createCorsMiddleware } from "./middleware/corsAllowList.js";
@@ -54,6 +54,13 @@ export interface AppDeps {
      * persona via buyerWalletRouting. See features/x402-bid-middleware.md.
      */
     buyerPrivateKey?: `0x${string}`;
+    /**
+     * "in_process": mount POST /demo/agent-run; the in-server orchestrator
+     * drives auctions. "external": leave the demo router unmounted so the
+     * standalone Railway agent services own auction generation (avoids
+     * double-bidding when both drivers run against the same exchange).
+     */
+    mode: "in_process" | "external";
   };
 }
 

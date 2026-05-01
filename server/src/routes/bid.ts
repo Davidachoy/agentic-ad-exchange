@@ -1,8 +1,8 @@
 import { BidRequestSchema } from "@ade/shared";
 import { Router, type RequestHandler } from "express";
 
-import { createBidRateLimiter } from "../middleware/rateLimit.js";
 import type { GatewayMiddlewareAdapter } from "../middleware/nanopayments.js";
+import { createBidRateLimiter } from "../middleware/rateLimit.js";
 import type { NonceStore } from "../nonces/store.js";
 import type { BidStore } from "../state/stores.js";
 

@@ -49,6 +49,7 @@ function main(): void {
       personas,
       gemini,
       buyerPrivateKey: config.BUYER_PRIVATE_KEY as `0x${string}` | undefined,
+      mode: config.DEMO_MODE,
     },
   });
 
@@ -61,6 +62,7 @@ function main(): void {
         gatewayEnabled: Boolean(gateway),
         personaWallets: buyerWalletRouting.size,
         demoEnabled: Boolean(gemini && personas.length > 0),
+        demoMode: config.DEMO_MODE,
       },
       "exchange_server_listening",
     );

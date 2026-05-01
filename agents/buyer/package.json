@@ -17,6 +17,7 @@
     "build": "tsc",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "dev": "tsx watch src/run.ts",
+    "start": "tsx src/run.ts",
     "test": "vitest run"
   },
   "dependencies": {

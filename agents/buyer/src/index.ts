@@ -1,3 +1,5 @@
+import type { SupportedChainName } from "@circle-fin/x402-batching/client";
+
 import { createBuyerAgent, type BuyerAgent } from "./agent.js";
 import { loadBuyerConfig, type BuyerAgentConfig } from "./config.js";
 import { createGeminiLlmAdapter } from "./llm/index.js";
@@ -9,7 +11,6 @@ import {
   createReviewAuctionTool,
   type AgentTool,
 } from "./tools/index.js";
-import type { SupportedChainName } from "@circle-fin/x402-batching/client";
 
 export { createBuyerAgent } from "./agent.js";
 export type { BuyerAgent, CreateBuyerAgentDeps, LlmAdapter, LlmDecision } from "./agent.js";
