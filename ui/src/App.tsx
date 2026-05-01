@@ -14,8 +14,6 @@ import { useAuctionStream } from "./hooks/useAuctionStream.js";
 import { useBids } from "./hooks/useBids.js";
 import { useInventory } from "./hooks/useInventory.js";
 
-const SELLER_WALLET = "0xcc00000000000000000000000000000000000003";
-
 export function App(): JSX.Element {
   const { connected, settlementCount, auctions, lastAuction, lastReceipt, confirmedReceipts } =
     useAuctionStream();
@@ -59,12 +57,14 @@ export function App(): JSX.Element {
   const activeListing = listings.find((l) => l.listingId === activeListingId) ?? null;
 
   async function handleRegisterListing(): Promise<void> {
+    const sellerWallet = uiEnv.VITE_SELLER_WALLET_ADDRESS;
+    if (!sellerWallet) return;
     setRegistering(true);
     try {
       const listing: AdInventoryListing = {
         listingId: crypto.randomUUID(),
         sellerAgentId: "seller-agent-sigma",
-        sellerWallet: SELLER_WALLET,
+        sellerWallet,
         adType: "display",
         format: "banner",
         size: "300x250",
@@ -162,6 +162,11 @@ export function App(): JSX.Element {
             listings={listings}
             onRegister={handleRegisterListing}
             registering={registering}
+            disabledReason={
+              uiEnv.VITE_SELLER_WALLET_ADDRESS
+                ? null
+                : "Set VITE_SELLER_WALLET_ADDRESS to enable manual registration"
+            }
           />
           <BuyerPanel
             bids={bids}

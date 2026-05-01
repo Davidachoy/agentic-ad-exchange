@@ -4,9 +4,15 @@ export interface SellerPanelProps {
   listings: AdInventoryListing[];
   onRegister: () => Promise<void>;
   registering: boolean;
+  disabledReason: string | null;
 }
 
-export function SellerPanel({ listings, onRegister, registering }: SellerPanelProps): JSX.Element {
+export function SellerPanel({
+  listings,
+  onRegister,
+  registering,
+  disabledReason,
+}: SellerPanelProps): JSX.Element {
   return (
     <section
       role="region"
@@ -52,15 +58,20 @@ export function SellerPanel({ listings, onRegister, registering }: SellerPanelPr
 
       <button
         onClick={() => void onRegister()}
-        disabled={registering}
+        disabled={registering || disabledReason !== null}
+        title={disabledReason ?? undefined}
         className="mt-4 w-full rounded-lg border border-purple-700/50 bg-purple-900/20 px-4 py-2.5 text-sm font-medium text-purple-300 transition-colors hover:bg-purple-900/40 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {registering ? "Registering…" : "+ Register Demo Ad Slot"}
       </button>
 
-      <p className="mt-2 text-center text-xs text-slate-500">
-        300×250 banner · floor $0.002 USDC
-      </p>
+      {disabledReason ? (
+        <p className="mt-2 text-center text-xs text-exchange-warn">{disabledReason}</p>
+      ) : (
+        <p className="mt-2 text-center text-xs text-slate-500">
+          300×250 banner · floor $0.002 USDC
+        </p>
+      )}
     </section>
   );
 }
