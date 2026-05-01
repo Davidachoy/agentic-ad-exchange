@@ -27,11 +27,6 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ""),
         configure: quietProxyError,
       },
-      "/events": {
-        target: "http://localhost:4021",
-        changeOrigin: false,
-        configure: quietProxyError,
-      },
     },
   },
   build: {
