@@ -1,7 +1,7 @@
 import type { AdInventoryListing } from "@ade/shared";
 import { useEffect, useState } from "react";
 
-import { postInventory, runAuction, triggerAgentDemo } from "./api/client.js";
+import { postInventory, runAuction } from "./api/client.js";
 import { AuctionFeed } from "./components/AuctionFeed.js";
 import { AuctionPanel } from "./components/AuctionPanel.js";
 import { BuyerPanel } from "./components/BuyerPanel.js";
@@ -25,8 +25,6 @@ export function App(): JSX.Element {
 
   const [registering, setRegistering] = useState(false);
   const [running, setRunning] = useState(false);
-  const [agentDemoRunning, setAgentDemoRunning] = useState(false);
-  const [agentDemoError, setAgentDemoError] = useState<string | null>(null);
   const [activeListingId, setActiveListingId] = useState<string | null>(null);
 
   // Drives the FlowStep visualization for the *current* cycle. Set when an
@@ -98,24 +96,6 @@ export function App(): JSX.Element {
     }
   }
 
-  async function handleRunAgentDemo(): Promise<void> {
-    setAgentDemoRunning(true);
-    setAgentDemoError(null);
-    setCycleAuctionId(null);
-    try {
-      const result = await triggerAgentDemo();
-      // Bids are drained after auction; refresh inventory + bids so UI mirrors state.
-      await Promise.all([refreshInventory(), refreshBids()]);
-      // Auto-select the new listing so AdSlotPreview renders against it.
-      setActiveListingId(result.listingId);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setAgentDemoError(msg);
-    } finally {
-      setAgentDemoRunning(false);
-    }
-  }
-
   const cycleActive = cycleAuctionId !== null;
   const step2Done = cycleActive && (bids.length > 0 || lastAuction != null);
   const step3Done = cycleActive && lastAuction != null;
@@ -171,12 +151,6 @@ export function App(): JSX.Element {
           <FlowStep n={4} label="Ad goes live" done={step4Done} />
         </div>
 
-        {agentDemoError && (
-          <div className="mb-4 rounded-lg border border-exchange-warn/40 bg-exchange-warn/10 p-3 text-xs text-exchange-warn">
-            Agent demo failed: {agentDemoError}
-          </div>
-        )}
-
         {/* Main panels */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <SellerPanel
@@ -203,19 +177,21 @@ export function App(): JSX.Element {
             running={running}
             lastAuction={lastAuction}
             lastReceipt={lastReceipt}
-            onRunAgentDemo={handleRunAgentDemo}
-            agentDemoRunning={agentDemoRunning}
           />
         </div>
 
-        {/* Bottom row */}
-        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* Bottom row: live data trio (auctions / counter / settlements) */}
+        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
           <AuctionFeed auctions={auctions} />
           <TransactionCounter count={settlementCount} />
           <SettlementLedger
             receipts={confirmedReceipts}
             sellerAddress={uiEnv.VITE_SELLER_WALLET_ADDRESS}
           />
+        </div>
+
+        {/* Margin explainer — full width so its 4-column table has room */}
+        <div className="mt-6">
           <MarginExplainer />
         </div>
       </main>
