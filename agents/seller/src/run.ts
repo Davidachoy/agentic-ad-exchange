@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import type { SellerAgent } from "./agent.js";
 import { loadSellerConfig, type SellerAgentConfig } from "./config.js";
 
@@ -44,18 +42,11 @@ const LISTING_TEMPLATES: ReadonlyArray<ListingTemplate> = [
 
 const sleep = (ms: number): Promise<void> => new Promise<void>((r) => setTimeout(r, ms));
 
-function buildPrompt(
-  template: ListingTemplate,
-  sellerWallet: string,
-  listingId: string,
-): string {
+function buildPrompt(template: ListingTemplate): string {
   return [
     "Register a new ad slot via the listInventory tool.",
     "",
-    "Listing details (use these exact values):",
-    `- listingId: "${listingId}"`,
-    `- sellerAgentId: "seller-default"`,
-    `- sellerWallet: "${sellerWallet}"`,
+    "Listing parameters (use these exact values):",
     `- adType: "display"`,
     `- format: "banner"`,
     `- size: "300x250"`,
@@ -78,8 +69,6 @@ export interface RunSellerDeps {
   sleepImpl?: (ms: number) => Promise<void>;
   /** Structured logger hook. */
   log?: (msg: string, meta?: Record<string, unknown>) => void;
-  /** Listing-id factory for tests. */
-  randomUuidImpl?: () => string;
   /** Capture the prompt sent to the agent each cycle (tests). */
   onPrompt?: (prompt: string) => void;
 }
@@ -98,7 +87,6 @@ export async function runSeller(deps: RunSellerDeps = {}): Promise<RunSellerResu
       // eslint-disable-next-line no-console
       console.log(`[seller-default] ${msg}`, meta ?? {}));
   const agent = deps.agent ?? createSellerAgentWithGemini({ config });
-  const uuid = deps.randomUuidImpl ?? randomUUID;
 
   let cycles = 0;
   let registered = 0;
@@ -107,7 +95,7 @@ export async function runSeller(deps: RunSellerDeps = {}): Promise<RunSellerResu
     const template = LISTING_TEMPLATES[cycles % LISTING_TEMPLATES.length]!;
     cycles++;
     try {
-      const prompt = buildPrompt(template, config.SELLER_WALLET_ADDRESS, uuid());
+      const prompt = buildPrompt(template);
       deps.onPrompt?.(prompt);
       const result = await agent.run(prompt);
       const ok = result.toolCalls.includes("listInventory");

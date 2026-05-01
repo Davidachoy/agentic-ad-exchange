@@ -46,13 +46,30 @@ describe("createBuyerAgent", () => {
       async () => new Response(JSON.stringify({ bidId: bid.bidId }), { status: 202 }),
     );
     const tools = [
-      createPlaceBidTool({ exchangeUrl: "http://localhost:4021", fetchImpl }),
+      createPlaceBidTool({
+        exchangeUrl: "http://localhost:4021",
+        buyerAgentId: bid.buyerAgentId,
+        buyerWallet: bid.buyerWallet,
+        fetchImpl,
+        randomUuidImpl: () => bid.bidId,
+        nonceImpl: () => bid.nonce,
+        nowImpl: () => new Date(bid.createdAt),
+      }),
       createCheckBalanceTool({ exchangeUrl: "http://localhost:4021" }),
       createReviewAuctionTool({ exchangeUrl: "http://localhost:4021" }),
     ];
     const agent = createBuyerAgent({
       llm: fakeLlm([
-        Promise.resolve({ toolCall: { name: "placeBid", args: bid } }),
+        Promise.resolve({
+          toolCall: {
+            name: "placeBid",
+            args: {
+              targeting: bid.targeting,
+              bidAmountUsdc: bid.bidAmountUsdc,
+              budgetRemainingUsdc: bid.budgetRemainingUsdc,
+            },
+          },
+        }),
         Promise.resolve({ final: "Bid placed." }),
       ]),
       tools,

@@ -1,5 +1,3 @@
-import { randomBytes, randomUUID } from "node:crypto";
-
 import { AdInventoryListingSchema, type AdInventoryListing } from "@ade/shared";
 
 import type { BuyerAgent } from "./agent.js";
@@ -9,24 +7,7 @@ import { createBuyerAgentWithGemini } from "./index.js";
 
 const sleep = (ms: number): Promise<void> => new Promise<void>((r) => setTimeout(r, ms));
 
-function generateNonce(): string {
-  return "0x" + randomBytes(32).toString("hex");
-}
-
-interface PromptContext {
-  bidId: string;
-  nonce: string;
-  createdAt: string;
-}
-
-function buildPrompt(
-  config: BuyerAgentConfig,
-  listing: AdInventoryListing,
-  ctx: PromptContext,
-): string {
-  // Reason: mirrors server/src/demo/runAgentAuction.ts:177-206 buildBuyerPrompt
-  // shape. Persona attributes come from env (BUYER_AGENT_*) so a single
-  // buyer-agent process acts as one of N personas without a code change.
+function buildPrompt(config: BuyerAgentConfig, listing: AdInventoryListing): string {
   return [
     "Sealed-bid second-price auction. Other buyers will bid blind too.",
     "",
@@ -37,18 +18,13 @@ function buildPrompt(
     "",
     `Listing #${listing.listingId.slice(0, 8)} — ${listing.format} ${listing.size}, floor $${listing.floorPriceUsdc}`,
     "",
-    "Required exact values for placeBid:",
-    `- bidId: "${ctx.bidId}"`,
-    `- buyerAgentId: "${config.BUYER_AGENT_ID}"`,
-    `- buyerWallet: "${config.BUYER_WALLET_ADDRESS}"`,
-    `- nonce: "${ctx.nonce}"`,
-    `- createdAt: "${ctx.createdAt}"`,
-    `- budgetRemainingUsdc: "1.000"`,
+    "Call placeBid with:",
     `- targeting.adType: "${listing.adType}"`,
     `- targeting.format: "${listing.format}"`,
     `- targeting.size: "${listing.size}"`,
-    "Set targeting.contextTags yourself to the matching subset of your preferred tags.",
-    `Set bidAmountUsdc within your range $${config.BUYER_AGENT_MIN_BID_USDC}–$${config.BUYER_AGENT_MAX_BID_USDC}.`,
+    "- targeting.contextTags: choose the subset of your preferred tags that matches the listing.",
+    `- bidAmountUsdc: a value within your range $${config.BUYER_AGENT_MIN_BID_USDC}–$${config.BUYER_AGENT_MAX_BID_USDC}.`,
+    `- budgetRemainingUsdc: "1.000".`,
   ].join("\n");
 }
 
@@ -65,10 +41,6 @@ export interface RunBuyerDeps {
   sleepImpl?: (ms: number) => Promise<void>;
   /** Structured logger hook. Defaults to console.log with persona prefix. */
   log?: (msg: string, meta?: Record<string, unknown>) => void;
-  /** Bid id factory (tests). */
-  randomUuidImpl?: () => string;
-  /** Nonce factory (tests). */
-  nonceImpl?: () => string;
 }
 
 export interface RunBuyerResult {
@@ -86,8 +58,6 @@ export async function runBuyer(deps: RunBuyerDeps = {}): Promise<RunBuyerResult>
       // eslint-disable-next-line no-console
       console.log(`[${config.BUYER_AGENT_ID}] ${msg}`, meta ?? {}));
   const agent = deps.agent ?? createBuyerAgentWithGemini({ config });
-  const uuid = deps.randomUuidImpl ?? randomUUID;
-  const nonceFn = deps.nonceImpl ?? generateNonce;
   const seenListings = new Set<string>();
 
   let cycles = 0;
@@ -105,13 +75,11 @@ export async function runBuyer(deps: RunBuyerDeps = {}): Promise<RunBuyerResult>
         const listings = AdInventoryListingSchema.array().parse(items);
         const target = listings.find((l) => !seenListings.has(l.listingId));
         if (target) {
+          const result = await agent.run(buildPrompt(config, target));
+          // Reason: only mark seen after agent.run() returns. If it throws
+          // (Gemini 503, network blip), the next cycle re-tries this listing
+          // instead of permanently skipping it.
           seenListings.add(target.listingId);
-          const ctx: PromptContext = {
-            bidId: uuid(),
-            nonce: nonceFn(),
-            createdAt: new Date().toISOString(),
-          };
-          const result = await agent.run(buildPrompt(config, target, ctx));
           const placed = result.toolCalls.includes("placeBid");
           if (placed) bids++;
           log("cycle_done", {
