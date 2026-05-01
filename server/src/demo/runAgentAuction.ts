@@ -144,10 +144,21 @@ function buildBuyerAgentForPersona(
     model: string;
     exchangeUrl: string;
     gatewayClient?: GatewayClient;
+    bidId: string;
+    nonce: string;
+    createdAt: Date;
   },
 ): BuyerAgent {
   const tools: BuyerAgentTool<unknown, unknown>[] = [
-    createPlaceBidTool({ exchangeUrl: cfg.exchangeUrl, gatewayClient: cfg.gatewayClient }),
+    createPlaceBidTool({
+      exchangeUrl: cfg.exchangeUrl,
+      buyerAgentId: persona.agentId,
+      buyerWallet: persona.walletAddress,
+      gatewayClient: cfg.gatewayClient,
+      randomUuidImpl: () => cfg.bidId,
+      nonceImpl: () => cfg.nonce,
+      nowImpl: () => cfg.createdAt,
+    }),
     createCheckBalanceTool({ exchangeUrl: cfg.exchangeUrl }),
     createReviewAuctionTool({ exchangeUrl: cfg.exchangeUrl }),
   ];
@@ -167,9 +178,8 @@ function buildBuyerAgentForPersona(
     "Hard rules:",
     "1. Place exactly ONE bid via the placeBid tool, then stop.",
     "2. Bid amount must respect your range and the listing floor.",
-    "3. Use the exact bidId, buyerWallet, nonce, and createdAt values from the user message verbatim.",
-    "4. Set targeting.contextTags to the subset of YOUR preferred tags that overlap with the listing.",
-    "5. After placeBid returns, output ONE short sentence: 'Bid $X.XXX — <reasoning>'.",
+    "3. Set targeting.contextTags to the subset of YOUR preferred tags that overlap with the listing.",
+    "4. After placeBid returns, output ONE short sentence: 'Bid $X.XXX — <reasoning>'.",
   ].join("\n");
   return createBuyerAgent({ llm, tools, systemPrompt });
 }
@@ -177,7 +187,6 @@ function buildBuyerAgentForPersona(
 function buildBuyerPrompt(
   persona: ResolvedPersona,
   listing: { listingId: string; floor: string; tags: ReadonlyArray<string>; description: string },
-  ctx: { bidId: string; nonce: string; createdAt: string },
 ): string {
   return [
     "Sealed-bid second-price auction. Other buyers will bid blind too.",
@@ -190,18 +199,13 @@ function buildBuyerPrompt(
     "",
     `Compare these tags against your preferred tags (${persona.preferredTags.join(", ")}) and decide bidAmountUsdc.`,
     "",
-    "Required exact values for placeBid:",
-    `- bidId: "${ctx.bidId}"`,
-    `- buyerAgentId: "${persona.agentId}"`,
-    `- buyerWallet: "${persona.walletAddress}"`,
-    `- nonce: "${ctx.nonce}"`,
-    `- createdAt: "${ctx.createdAt}"`,
-    `- budgetRemainingUsdc: "1.000"`,
+    "Call placeBid with:",
     `- targeting.adType: "display"`,
     `- targeting.format: "banner"`,
     `- targeting.size: "300x250"`,
-    "Set targeting.contextTags yourself to the matching subset.",
-    "Set bidAmountUsdc yourself based on your strategy + match quality.",
+    "- targeting.contextTags: the subset of your preferred tags that overlap with the listing.",
+    `- bidAmountUsdc: a value within $${persona.minBid}–$${persona.maxBid} based on match quality.`,
+    `- budgetRemainingUsdc: "1.000".`,
   ].join("\n");
 }
 
@@ -280,19 +284,30 @@ export async function runAgentAuction(deps: AgentAuctionDeps): Promise<AgentAuct
   const gatewayClient = deps.buyerPrivateKey
     ? buildGatewayClient(deps.buyerPrivateKey, "arcTestnet")
     : undefined;
-  const buyers = deps.personas.map((p) =>
+  // Pre-generate the bid identifiers per persona so we can both inject them
+  // into the placeBid tool (preventing LLM hallucination of these fields)
+  // and report the bidId in the BidLog without round-tripping through the
+  // tool's return value.
+  const ctxs = deps.personas.map(() => ({
+    bidId: randomUUID(),
+    nonce: nonce(),
+    createdAt: new Date(),
+  }));
+  const buyers = deps.personas.map((p, i) =>
     buildBuyerAgentForPersona(p, {
       apiKey: deps.gemini.apiKey,
       model: deps.gemini.model,
       exchangeUrl: deps.exchangeUrl,
       gatewayClient,
+      bidId: ctxs[i]!.bidId,
+      nonce: ctxs[i]!.nonce,
+      createdAt: ctxs[i]!.createdAt,
     }),
   );
   const settled = await Promise.allSettled(
     deps.personas.map(async (p, i) => {
-      const ctx = { bidId: randomUUID(), nonce: nonce(), createdAt: new Date().toISOString() };
-      const r = await buyers[i]!.run(buildBuyerPrompt(p, listingForBuyers, ctx));
-      return { persona: p, ctx, r };
+      const r = await buyers[i]!.run(buildBuyerPrompt(p, listingForBuyers));
+      return { persona: p, ctx: ctxs[i]!, r };
     }),
   );
 

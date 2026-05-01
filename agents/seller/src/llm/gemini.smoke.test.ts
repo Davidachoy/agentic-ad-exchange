@@ -38,7 +38,12 @@ describeSmoke("createGeminiLlmAdapter (live Gemini smoke, seller)", () => {
       );
 
       const tools = [
-        createListInventoryTool({ exchangeUrl: "http://localhost:4021", fetchImpl }),
+        createListInventoryTool({
+          exchangeUrl: "http://localhost:4021",
+          sellerAgentId: "seller-smoke",
+          sellerWallet: "0x0000000000000000000000000000000000000001",
+          fetchImpl,
+        }),
         createServeAdTool({ exchangeUrl: "http://localhost:4021" }),
         createViewHistoryTool({ exchangeUrl: "http://localhost:4021" }),
       ];
@@ -54,16 +59,12 @@ describeSmoke("createGeminiLlmAdapter (live Gemini smoke, seller)", () => {
       const result = await agent.run(
         [
           "List a 300x250 display banner with floor 0.001 USDC.",
-          "Use these values verbatim:",
-          '- listingId: "11111111-1111-4111-8111-111111111111"',
-          '- sellerAgentId: "seller-smoke"',
-          '- sellerWallet: "0x0000000000000000000000000000000000000001"',
+          "Use these values:",
           '- adType: "display"',
           '- format: "banner"',
           '- size: "300x250"',
           "- contextualExclusions: []",
           '- floorPriceUsdc: "0.001"',
-          '- createdAt: "2026-04-22T12:00:00Z"',
         ].join("\n"),
       );
 

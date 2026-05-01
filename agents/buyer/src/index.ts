@@ -1,3 +1,5 @@
+import type { SupportedChainName } from "@circle-fin/x402-batching/client";
+
 import { createBuyerAgent, type BuyerAgent } from "./agent.js";
 import { loadBuyerConfig, type BuyerAgentConfig } from "./config.js";
 import { createGeminiLlmAdapter } from "./llm/index.js";
@@ -9,7 +11,6 @@ import {
   createReviewAuctionTool,
   type AgentTool,
 } from "./tools/index.js";
-import type { SupportedChainName } from "@circle-fin/x402-batching/client";
 
 export { createBuyerAgent } from "./agent.js";
 export type { BuyerAgent, CreateBuyerAgentDeps, LlmAdapter, LlmDecision } from "./agent.js";
@@ -26,17 +27,26 @@ export type { AgentTool } from "./tools/index.js";
 export { createGeminiLlmAdapter, zodToGeminiSchema } from "./llm/index.js";
 export type { GeminiLlmAdapterConfig, GoogleGenerativeAIClient } from "./llm/index.js";
 
-function buildTools(
-  exchangeUrl: string,
-  privateKey?: `0x${string}`,
-  chain?: SupportedChainName,
-): AgentTool<unknown, unknown>[] {
+interface BuildToolsDeps {
+  exchangeUrl: string;
+  buyerAgentId: string;
+  buyerWallet: string;
+  privateKey?: `0x${string}`;
+  chain?: SupportedChainName;
+}
+
+function buildTools(deps: BuildToolsDeps): AgentTool<unknown, unknown>[] {
   const gatewayClient =
-    privateKey ? buildGatewayClient(privateKey, chain ?? "arcTestnet") : undefined;
+    deps.privateKey ? buildGatewayClient(deps.privateKey, deps.chain ?? "arcTestnet") : undefined;
   return [
-    createPlaceBidTool({ exchangeUrl, gatewayClient }),
-    createCheckBalanceTool({ exchangeUrl }),
-    createReviewAuctionTool({ exchangeUrl }),
+    createPlaceBidTool({
+      exchangeUrl: deps.exchangeUrl,
+      buyerAgentId: deps.buyerAgentId,
+      buyerWallet: deps.buyerWallet,
+      gatewayClient,
+    }),
+    createCheckBalanceTool({ exchangeUrl: deps.exchangeUrl }),
+    createReviewAuctionTool({ exchangeUrl: deps.exchangeUrl }),
   ];
 }
 
@@ -49,11 +59,13 @@ export function createBuyerAgentWithGemini(
   overrides: { config?: BuyerAgentConfig } = {},
 ): BuyerAgent {
   const config = overrides.config ?? loadBuyerConfig();
-  const tools = buildTools(
-    config.EXCHANGE_API_URL,
-    config.BUYER_PRIVATE_KEY as `0x${string}` | undefined,
-    config.BUYER_CHAIN as SupportedChainName | undefined,
-  );
+  const tools = buildTools({
+    exchangeUrl: config.EXCHANGE_API_URL,
+    buyerAgentId: config.BUYER_AGENT_ID,
+    buyerWallet: config.BUYER_WALLET_ADDRESS,
+    privateKey: config.BUYER_PRIVATE_KEY as `0x${string}` | undefined,
+    chain: config.BUYER_CHAIN as SupportedChainName | undefined,
+  });
   const llm = createGeminiLlmAdapter({
     apiKey: config.GEMINI_API_KEY,
     model: config.GEMINI_MODEL,

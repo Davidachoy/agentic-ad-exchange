@@ -1,13 +1,13 @@
+import type { CircleClient } from "@ade/wallets";
 import type { Express } from "express";
 
-import type { CircleClient } from "@ade/wallets";
 
+import type { ResolvedPersona } from "../demo/runAgentAuction.js";
 import type { EventBus } from "../events/bus.js";
 import type { GatewayMiddlewareAdapter } from "../middleware/nanopayments.js";
 import type { NonceStore } from "../nonces/store.js";
 import type { BidStore, ListingStore, SettlementStore } from "../state/stores.js";
 
-import type { ResolvedPersona } from "../demo/runAgentAuction.js";
 
 import { createAuctionRouter } from "./auction.js";
 import { createBidRouter } from "./bid.js";
@@ -34,6 +34,7 @@ export interface RegisterRoutesDeps {
     personas: ResolvedPersona[];
     gemini?: { apiKey: string; model: string };
     buyerPrivateKey?: `0x${string}`;
+    mode: "in_process" | "external";
   };
 }
 
@@ -61,7 +62,11 @@ export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
   );
   app.use(createSettlementRouter({ settlementStore: deps.settlementStore }));
   app.use(createStreamRouter({ eventBus: deps.eventBus }));
-  if (deps.demo) {
+  if (deps.demo && deps.demo.mode === "in_process") {
+    // Reason: when DEMO_MODE=external, standalone Railway agent services own
+    // auction generation. Mounting the demo router here would risk
+    // double-bidding (one bid from the in-process orchestrator + one from the
+    // external buyer service per persona).
     app.use(
       createDemoRouter({
         exchangeUrl: deps.demo.exchangeUrl,

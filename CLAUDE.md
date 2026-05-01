@@ -1,20 +1,21 @@
 # CLAUDE.md — Agentic Ad Exchange Stack
 
-> AI behavior guide for this repository. Keep in sync with `PLANNING.md`.
+> AI behavior guide for this repository.
 > This is a **hackathon project** for Circle's *Nanopayments on Arc* hackathon. Calibrate strictness accordingly: payment, auction, and wallet code needs rigor; demo UI does not.
 
 ---
 
 ## Project Awareness & Context
 
-Read these docs at the start of a new conversation, in this order:
-
-1. `PLANNING.md` — architecture, components, data model, project structure. **Authoritative.**
-2. `hackathon-context.md` — the submission brief: mandatory stack, tracks, judging criteria.
-3. `agentic-ad-exchange-stack.md` — short product spec (what the Exchange does).
-4. `architecture-diagram.md` — Mermaid diagrams for the system, payment sequence, and data objects.
-5. `ai-agent-micropayments-validation.md` — the *why*: product strategy, track alignment, re-scored ideas. Use for framing, not implementation.
-6. `tutorials/` — three working tutorials (x402 payments, autonomous wallet agent, pay-per-call LLM nanopayments). **Consult these before writing novel Circle SDK, x402, or LangChain code** — their patterns are known-good and the SDKs change fast.
+Read these in this order:
+1. `README.md` — runnable commands and Quick Start. Note: its "Still TODO" paragraph is stale; trust the code and `REPO_SUMMARY.md` instead.
+2. **Optional local context** — these are untracked working notes that may or may not exist on a given checkout. Read them if present; do not block on them if missing:
+   - `PLANNING.md` — architecture, data model.
+   - `hackathon-context.md` — submission brief, tracks, judging criteria.
+   - `agentic-ad-exchange-stack.md` — short product spec.
+   - `architecture-diagram.md` — Mermaid system / payment / data diagrams.
+   - `ai-agent-micropayments-validation.md` — strategy / framing.
+   - `tutorials/` — known-good Circle SDK / x402 / LangChain patterns. **If present, consult before writing novel SDK code** (these SDKs change fast). If absent, mirror existing usage in `wallets/src/circleAdapter.ts` and `server/src/middleware/nanopayments.ts`.
 
 Before starting a new task: check the task list (via the Task tool). If the task isn't tracked, add it.
 
@@ -32,22 +33,23 @@ If a design choice breaks any of the above, flag it before building.
 
 ## Project Structure
 
-The monorepo layout is defined in `PLANNING.md`. Do not reshape it without updating `PLANNING.md` first.
+pnpm-workspaces monorepo. Do not reshape it without flagging the change.
 
 ```
 agentic-ad-exchange/
-├── server/         # Exchange server (Express) — matching, auction, payment trigger
+├── server/         # @ade/server         — Express API (matching, auction, SSE, x402 middleware)
+├── shared/         # @ade/shared         — zod schemas, constants, env loader (zero runtime deps)
+├── wallets/        # @ade/wallets        — Circle DCW SDK wrapper (server-side only)
 ├── agents/
-│   ├── buyer/      # Buying agent (Gemini + LangGraph) + tools
-│   └── seller/     # Selling agent (Gemini + LangGraph) + tools
-├── wallets/        # Circle SDK wrapper for Developer-Controlled Wallets
-├── ui/             # React + TypeScript demo dashboard
-├── scripts/        # Wallet creation, funding, Gateway deposit
+│   ├── buyer/      # @ade/agents-buyer   — Buyer agent (Gemini + LangGraph) + tools
+│   └── seller/     # @ade/agents-seller  — Seller agent (Gemini + LangGraph) + tools
+├── ui/             # @ade/ui             — React + Vite + Tailwind dashboard
+├── scripts/        # @ade/scripts        — Wallet provisioning, Gateway deposit, demo:load (≥50 cycles)
 └── .env.example
 ```
 
 - **Barrel exports (`index.ts`)** at each package boundary. No deep imports across packages.
-- **Secrets never leave the server side.** `ui/` must never import from `wallets/`, `server/middleware/nanopayments`, or anything that touches the Circle entity secret or agent private keys.
+- **Secrets never leave the server side.** `ui/` must never import from `@ade/wallets`, `server/src/middleware/nanopayments.ts`, or anything that touches the Circle entity secret or agent private keys. An ESLint rule enforces this — don't suppress it.
 
 ---
 
@@ -55,7 +57,7 @@ agentic-ad-exchange/
 
 - **No file longer than 300 lines.** If it approaches the limit, extract. Exception: generated types, ABI/bytecode artifacts.
 - **One primary export per file** (one component, one class, one agent definition). Name the file after the export.
-- **Environment variables** accessed only through a typed config module (e.g. `server/config.ts`). Never inline `process.env.FOO`.
+- **Environment variables** accessed only through a typed config module (e.g. `server/src/config.ts`, `wallets/src/config.ts`). Never inline `process.env.FOO`.
 - **Colocate tests** with source as `*.test.ts` / `*.test.tsx`.
 
 ---
@@ -66,6 +68,7 @@ agentic-ad-exchange/
 - `interface` for object shapes; `type` for unions/intersections.
 - **Named exports** only.
 - **`zod` for all runtime validation at boundaries:** inbound HTTP requests, Circle API responses, agent tool inputs and outputs, and anything parsed from env/config.
+- **USDC amounts are decimal strings with 6 decimals** end-to-end. Never serialize as floats; never do float arithmetic on prices. Use the BigInt helpers in `server/src/auction/money.ts` (`toAtomic`, `fromAtomic`, `addUsdc`, `gtUsdc`).
 - No `.js` in any package's `src/`.
 
 ---
@@ -100,7 +103,7 @@ agentic-ad-exchange/
 - **Floor price enforcement** and **bid-range validation** happen in the auction engine, not in the agent layer.
 - **Faucet top-ups and Gateway deposits** go through `scripts/`, never from an HTTP handler.
 - **Initial Gateway deposit takes 13–19 minutes to credit on testnet** (per the nanopayments tutorial). Design flows, loading states, and demo scripts to tolerate this.
-- **Trust model** is documented in `PLANNING.md` § Trust Model — framed as *"trust-minimized, with Circle as the settlement facilitator."* Don't rewrite this framing without updating PLANNING.
+- **Trust model** framing: *"trust-minimized, with Circle as the settlement facilitator."* Don't rewrite this framing casually — if `PLANNING.md` is present locally it has the long-form version; otherwise treat this line as the canonical statement.
 
 ---
 
@@ -162,7 +165,7 @@ agentic-ad-exchange/
 ## AI Behavior Rules
 
 - **Never assume missing context. Ask questions if uncertain** — especially about Circle SDK method signatures and x402 SDK exports, which change between tutorial versions.
-- **Never hallucinate libraries, functions, or Circle/x402 SDK methods.** Verify against `tutorials/`, Circle's GitHub (`github.com/circlefin`), or the Arc docs before writing code that calls them.
+- **Never hallucinate libraries, functions, or Circle/x402 SDK methods.** Verify against the in-repo callers (`wallets/src/circleAdapter.ts`, `server/src/middleware/nanopayments.ts`), the local `tutorials/` directory if present, Circle's GitHub (`github.com/circlefin`), or the Arc docs before writing code that calls them.
 - **Always confirm file paths and module names exist** before referencing them.
 - **Never delete or overwrite existing code** unless a task explicitly instructs you to.
 - For payment-, auction-, or wallet-touching code, **state your assumptions explicitly and ask before shipping**. The cost of a wrong settlement path (lost USDC, stuck nonces, demo blowup) is much higher than the cost of a clarifying question.

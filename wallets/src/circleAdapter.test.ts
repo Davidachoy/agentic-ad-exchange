@@ -1,6 +1,6 @@
+import { ARC_TESTNET_USDC } from "@ade/shared";
 import { describe, expect, it, vi } from "vitest";
 
-import { ARC_TESTNET_USDC } from "@ade/shared";
 
 import { buildAdapter, normalizeUsdcAmount } from "./circleAdapter.js";
 

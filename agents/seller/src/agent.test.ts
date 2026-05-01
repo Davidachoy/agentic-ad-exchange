@@ -41,13 +41,31 @@ describe("createSellerAgent", () => {
       async () => new Response(JSON.stringify({ listingId: listing.listingId }), { status: 201 }),
     );
     const tools = [
-      createListInventoryTool({ exchangeUrl: "http://localhost:4021", fetchImpl }),
+      createListInventoryTool({
+        exchangeUrl: "http://localhost:4021",
+        sellerAgentId: listing.sellerAgentId,
+        sellerWallet: listing.sellerWallet,
+        fetchImpl,
+        randomUuidImpl: () => listing.listingId,
+        nowImpl: () => new Date(listing.createdAt),
+      }),
       createServeAdTool({ exchangeUrl: "http://localhost:4021" }),
       createViewHistoryTool({ exchangeUrl: "http://localhost:4021" }),
     ];
     const agent = createSellerAgent({
       llm: fakeLlm([
-        Promise.resolve({ toolCall: { name: "listInventory", args: listing } }),
+        Promise.resolve({
+          toolCall: {
+            name: "listInventory",
+            args: {
+              adType: listing.adType,
+              format: listing.format,
+              size: listing.size,
+              contextualExclusions: listing.contextualExclusions,
+              floorPriceUsdc: listing.floorPriceUsdc,
+            },
+          },
+        }),
         Promise.resolve({ final: "Listed." }),
       ]),
       tools,

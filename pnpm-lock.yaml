@@ -51,8 +51,8 @@ importers:
         specifier: workspace:*
         version: link:../../shared
       '@circle-fin/x402-batching':
-        specifier: ^3.0.2
-        version: 3.0.2(@x402/core@2.10.0)(@x402/evm@2.10.0(typescript@5.9.3))(viem@2.48.4(typescript@5.9.3)(zod@3.25.76))
+        specifier: ^3.0.3
+        version: 3.0.3(@x402/core@2.10.0)(@x402/evm@2.10.0(typescript@5.9.3))(viem@2.48.4(typescript@5.9.3)(zod@3.25.76))
       '@google/generative-ai':
         specifier: ^0.24.1
         version: 0.24.1
@@ -134,8 +134,8 @@ importers:
         specifier: ^10.0.0
         version: 10.3.0
       '@circle-fin/x402-batching':
-        specifier: ^3.0.2
-        version: 3.0.2(@x402/core@2.10.0)(@x402/evm@2.10.0(typescript@5.9.3))(viem@2.48.4(typescript@5.9.3)(zod@3.25.76))
+        specifier: ^3.0.3
+        version: 3.0.3(@x402/core@2.10.0)(@x402/evm@2.10.0(typescript@5.9.3))(viem@2.48.4(typescript@5.9.3)(zod@3.25.76))
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -165,8 +165,8 @@ importers:
         specifier: workspace:*
         version: link:../wallets
       '@circle-fin/x402-batching':
-        specifier: ^3.0.2
-        version: 3.0.2(@x402/core@2.10.0)(@x402/evm@2.10.0(typescript@5.9.3))(viem@2.48.4(typescript@5.9.3)(zod@3.25.76))
+        specifier: ^3.0.3
+        version: 3.0.3(@x402/core@2.10.0)(@x402/evm@2.10.0(typescript@5.9.3))(viem@2.48.4(typescript@5.9.3)(zod@3.25.76))
       '@x402/core':
         specifier: ^2.10.0
         version: 2.10.0
@@ -409,8 +409,8 @@ packages:
   '@circle-fin/developer-controlled-wallets@10.3.0':
     resolution: {integrity: sha512-vuwqSFgOWv21FQnFssJ4ZvUNlxcqE4es9fV/CzP4o9vF628SJMughCVssw8PyQtyWjBHmuWGr2Ex44VFCCxVwg==}
 
-  '@circle-fin/x402-batching@3.0.2':
-    resolution: {integrity: sha512-e8ysgHxgNjgck0M5Ajhx84GRb75vGJHSfat4JDtSLWQLJR+j+UEzYcw/WfKzAU69AXQGujv9EeI6gyR3yU1tuA==}
+  '@circle-fin/x402-batching@3.0.3':
+    resolution: {integrity: sha512-hP5I9VRPHZxrqlKRvZQCrEfU6Rhh3KULKQPDuQMLI7FlME+wXuq3W4FkWafr/bVMolqvDW+Fnt+NGpkc204x3Q==}
     engines: {node: '>=18'}
     peerDependencies:
       '@x402/core': ^2.3.0
@@ -2427,6 +2427,26 @@ packages:
       ws:
         optional: true
 
+  langsmith@0.6.0:
+    resolution: {integrity: sha512-GGaj5IMRfLv2HXXFzGk9diISMYLTpSTh6fzCZGKxWYW/NqEztIFtnXLq6G/RVhzFRmCykLap1fuC67LVKoQLcg==}
+    peerDependencies:
+      '@opentelemetry/api': '*'
+      '@opentelemetry/exporter-trace-otlp-proto': '*'
+      '@opentelemetry/sdk-trace-base': '*'
+      openai: '*'
+      ws: '>=7'
+    peerDependenciesMeta:
+      '@opentelemetry/api':
+        optional: true
+      '@opentelemetry/exporter-trace-otlp-proto':
+        optional: true
+      '@opentelemetry/sdk-trace-base':
+        optional: true
+      openai:
+        optional: true
+      ws:
+        optional: true
+
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
@@ -3332,6 +3352,10 @@ packages:
     resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
     hasBin: true
 
+  uuid@11.1.1:
+    resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
+    hasBin: true
+
   uuid@13.0.0:
     resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
     hasBin: true
@@ -3662,7 +3686,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@circle-fin/x402-batching@3.0.2(@x402/core@2.10.0)(@x402/evm@2.10.0(typescript@5.9.3))(viem@2.48.4(typescript@5.9.3)(zod@3.25.76))':
+  '@circle-fin/x402-batching@3.0.3(@x402/core@2.10.0)(@x402/evm@2.10.0(typescript@5.9.3))(viem@2.48.4(typescript@5.9.3)(zod@3.25.76))':
     dependencies:
       '@x402/core': 2.10.0
       viem: 2.48.4(typescript@5.9.3)(zod@3.25.76)
@@ -3920,10 +3944,10 @@ snapshots:
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.21
-      langsmith: 0.5.22(ws@8.20.0)
+      langsmith: 0.6.0(ws@8.20.0)
       mustache: 4.2.0
       p-queue: 6.6.2
-      uuid: 11.1.0
+      uuid: 11.1.1
       zod: 3.25.76
     transitivePeerDependencies:
       - '@opentelemetry/api'
@@ -5743,6 +5767,12 @@ snapshots:
     optionalDependencies:
       ws: 8.20.0
 
+  langsmith@0.6.0(ws@8.20.0):
+    dependencies:
+      p-queue: 6.6.2
+    optionalDependencies:
+      ws: 8.20.0
+
   levn@0.4.1:
     dependencies:
       prelude-ls: 1.2.1
@@ -6730,6 +6760,8 @@ snapshots:
   uuid@10.0.0: {}
 
   uuid@11.1.0: {}
+
+  uuid@11.1.1: {}
 
   uuid@13.0.0: {}
 

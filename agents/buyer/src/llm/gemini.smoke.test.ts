@@ -38,7 +38,12 @@ describeSmoke("createGeminiLlmAdapter (live Gemini smoke)", () => {
       );
 
       const tools = [
-        createPlaceBidTool({ exchangeUrl: "http://localhost:4021", fetchImpl }),
+        createPlaceBidTool({
+          exchangeUrl: "http://localhost:4021",
+          buyerAgentId: "buyer-smoke",
+          buyerWallet: "0x0000000000000000000000000000000000000002",
+          fetchImpl,
+        }),
         createCheckBalanceTool({ exchangeUrl: "http://localhost:4021" }),
         createReviewAuctionTool({ exchangeUrl: "http://localhost:4021" }),
       ];
@@ -54,15 +59,10 @@ describeSmoke("createGeminiLlmAdapter (live Gemini smoke)", () => {
       const result = await agent.run(
         [
           "Place a bid of 0.005 USDC on a display banner 300x250 impression.",
-          "Use these values verbatim:",
-          '- bidId: "11111111-1111-4111-8111-111111111111"',
-          '- buyerAgentId: "buyer-smoke"',
-          '- buyerWallet: "0x0000000000000000000000000000000000000002"',
+          "Use these values:",
           '- targeting: { adType: "display", format: "banner", size: "300x250", contextTags: [] }',
           '- bidAmountUsdc: "0.005"',
           '- budgetRemainingUsdc: "1.000000"',
-          '- nonce: "0x000000000000000000000000000000000000000000000000000000000000000a"',
-          '- createdAt: "2026-04-22T12:00:00Z"',
         ].join("\n"),
       );
 

@@ -25,6 +25,15 @@ globalThis.fetch = async (input, init) => {
   const res = await origFetch(input, init);
   if (!url.includes("circle")) {
     console.log(`  status: ${res.status} ${res.statusText}`);
+    const paymentRequired = res.headers.get("PAYMENT-REQUIRED");
+    if (paymentRequired) {
+      try {
+        const decoded = JSON.parse(Buffer.from(paymentRequired, "base64").toString("utf-8"));
+        console.log(`  PAYMENT-REQUIRED (decoded): ${JSON.stringify(decoded, null, 2)}`);
+      } catch {
+        console.log(`  PAYMENT-REQUIRED (raw): ${paymentRequired.slice(0, 200)}`);
+      }
+    }
     const clone = res.clone();
     const body = await clone.text();
     if (body) console.log(`  body: ${body.slice(0, 300)}`);

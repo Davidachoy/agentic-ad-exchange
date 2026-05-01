@@ -1,5 +1,5 @@
-import type { RequestHandler } from "express";
 import { createGatewayMiddleware } from "@circle-fin/x402-batching/server";
+import type { RequestHandler } from "express";
 
 /**
  * Gateway middleware adapter — the single integration seam for Circle Gateway

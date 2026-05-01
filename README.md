@@ -112,6 +112,66 @@ pnpm audit         # 0 high / 0 critical expected at scaffold time
 | ≥ 50 on-chain transactions in demo | `scripts/src/demoLoad.ts` drives `DEMO_LOAD_CYCLES` (default 50, min-enforced at config) DCW transfers; each prints an Arc explorer URL, and the script fails loud if fewer settle. Live SSE feed via `server/src/routes/stream.ts` + `ui/src/components/TransactionCounter.tsx`. |
 | Margin explainer | `scripts/src/demoLoad.margin.ts` prints the final terminal banner; `ui/src/components/MarginExplainer.tsx` shows the Stripe $0.30 fee vs. Nanopayment $0.00 gas comparison in the dashboard. |
 
+## Deploy to Railway
+
+The repo deploys as **three independent Railway services** built from this
+single monorepo. The implementation details and validation contract live in
+`PRPs/railway-deploy.md`; the table below is the deploy-time cheat sheet.
+
+### Per-service build / start commands
+
+Leave **Root Directory empty** for every service — the pnpm workspace at the
+repo root must be the build context. The trailing `...` in the build command
+is required so transitive workspace deps resolve under `pnpm install --frozen-lockfile`.
+
+| Service | Build command | Start command | Public domain? |
+|---|---|---|---|
+| `ade-server` | `pnpm install --frozen-lockfile && pnpm --filter @ade/server... build` | `pnpm --filter @ade/server start` | ✅ generate one |
+| `ade-buyer-<persona>` | `pnpm install --frozen-lockfile && pnpm --filter @ade/agent-buyer... build` | `pnpm --filter @ade/agent-buyer start` | ❌ private only |
+| `ade-seller` | `pnpm install --frozen-lockfile && pnpm --filter @ade/agent-seller... build` | `pnpm --filter @ade/agent-seller start` | ❌ private only |
+
+Deploy `ade-buyer` once per persona (`ade-buyer-luxuryco`, `ade-buyer-growthco`,
+`ade-buyer-retailco`) — same image, different env block. Three personas =
+three buyer replicas competing on every listing.
+
+### Env-var split
+
+Secrets stay server-side. The Circle entity secret + API key live **only on
+`ade-server`** — never on agent services.
+
+| Variable | `ade-server` | `ade-buyer-<persona>` | `ade-seller` |
+|---|---|---|---|
+| `NODE_ENV=production` | ✅ | ✅ | ✅ |
+| `CIRCLE_API_KEY`, `CIRCLE_ENTITY_SECRET`, `CIRCLE_ENVIRONMENT=testnet` | ✅ | — | — |
+| `ARC_CHAIN_ID=5042002`, `ARC_RPC_URL` | ✅ | — | — |
+| `BUYER_LUXURYCO_*` / `BUYER_GROWTHCO_*` / `BUYER_RETAILCO_*` (server-side persona routing) | ✅ | — | — |
+| `SELLER_WALLET_ADDRESS` | ✅ (Gateway recipient) | — | ✅ (registered listings) |
+| `BUYER_PRIVATE_KEY` | ✅ (in-process demo path; harmless when `DEMO_MODE=external`) | ✅ (signs x402 EIP-3009) | — |
+| `BUYER_CHAIN=arcTestnet`, `X402_NETWORK=eip155:5042002`, `GATEWAY_FACILITATOR_URL` | ✅ | (only `BUYER_CHAIN`) | — |
+| `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-2.5-flash` | optional (only when `DEMO_MODE=in_process`) | ✅ | ✅ |
+| `CORS_ALLOW_ORIGINS=https://${{ade-server.RAILWAY_PUBLIC_DOMAIN}},https://<ui-domain>` | ✅ | — | — |
+| `BID_RATE_LIMIT_PER_MIN=120` | ✅ | — | — |
+| `DEMO_MODE=external` | ✅ (production) | — | — |
+| `EXCHANGE_API_URL=http://ade-server.railway.internal:${{ade-server.PORT}}` | — | ✅ | ✅ |
+| `BUYER_AGENT_ID`, `BUYER_AGENT_BRAND`, `BUYER_AGENT_STRATEGY` | — | ✅ | — |
+| `BUYER_AGENT_MAX_BID_USDC`, `BUYER_AGENT_MIN_BID_USDC`, `BUYER_AGENT_PREFERRED_TAGS` | — | ✅ | — |
+| `BUYER_WALLET_ADDRESS` (must match a server-side `BUYER_*_WALLET_ADDRESS`) | — | ✅ | — |
+| `BUYER_POLL_INTERVAL_MS=1000` | — | ✅ | — |
+| `SELLER_LISTING_INTERVAL_MS=30000` | — | — | ✅ |
+
+### Pre-flight
+
+1. **Gateway deposit** — run `pnpm --filter @ade/scripts deposit:gateway` from
+   a developer laptop pointed at the production wallet ids **before** opening
+   the demo. Testnet credit takes 13–19 minutes.
+2. **Tag the deploy commit** — `git tag -a railway-deploy-v1 -m ...` so a
+   bad redeploy can roll back via the Railway dashboard.
+3. **Verify** `curl https://<ade-server-domain>/health` returns 200,
+   `/inventory` populates within 30s of `ade-seller` boot, `/settlements`
+   climbs once `ade-buyer-*` services are up.
+
+Local `pnpm dev` is unaffected — `DEMO_MODE` defaults to `in_process`.
+
 ## References
 
 - `PLANNING.md` — authoritative architecture, data model, project structure
