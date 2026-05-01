@@ -41,6 +41,29 @@ function inventoryResponse(items: unknown[]): Response {
   });
 }
 
+function controlResponse(paused: boolean): Response {
+  return new Response(JSON.stringify({ paused }), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+/**
+ * Reasoning: the buyer's loop polls `/control/state` first and `/inventory`
+ * second. This helper returns a fetch double that answers each URL with the
+ * matching response, so tests don't depend on call ordering or argument
+ * count.
+ */
+function makeFetchByUrl(handlers: Record<string, () => Response>): typeof fetch {
+  return (async (url: RequestInfo | URL) => {
+    const u = url.toString();
+    for (const [needle, fn] of Object.entries(handlers)) {
+      if (u.includes(needle)) return fn();
+    }
+    throw new Error(`unhandled url: ${u}`);
+  }) as unknown as typeof fetch;
+}
+
 function fakeAgent(toolCalls: string[]): BuyerAgent {
   return {
     tools: [],
@@ -52,33 +75,85 @@ function fakeAgent(toolCalls: string[]): BuyerAgent {
 
 describe("runBuyer", () => {
   it("places a bid on the first available listing (happy)", async () => {
-    const fetchImpl = vi.fn(async () => inventoryResponse([sampleListing]));
+    const fetchImpl = makeFetchByUrl({
+      "/control/state": () => controlResponse(false),
+      "/inventory": () => inventoryResponse([sampleListing]),
+    });
+    const agent = fakeAgent(["placeBid"]);
+    const runSpy = vi.spyOn(agent, "run");
     const result = await runBuyer({
       config: baseConfig,
-      fetchImpl: fetchImpl as unknown as typeof fetch,
-      agent: fakeAgent(["placeBid"]),
+      fetchImpl,
+      agent,
       maxCycles: 1,
       sleepImpl: async () => {},
       log: () => {},
     });
     expect(result.cycles).toBe(1);
     expect(result.bids).toBe(1);
-    expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(runSpy).toHaveBeenCalledOnce();
   });
 
   it("dedupes a listing seen in a prior cycle (edge)", async () => {
-    const fetchImpl = vi.fn(async () => inventoryResponse([sampleListing]));
+    const fetchImpl = makeFetchByUrl({
+      "/control/state": () => controlResponse(false),
+      "/inventory": () => inventoryResponse([sampleListing]),
+    });
     const agent = fakeAgent(["placeBid"]);
     const runSpy = vi.spyOn(agent, "run");
     const result = await runBuyer({
       config: baseConfig,
-      fetchImpl: fetchImpl as unknown as typeof fetch,
+      fetchImpl,
       agent,
       maxCycles: 2,
       sleepImpl: async () => {},
       log: () => {},
     });
     expect(result.cycles).toBe(2);
+    expect(result.bids).toBe(1);
+    expect(runSpy).toHaveBeenCalledOnce();
+  });
+
+  it("skips the cycle without calling the agent when control says paused", async () => {
+    const inventoryHandler = vi.fn(() => inventoryResponse([sampleListing]));
+    const fetchImpl = makeFetchByUrl({
+      "/control/state": () => controlResponse(true),
+      "/inventory": inventoryHandler,
+    });
+    const agent = fakeAgent(["placeBid"]);
+    const runSpy = vi.spyOn(agent, "run");
+    const log = vi.fn();
+    const result = await runBuyer({
+      config: baseConfig,
+      fetchImpl,
+      agent,
+      maxCycles: 1,
+      sleepImpl: async () => {},
+      log,
+    });
+    expect(result.cycles).toBe(1);
+    expect(result.bids).toBe(0);
+    expect(runSpy).not.toHaveBeenCalled();
+    expect(inventoryHandler).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith("cycle_paused", expect.any(Object));
+  });
+
+  it("treats a /control/state error as 'running' and proceeds (failure-recovery)", async () => {
+    const fetchImpl = makeFetchByUrl({
+      "/control/state": () =>
+        new Response("upstream down", { status: 503 }),
+      "/inventory": () => inventoryResponse([sampleListing]),
+    });
+    const agent = fakeAgent(["placeBid"]);
+    const runSpy = vi.spyOn(agent, "run");
+    const result = await runBuyer({
+      config: baseConfig,
+      fetchImpl,
+      agent,
+      maxCycles: 1,
+      sleepImpl: async () => {},
+      log: () => {},
+    });
     expect(result.bids).toBe(1);
     expect(runSpy).toHaveBeenCalledOnce();
   });

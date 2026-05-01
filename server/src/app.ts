@@ -12,6 +12,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import type { GatewayMiddlewareAdapter } from "./middleware/nanopayments.js";
 import { createInMemoryNonceStore, type NonceStore } from "./nonces/store.js";
 import { registerRoutes } from "./routes/index.js";
+import { createControlStore, type ControlStore } from "./state/controlStore.js";
 import {
   createBidStore,
   createListingStore,
@@ -74,6 +75,8 @@ export interface AppDeps {
   autoClearDelayMs?: number;
   /** Optional pre-built scheduler — tests can inject a stub. */
   autoClearScheduler?: AutoClearScheduler;
+  /** Optional pre-built control store — tests can inject one to start paused. */
+  controlStore?: ControlStore;
   /** Falls back to the package-level pino default when omitted. */
   logger?: Logger;
 }
@@ -87,6 +90,8 @@ export interface AppHandles {
   eventBus: EventBus;
   /** Exposed so tests / a graceful-shutdown hook can clear pending timers. */
   autoClearScheduler: AutoClearScheduler;
+  /** Pause/resume control state. Read by gates + agent /control/state polls. */
+  controlStore: ControlStore;
 }
 
 /**
@@ -100,6 +105,7 @@ export function createApp(deps: AppDeps): AppHandles {
   const settlementStore = deps.settlementStore ?? createSettlementStore();
   const nonceStore = deps.nonceStore ?? createInMemoryNonceStore();
   const eventBus = deps.eventBus ?? createEventBus();
+  const controlStore = deps.controlStore ?? createControlStore();
   const log = deps.logger ?? defaultLogger;
 
   const autoClearScheduler =
@@ -117,6 +123,7 @@ export function createApp(deps: AppDeps): AppHandles {
           buyerWalletRouting: deps.buyerWalletRouting,
         }),
       logger: log,
+      isPaused: () => controlStore.isPaused(),
     });
 
   app.disable("x-powered-by");
@@ -136,6 +143,7 @@ export function createApp(deps: AppDeps): AppHandles {
     buyerWalletRouting: deps.buyerWalletRouting,
     demo: deps.demo,
     autoClearScheduler,
+    controlStore,
   });
 
   app.use(errorHandler);
@@ -148,5 +156,6 @@ export function createApp(deps: AppDeps): AppHandles {
     nonceStore,
     eventBus,
     autoClearScheduler,
+    controlStore,
   };
 }

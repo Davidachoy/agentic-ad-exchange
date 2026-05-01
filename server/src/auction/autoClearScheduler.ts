@@ -11,6 +11,11 @@ export interface AutoClearSchedulerDeps {
   /** Injected runAuction binding so the scheduler stays unit-testable. */
   runAuction: (listingId: string) => Promise<RunAuctionOutcome>;
   logger: Logger;
+  /**
+   * Pause predicate. When it returns true at fire-time, the scheduler skips
+   * the runAuction call (logs at debug). Defaults to "never paused".
+   */
+  isPaused?: () => boolean;
 }
 
 export interface AutoClearScheduler {
@@ -38,6 +43,10 @@ export function createAutoClearScheduler(deps: AutoClearSchedulerDeps): AutoClea
       // crash the process under Node's --unhandled-rejections=throw default.
       void (async () => {
         try {
+          if (deps.isPaused?.()) {
+            deps.logger.debug({ listingId }, "auto_clear_skipped_paused");
+            return;
+          }
           const outcome = await deps.runAuction(listingId);
           switch (outcome.kind) {
             case "listing_not_found":

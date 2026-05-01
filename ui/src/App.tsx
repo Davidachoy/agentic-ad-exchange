@@ -6,12 +6,14 @@ import { AuctionFeed } from "./components/AuctionFeed.js";
 import { AuctionPanel } from "./components/AuctionPanel.js";
 import { BuyerPanel } from "./components/BuyerPanel.js";
 import { MarginExplainer } from "./components/MarginExplainer.js";
+import { PauseButton } from "./components/PauseButton.js";
 import { SellerPanel } from "./components/SellerPanel.js";
 import { SettlementLedger } from "./components/SettlementLedger.js";
 import { TransactionCounter } from "./components/TransactionCounter.js";
 import { uiEnv } from "./env.js";
 import { useAuctionStream } from "./hooks/useAuctionStream.js";
 import { useBids } from "./hooks/useBids.js";
+import { useControlState } from "./hooks/useControlState.js";
 import { useInventory } from "./hooks/useInventory.js";
 
 export function App(): JSX.Element {
@@ -19,6 +21,7 @@ export function App(): JSX.Element {
     useAuctionStream();
   const { listings, refresh: refreshInventory } = useInventory();
   const { bids, refresh: refreshBids } = useBids();
+  const control = useControlState();
 
   const [registering, setRegistering] = useState(false);
   const [running, setRunning] = useState(false);
@@ -129,15 +132,33 @@ export function App(): JSX.Element {
               AI agents buy &amp; sell ad impressions · settled via Circle Arc nanopayments
             </p>
           </div>
-          <span
-            aria-label="Exchange connection status"
-            className={`mt-1 text-xs uppercase tracking-wide ${
-              connected ? "text-exchange-accent" : "text-slate-500"
-            }`}
-          >
-            {connected ? "● live" : "○ connecting…"}
-          </span>
+          <div className="flex items-center gap-3">
+            <PauseButton
+              paused={control.paused}
+              pending={control.pending}
+              onPause={() => void control.pause()}
+              onResume={() => void control.resume()}
+            />
+            <span
+              aria-label="Exchange connection status"
+              className={`mt-1 text-xs uppercase tracking-wide ${
+                connected ? "text-exchange-accent" : "text-slate-500"
+              }`}
+            >
+              {connected ? "● live" : "○ connecting…"}
+            </span>
+          </div>
         </header>
+
+        {control.paused && (
+          <div
+            role="status"
+            className="mb-6 rounded-lg border border-amber-700/60 bg-amber-900/20 px-4 py-2.5 text-sm text-amber-200"
+          >
+            Demo paused — buyer agents, seller agent, and auto-clear are halted.
+            Click Resume to continue.
+          </div>
+        )}
 
         {/* Happy path guide */}
         <div className="mb-6 flex items-center gap-2 overflow-x-auto rounded-xl border border-slate-800 bg-exchange-card px-5 py-3.5">

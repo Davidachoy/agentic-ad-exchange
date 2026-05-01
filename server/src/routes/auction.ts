@@ -2,10 +2,13 @@ import { Router } from "express";
 
 import type { AutoClearScheduler } from "../auction/autoClearScheduler.js";
 import { runAuction, type RunAuctionDeps } from "../auction/runAuction.js";
+import { createPauseGuard } from "../middleware/pauseGuard.js";
 import { createAuctionRateLimiter } from "../middleware/rateLimit.js";
+import type { ControlStore } from "../state/controlStore.js";
 
 export interface AuctionRunDeps extends RunAuctionDeps {
   autoClearScheduler: AutoClearScheduler;
+  controlStore: ControlStore;
 }
 
 export function createAuctionRouter(deps: AuctionRunDeps): Router {
@@ -13,6 +16,7 @@ export function createAuctionRouter(deps: AuctionRunDeps): Router {
 
   router.post(
     "/auction/run/:listingId",
+    createPauseGuard(deps.controlStore),
     createAuctionRateLimiter(5),
     async (req, res, next) => {
       try {

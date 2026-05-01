@@ -74,3 +74,15 @@ export interface AgentDemoResult {
 export async function triggerAgentDemo(): Promise<AgentDemoResult> {
   return apiFetch("/demo/agent-run", { method: "POST" });
 }
+
+export async function getControlState(): Promise<{ paused: boolean }> {
+  return apiFetch("/control/state");
+}
+
+export async function pauseDemo(): Promise<{ paused: boolean }> {
+  return apiFetch("/control/pause", { method: "POST" });
+}
+
+export async function resumeDemo(): Promise<{ paused: boolean }> {
+  return apiFetch("/control/resume", { method: "POST" });
+}

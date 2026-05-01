@@ -23,12 +23,32 @@ function fakeAgent(toolCalls: string[]): SellerAgent {
   };
 }
 
+function controlResponse(paused: boolean): Response {
+  return new Response(JSON.stringify({ paused }), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+function makeFetchByUrl(handlers: Record<string, () => Response>): typeof fetch {
+  return (async (url: RequestInfo | URL) => {
+    const u = url.toString();
+    for (const [needle, fn] of Object.entries(handlers)) {
+      if (u.includes(needle)) return fn();
+    }
+    throw new Error(`unhandled url: ${u}`);
+  }) as unknown as typeof fetch;
+}
+
+const runningFetch = makeFetchByUrl({ "/control/state": () => controlResponse(false) });
+
 describe("runSeller", () => {
   it("registers a listing on the first cycle (happy)", async () => {
     const agent = fakeAgent(["listInventory"]);
     const result = await runSeller({
       config: baseConfig,
       agent,
+      fetchImpl: runningFetch,
       maxCycles: 1,
       sleepImpl: async () => {},
       log: () => {},
@@ -42,6 +62,7 @@ describe("runSeller", () => {
     const result = await runSeller({
       config: baseConfig,
       agent: fakeAgent(["listInventory"]),
+      fetchImpl: runningFetch,
       maxCycles: 2,
       sleepImpl: async () => {},
       log: () => {},
@@ -65,6 +86,7 @@ describe("runSeller", () => {
     const result = await runSeller({
       config: baseConfig,
       agent,
+      fetchImpl: runningFetch,
       maxCycles: 1,
       sleepImpl: async () => {},
       log,
@@ -75,5 +97,26 @@ describe("runSeller", () => {
       "cycle_error",
       expect.objectContaining({ error: "agent down" }),
     );
+  });
+
+  it("skips the cycle without calling the agent when control says paused", async () => {
+    const agent = fakeAgent(["listInventory"]);
+    const runSpy = vi.spyOn(agent, "run");
+    const log = vi.fn();
+    const fetchImpl = makeFetchByUrl({
+      "/control/state": () => controlResponse(true),
+    });
+    const result = await runSeller({
+      config: baseConfig,
+      agent,
+      fetchImpl,
+      maxCycles: 1,
+      sleepImpl: async () => {},
+      log,
+    });
+    expect(result.cycles).toBe(1);
+    expect(result.registered).toBe(0);
+    expect(runSpy).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith("cycle_paused", expect.any(Object));
   });
 });
