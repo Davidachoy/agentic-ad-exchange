@@ -20,7 +20,7 @@ export function AuctionFeed({ auctions }: AuctionFeedProps): JSX.Element {
       {auctions.length === 0 ? (
         <p className="mt-3 text-sm text-slate-500">No auctions yet — run one to see results.</p>
       ) : (
-        <ul className="mt-3 space-y-2">
+        <ul className="mt-3 max-h-96 space-y-2 overflow-y-auto pr-1">
           {auctions.map((a) => (
             <li
               key={a.auctionId}
