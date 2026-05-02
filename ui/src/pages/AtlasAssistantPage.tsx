@@ -8,6 +8,7 @@ import {
   type AssistantChatHttpError,
 } from "../api/client.js";
 import { ATLAS_CHIP_SUGGESTIONS, getAtlasChipDemoReply } from "../assistant/atlasChipDemoCatalog.js";
+import { getSimulatedAtlasReply, type AtlasComposerMode } from "../assistant/atlasComposerSimulation.js";
 import {
   buildDashboardAssistantContext,
   buildFallbackAssistantBlocks,
@@ -15,8 +16,8 @@ import {
 } from "../assistant/buildDashboardContext.js";
 import { AtlasChatThread } from "../components/atlas/AtlasChatThread.js";
 import { AtlasComposer } from "../components/atlas/AtlasComposer.js";
-import { AtlasLiveCanvas } from "../components/atlas/AtlasLiveCanvas.js";
 import type { ChatLine } from "../components/atlas/AtlasMessageBubble.js";
+import { AtlasRightPanel } from "../components/atlas/AtlasRightPanel.js";
 import { AtlasSidebar } from "../components/atlas/AtlasSidebar.js";
 import { AtlasTopBar } from "../components/atlas/AtlasTopBar.js";
 import { useDashboardData } from "../context/DashboardDataContext.js";
@@ -42,13 +43,18 @@ export function AtlasAssistantPage(): JSX.Element {
       id: newId(),
       role: "assistant",
       content:
-        "I'm **Atlas**, your in-app assistant for the Agentic Ad Exchange. **Suggestion chips** below insert **local demo replies** (sample cards and charts) with no API call — type a message in the box when you want the **live assistant** (server + Gemini when configured).",
+        "I'm **Atlas**, your in-app assistant for the Agentic Ad Exchange. **Suggestion chips** insert **local demo replies** when they match a preset, or call the **live assistant** (server + Gemini when configured). Messages you **type below** use a **local simulation** (typing indicator + canned replies) for this demo.",
       createdAt: new Date().toISOString(),
     },
   ]);
   const [sending, setSending] = useState(false);
+  const [composerTyping, setComposerTyping] = useState(false);
   const messagesRef = useRef(messages);
   const assistantAbortRef = useRef<AbortController | null>(null);
+  const composerSimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pageMountedRef = useRef(true);
+  /** True while composer demo typing + reply window runs (blocks chip sends). */
+  const composerSimBusyRef = useRef(false);
   /** Prevents parallel POSTs (double chip / re-entrant send) while one assistant call is in flight. */
   const assistantBusyRef = useRef(false);
   /** True only when the user clicked Cancel — other aborts (unmount) stay silent. */
@@ -56,6 +62,18 @@ export function AtlasAssistantPage(): JSX.Element {
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  useEffect(() => {
+    return () => {
+      pageMountedRef.current = false;
+      if (composerSimTimerRef.current != null) {
+        clearTimeout(composerSimTimerRef.current);
+        composerSimTimerRef.current = null;
+      }
+      composerSimBusyRef.current = false;
+      setComposerTyping(false);
+    };
+  }, []);
 
   const contextPayload = useMemo(
     () =>
@@ -88,7 +106,7 @@ export function AtlasAssistantPage(): JSX.Element {
 
   const sendWithHistory = useCallback(
     async (userText: string) => {
-      if (assistantBusyRef.current) {
+      if (assistantBusyRef.current || composerSimBusyRef.current) {
         return;
       }
       assistantBusyRef.current = true;
@@ -206,6 +224,44 @@ export function AtlasAssistantPage(): JSX.Element {
     [contextPayload],
   );
 
+  const sendComposerMessage = useCallback((userText: string, mode: AtlasComposerMode) => {
+    if (sending || composerSimBusyRef.current || assistantBusyRef.current) {
+      return;
+    }
+    composerSimBusyRef.current = true;
+    const userMsg: ChatLine = {
+      id: newId(),
+      role: "user",
+      content: userText,
+      createdAt: new Date().toISOString(),
+      userComposerMode: mode === "direct" ? undefined : mode,
+    };
+    const withUser = [...messagesRef.current, userMsg];
+    messagesRef.current = withUser;
+    setMessages(withUser);
+    setComposerTyping(true);
+
+    composerSimTimerRef.current = setTimeout(() => {
+      composerSimTimerRef.current = null;
+      const reply = getSimulatedAtlasReply(mode, userText);
+      const withAssistant: ChatLine[] = [
+        ...messagesRef.current,
+        {
+          id: newId(),
+          role: "assistant" as const,
+          content: reply,
+          createdAt: new Date().toISOString(),
+        },
+      ];
+      if (pageMountedRef.current) {
+        messagesRef.current = withAssistant;
+        setMessages(withAssistant);
+        setComposerTyping(false);
+      }
+      composerSimBusyRef.current = false;
+    }, 1200);
+  }, [sending]);
+
   return (
     <div className="flex h-screen min-h-0 bg-[oklch(0.985_0.004_80)] text-[oklch(0.18_0.01_80)]">
       <AtlasSidebar />
@@ -213,14 +269,18 @@ export function AtlasAssistantPage(): JSX.Element {
         <AtlasTopBar />
         <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(300px,420px)]">
           <div className="flex min-h-0 flex-col border-r border-[oklch(0.91_0.005_80)] bg-[oklch(0.985_0.004_80)]">
-            <AtlasChatThread messages={messages} assistantPending={sending} />
+            <AtlasChatThread
+              messages={messages}
+              assistantPending={sending}
+              composerTyping={composerTyping}
+            />
             <div className="shrink-0 border-t border-[oklch(0.91_0.005_80)] px-6 pb-2">
               <div className="mx-auto flex max-w-2xl flex-wrap gap-2 pt-2">
                 {ATLAS_CHIP_SUGGESTIONS.map((s) => (
                   <button
                     key={s}
                     type="button"
-                    disabled={sending}
+                    disabled={sending || composerTyping}
                     onClick={() => void sendWithHistory(s)}
                     className="rounded-full border border-[oklch(0.91_0.005_80)] bg-white px-3 py-1.5 text-left text-[11.5px] text-[oklch(0.36_0.01_80)] hover:border-[oklch(0.72_0.006_80)] disabled:opacity-50"
                   >
@@ -230,13 +290,13 @@ export function AtlasAssistantPage(): JSX.Element {
               </div>
             </div>
             <AtlasComposer
-              disabled={sending}
+              disabled={sending || composerTyping}
               pending={sending}
               onCancel={cancelAssistantRequest}
-              onSend={(t) => void sendWithHistory(t)}
+              onSend={(t, mode) => sendComposerMessage(t, mode)}
             />
           </div>
-          <AtlasLiveCanvas
+          <AtlasRightPanel
             connected={data.connected}
             paused={data.control.paused}
             settlementCount={data.settlementCount}
@@ -244,6 +304,7 @@ export function AtlasAssistantPage(): JSX.Element {
             listingCount={data.listings.length}
             lastAuction={data.lastAuction}
             lastReceipt={data.lastReceipt}
+            control={data.control}
           />
         </div>
       </div>

@@ -1,6 +1,8 @@
 import type { AssistantUiBlock } from "@ade/shared";
 import type { JSX } from "react";
 
+import type { AtlasComposerMode } from "../../assistant/atlasComposerSimulation.js";
+
 import { AtlasAssistantBlocks } from "./AtlasAssistantBlocks.js";
 import { renderBoldMarkdown } from "./inlineBold.js";
 
@@ -13,10 +15,36 @@ export interface ChatLine {
   /** Local-only canned reply from suggestion chips (no API call). */
   demoPreview?: boolean;
   blocks?: AssistantUiBlock[];
+  /** Set when the user sent from the composer in goal/policy mode (styling only). */
+  userComposerMode?: AtlasComposerMode;
+}
+
+function userComposerTag(message: ChatLine): { label: string; labelClass: string } | null {
+  if (message.userComposerMode === "goal") {
+    return { label: "Goal updated", labelClass: "text-[10px] font-semibold text-amber-700" };
+  }
+  if (message.userComposerMode === "policy") {
+    return { label: "Policy added", labelClass: "text-[10px] font-semibold text-blue-700" };
+  }
+  return null;
+}
+
+function userBubbleClassName(message: ChatLine): string {
+  const base =
+    "rounded-xl border px-3.5 py-2.5 text-left text-[13.5px] leading-relaxed text-[oklch(0.22_0.01_80)] shadow-sm inline-block";
+  const m = message.userComposerMode;
+  if (m === "goal") {
+    return `${base} border-[oklch(0.91_0.005_80)] border-l-4 border-l-amber-400 bg-white`;
+  }
+  if (m === "policy") {
+    return `${base} border-[oklch(0.91_0.005_80)] border-l-4 border-l-blue-600 bg-white`;
+  }
+  return `${base} border-[oklch(0.91_0.005_80)] bg-white`;
 }
 
 export function AtlasMessageBubble({ message }: { message: ChatLine }): JSX.Element {
   const isUser = message.role === "user";
+  const userTag = isUser ? userComposerTag(message) : null;
   return (
     <article
       className={`flex gap-3.5 ${isUser ? "flex-row-reverse" : ""}`}
@@ -53,10 +81,17 @@ export function AtlasMessageBubble({ message }: { message: ChatLine }): JSX.Elem
             {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </time>
         </header>
+        {userTag ? (
+          <p className={`mb-1.5 ${isUser ? "text-right" : ""}`}>
+            <span className={userTag.labelClass}>{userTag.label}</span>
+          </p>
+        ) : null}
         <div
-          className={`rounded-xl border border-[oklch(0.91_0.005_80)] bg-white px-3.5 py-2.5 text-left text-[13.5px] leading-relaxed text-[oklch(0.22_0.01_80)] shadow-sm ${
-            isUser ? "inline-block text-left" : ""
-          }`}
+          className={
+            isUser
+              ? userBubbleClassName(message)
+              : "rounded-xl border border-[oklch(0.91_0.005_80)] bg-white px-3.5 py-2.5 text-left text-[13.5px] leading-relaxed text-[oklch(0.22_0.01_80)] shadow-sm"
+          }
         >
           <div className="whitespace-pre-wrap">{renderBoldMarkdown(message.content)}</div>
           {!isUser && message.blocks != null && message.blocks.length > 0 ? (

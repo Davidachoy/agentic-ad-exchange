@@ -98,6 +98,36 @@ describe("<AtlasMessageBubble />", () => {
     expect(screen.getByLabelText(/Bids by buyer/)).toBeInTheDocument();
   });
 
+  it("shows goal tag and left accent for user goal composer messages (happy)", () => {
+    render(
+      <AtlasMessageBubble
+        message={{
+          id: "g1",
+          role: "user",
+          content: "Maximize reach",
+          createdAt: new Date().toISOString(),
+          userComposerMode: "goal",
+        }}
+      />,
+    );
+    expect(screen.getByText("Goal updated")).toBeInTheDocument();
+  });
+
+  it("shows policy tag for user policy composer messages (happy)", () => {
+    render(
+      <AtlasMessageBubble
+        message={{
+          id: "p1",
+          role: "user",
+          content: "Never bid above $15",
+          createdAt: new Date().toISOString(),
+          userComposerMode: "policy",
+        }}
+      />,
+    );
+    expect(screen.getByText("Policy added")).toBeInTheDocument();
+  });
+
   it("does not render blocks for user messages (edge)", () => {
     render(
       <AtlasMessageBubble

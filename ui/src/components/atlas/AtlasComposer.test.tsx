@@ -20,7 +20,26 @@ describe("<AtlasComposer />", () => {
     render(<AtlasComposer onSend={onSend} />);
     await user.type(screen.getByLabelText("Message to Atlas"), "  Hello Atlas  ");
     await user.click(screen.getByRole("button", { name: "Send message" }));
-    expect(onSend).toHaveBeenCalledWith("Hello Atlas");
+    expect(onSend).toHaveBeenCalledWith("Hello Atlas", "direct");
+  });
+
+  it("inserts sample bid text when Quick action is clicked (happy)", async () => {
+    const user = userEvent.setup();
+    render(<AtlasComposer onSend={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: /quick action/i }));
+    const field = screen.getByLabelText("Message to Atlas") as HTMLTextAreaElement;
+    expect(field.value).toContain("Roku CTV");
+    expect(field.value).toContain("Solstice 1P");
+  });
+
+  it("calls onSend with goal mode after selecting Set goal (happy)", async () => {
+    const user = userEvent.setup();
+    const onSend = vi.fn();
+    render(<AtlasComposer onSend={onSend} />);
+    await user.click(screen.getByRole("button", { name: /set goal/i }));
+    await user.type(screen.getByLabelText("Message to Atlas"), "Maximize VCR");
+    await user.click(screen.getByRole("button", { name: "Send message" }));
+    expect(onSend).toHaveBeenCalledWith("Maximize VCR", "goal");
   });
 
   it("calls onCancel while pending (happy)", async () => {
