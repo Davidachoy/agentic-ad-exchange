@@ -1,4 +1,11 @@
-import type { AdInventoryListing, AuctionResult, BidRequest, SettlementReceipt } from "@ade/shared";
+import type {
+  AdInventoryListing,
+  AssistantChatRequest,
+  AssistantChatResponse,
+  AuctionResult,
+  BidRequest,
+  SettlementReceipt,
+} from "@ade/shared";
 
 import { uiEnv } from "../env.js";
 
@@ -85,4 +92,30 @@ export async function pauseDemo(): Promise<{ paused: boolean }> {
 
 export async function resumeDemo(): Promise<{ paused: boolean }> {
   return apiFetch("/control/resume", { method: "POST" });
+}
+
+export interface AssistantChatHttpError extends Error {
+  status: number;
+  code?: string;
+}
+
+export async function postAssistantChat(body: AssistantChatRequest): Promise<AssistantChatResponse> {
+  const url = `${uiEnv.VITE_API_BASE_URL}/assistant/chat`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: JSON_HEADERS,
+    body: JSON.stringify(body),
+  });
+  const raw: unknown = await res.json().catch(() => (null));
+  if (!res.ok) {
+    const code =
+      typeof raw === "object" && raw !== null && "code" in raw && typeof (raw as { code: unknown }).code === "string"
+        ? (raw as { code: string }).code
+        : undefined;
+    const err = new Error(`assistant ${res.status}`) as AssistantChatHttpError;
+    err.status = res.status;
+    err.code = code;
+    throw err;
+  }
+  return raw as AssistantChatResponse;
 }

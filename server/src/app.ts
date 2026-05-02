@@ -1,3 +1,4 @@
+import type { AuctionResult } from "@ade/shared";
 import type { CircleClient } from "@ade/wallets";
 import express, { type Express } from "express";
 import type { Logger } from "pino";
@@ -79,6 +80,11 @@ export interface AppDeps {
   controlStore?: ControlStore;
   /** Falls back to the package-level pino default when omitted. */
   logger?: Logger;
+  /** When null, POST /assistant/chat returns 503 gemini_not_configured. */
+  assistantGemini?: { apiKey: string; model: string } | null;
+  assistantRateLimitPerMin?: number;
+  /** Synthetic `auctionMatched` rows replayed on each SSE connect (dev fixtures). */
+  fixtureAuctionReplay?: ReadonlyArray<AuctionResult>;
 }
 
 export interface AppHandles {
@@ -144,6 +150,9 @@ export function createApp(deps: AppDeps): AppHandles {
     demo: deps.demo,
     autoClearScheduler,
     controlStore,
+    assistantGemini: deps.assistantGemini ?? null,
+    assistantRateLimitPerMin: deps.assistantRateLimitPerMin ?? 30,
+    fixtureAuctionReplay: deps.fixtureAuctionReplay,
   });
 
   app.use(errorHandler);

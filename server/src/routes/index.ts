@@ -2,6 +2,8 @@ import type { CircleClient } from "@ade/wallets";
 import type { Express } from "express";
 
 
+import type { AuctionResult } from "@ade/shared";
+
 import type { AutoClearScheduler } from "../auction/autoClearScheduler.js";
 import type { ResolvedPersona } from "../demo/runAgentAuction.js";
 import type { EventBus } from "../events/bus.js";
@@ -11,6 +13,7 @@ import type { ControlStore } from "../state/controlStore.js";
 import type { BidStore, ListingStore, SettlementStore } from "../state/stores.js";
 
 
+import { createAssistantRouter } from "./assistant.js";
 import { createAuctionRouter } from "./auction.js";
 import { createBidRouter } from "./bid.js";
 import { createControlRouter } from "./control.js";
@@ -41,10 +44,19 @@ export interface RegisterRoutesDeps {
   };
   autoClearScheduler: AutoClearScheduler;
   controlStore: ControlStore;
+  assistantGemini: { apiKey: string; model: string } | null;
+  assistantRateLimitPerMin: number;
+  fixtureAuctionReplay?: ReadonlyArray<AuctionResult>;
 }
 
 export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
   app.use(createHealthRouter());
+  app.use(
+    createAssistantRouter({
+      gemini: deps.assistantGemini,
+      rateLimitPerMin: deps.assistantRateLimitPerMin,
+    }),
+  );
   app.use(
     createInventoryRouter({
       listingStore: deps.listingStore,
@@ -75,7 +87,12 @@ export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
     }),
   );
   app.use(createSettlementRouter({ settlementStore: deps.settlementStore }));
-  app.use(createStreamRouter({ eventBus: deps.eventBus }));
+  app.use(
+    createStreamRouter({
+      eventBus: deps.eventBus,
+      fixtureAuctionReplay: deps.fixtureAuctionReplay,
+    }),
+  );
   app.use(
     createControlRouter({ controlStore: deps.controlStore, eventBus: deps.eventBus }),
   );

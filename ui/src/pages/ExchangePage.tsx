@@ -1,36 +1,38 @@
 import type { AdInventoryListing } from "@ade/shared";
+import type { JSX } from "react";
 import { useEffect, useState } from "react";
 
-import { postInventory, runAuction } from "./api/client.js";
-import { AuctionFeed } from "./components/AuctionFeed.js";
-import { AuctionPanel } from "./components/AuctionPanel.js";
-import { BuyerPanel } from "./components/BuyerPanel.js";
-import { MarginExplainer } from "./components/MarginExplainer.js";
-import { PauseButton } from "./components/PauseButton.js";
-import { SellerPanel } from "./components/SellerPanel.js";
-import { SettlementLedger } from "./components/SettlementLedger.js";
-import { TransactionCounter } from "./components/TransactionCounter.js";
-import { uiEnv } from "./env.js";
-import { useAuctionStream } from "./hooks/useAuctionStream.js";
-import { useBids } from "./hooks/useBids.js";
-import { useControlState } from "./hooks/useControlState.js";
-import { useInventory } from "./hooks/useInventory.js";
+import { postInventory, runAuction } from "../api/client.js";
+import { AppNav } from "../components/AppNav.js";
+import { AuctionFeed } from "../components/AuctionFeed.js";
+import { AuctionPanel } from "../components/AuctionPanel.js";
+import { BuyerPanel } from "../components/BuyerPanel.js";
+import { MarginExplainer } from "../components/MarginExplainer.js";
+import { PauseButton } from "../components/PauseButton.js";
+import { SellerPanel } from "../components/SellerPanel.js";
+import { SettlementLedger } from "../components/SettlementLedger.js";
+import { TransactionCounter } from "../components/TransactionCounter.js";
+import { useDashboardData } from "../context/DashboardDataContext.js";
+import { uiEnv } from "../env.js";
 
-export function App(): JSX.Element {
-  const { connected, settlementCount, auctions, lastAuction, lastReceipt, confirmedReceipts } =
-    useAuctionStream();
-  const { listings, refresh: refreshInventory } = useInventory();
-  const { bids, refresh: refreshBids } = useBids();
-  const control = useControlState();
+export function ExchangePage(): JSX.Element {
+  const {
+    connected,
+    settlementCount,
+    auctions,
+    lastAuction,
+    lastReceipt,
+    confirmedReceipts,
+    listings,
+    refreshInventory,
+    bids,
+    refreshBids,
+    control,
+  } = useDashboardData();
 
   const [registering, setRegistering] = useState(false);
   const [running, setRunning] = useState(false);
   const [activeListingId, setActiveListingId] = useState<string | null>(null);
-
-  // Drives the FlowStep visualization for the *current* cycle. Set when an
-  // auction event arrives, cleared 2.5s after the matching settlement so the
-  // indicator resets between runs. Independent of lastAuction/lastReceipt,
-  // which the side panels keep showing as "Last Result".
   const [cycleAuctionId, setCycleAuctionId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -104,7 +106,7 @@ export function App(): JSX.Element {
   return (
     <div className="min-h-screen bg-exchange-bg text-slate-100">
       <main className="mx-auto max-w-7xl p-6">
-        {/* Header */}
+        <AppNav />
         <header className="mb-6 flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-semibold">Agentic Ad Exchange</h1>
@@ -140,7 +142,6 @@ export function App(): JSX.Element {
           </div>
         )}
 
-        {/* Happy path guide */}
         <div className="mb-6 flex items-center gap-2 overflow-x-auto rounded-xl border border-slate-800 bg-exchange-card px-5 py-3.5">
           <FlowStep n={1} label="Seller lists" done={listings.length > 0} />
           <FlowArrow />
@@ -151,7 +152,6 @@ export function App(): JSX.Element {
           <FlowStep n={4} label="Ad goes live" done={step4Done} />
         </div>
 
-        {/* Main panels */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <SellerPanel
             listings={listings}
@@ -180,7 +180,6 @@ export function App(): JSX.Element {
           />
         </div>
 
-        {/* Bottom row: live data trio (auctions / counter / settlements) */}
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
           <AuctionFeed auctions={auctions} />
           <TransactionCounter count={settlementCount} />
@@ -190,7 +189,6 @@ export function App(): JSX.Element {
           />
         </div>
 
-        {/* Margin explainer — full width so its 4-column table has room */}
         <div className="mt-6">
           <MarginExplainer />
         </div>

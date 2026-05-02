@@ -35,3 +35,14 @@ export function createBidRateLimiter(perMinute: number): RequestHandler {
     },
   });
 }
+
+/** IP-keyed limit for POST /assistant/chat (demo UI; no wallet in body). */
+export function createAssistantRateLimiter(perMinute: number): RequestHandler {
+  return rateLimit({
+    windowMs: 60_000,
+    limit: perMinute,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    keyGenerator: (req) => `assistant:${req.ip ?? "unknown"}`,
+  });
+}
