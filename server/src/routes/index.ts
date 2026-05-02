@@ -1,6 +1,6 @@
 import type { CircleClient } from "@ade/wallets";
 import type { Express } from "express";
-
+import type { Logger } from "pino";
 
 import type { AuctionResult } from "@ade/shared";
 
@@ -47,6 +47,8 @@ export interface RegisterRoutesDeps {
   assistantGemini: { apiKey: string; model: string } | null;
   assistantRateLimitPerMin: number;
   fixtureAuctionReplay?: ReadonlyArray<AuctionResult>;
+  /** Pino logger for assistant + route diagnostics (same instance as createApp). */
+  logger: Logger;
 }
 
 export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
@@ -55,6 +57,7 @@ export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
     createAssistantRouter({
       gemini: deps.assistantGemini,
       rateLimitPerMin: deps.assistantRateLimitPerMin,
+      logger: deps.logger,
     }),
   );
   app.use(

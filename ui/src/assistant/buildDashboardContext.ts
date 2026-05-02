@@ -1,5 +1,6 @@
 import {
   type AdInventoryListing,
+  type AssistantUiBlock,
   type AuctionResult,
   type BidRequest,
   DashboardAssistantContextSchema,
@@ -47,6 +48,21 @@ export function buildDashboardAssistantContext(input: BuildDashboardContextInput
 /**
  * Deterministic copy when Gemini is unavailable (503) or network fails.
  */
+/** Exchange-only metrics strip when Gemini is offline or the request fails. */
+export function buildFallbackAssistantBlocks(ctx: DashboardAssistantContext): AssistantUiBlock[] {
+  return [
+    {
+      type: "metrics_strip",
+      items: [
+        { label: "SSE", value: ctx.sseConnected ? "live" : "off", dataSource: "exchange" },
+        { label: "Demo", value: ctx.demoPaused ? "paused" : "running", dataSource: "exchange" },
+        { label: "Settlements", value: String(ctx.settlementCount), dataSource: "exchange" },
+        { label: "Bids", value: String(ctx.bids.length), dataSource: "exchange" },
+      ],
+    },
+  ];
+}
+
 export function buildFallbackAssistantSummary(ctx: DashboardAssistantContext): string {
   const lines: string[] = [
     "**Atlas (offline summary)** — Gemini is not configured or the assistant API failed. Here is a snapshot from your dashboard:",

@@ -3,12 +3,29 @@ import express from "express";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 
-import { createAssistantRouter } from "./assistant.js";
+import { createLogger } from "../logger.js";
+import { createAssistantRouter, type AssistantReplyGenerator } from "./assistant.js";
+
+const testLog = createLogger("silent");
 
 function makeApp(gemini: { apiKey: string; model: string } | null) {
   const app = express();
   app.use(express.json());
-  app.use(createAssistantRouter({ gemini, rateLimitPerMin: 10_000 }));
+  app.use(createAssistantRouter({ gemini, rateLimitPerMin: 10_000, logger: testLog }));
+  return app;
+}
+
+function makeAppWithStubReply(replyGenerator: AssistantReplyGenerator) {
+  const app = express();
+  app.use(express.json());
+  app.use(
+    createAssistantRouter({
+      gemini: null,
+      rateLimitPerMin: 10_000,
+      replyGenerator,
+      logger: testLog,
+    }),
+  );
   return app;
 }
 
@@ -48,5 +65,25 @@ describe("POST /assistant/chat", () => {
     };
     const res = await request(makeApp(null)).post("/assistant/chat").send(bad).expect(400);
     expect(res.body.error).toContain("user");
+  });
+
+  it("returns reply and blocks when replyGenerator is injected (happy)", async () => {
+    const res = await request(
+      makeAppWithStubReply(async () => ({
+        reply: "OK",
+        blocks: [
+          {
+            type: "metrics_strip",
+            items: [{ label: "SSE", value: "live", dataSource: "exchange" }],
+          },
+        ],
+      })),
+    )
+      .post("/assistant/chat")
+      .send(body)
+      .expect(200);
+    expect(res.body.reply).toBe("OK");
+    expect(res.body.blocks).toHaveLength(1);
+    expect(res.body.blocks[0].type).toBe("metrics_strip");
   });
 });

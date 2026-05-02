@@ -35,4 +35,86 @@ describe("<AtlasMessageBubble />", () => {
     expect(document.querySelector("strong")).toBeNull();
     expect(screen.getByText("no close **bold", { exact: false })).toBeInTheDocument();
   });
+
+  it("renders assistant blocks when present (happy)", () => {
+    render(
+      <AtlasMessageBubble
+        message={{
+          id: "3",
+          role: "assistant",
+          content: "Snapshot:",
+          createdAt: new Date().toISOString(),
+          blocks: [
+            {
+              type: "metrics_strip",
+              items: [{ label: "SSE", value: "live", dataSource: "exchange" }],
+            },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByLabelText("Structured assistant content")).toBeInTheDocument();
+    expect(screen.getByText("live")).toBeInTheDocument();
+  });
+
+  it("shows demo preview badge when demoPreview is set (happy)", () => {
+    render(
+      <AtlasMessageBubble
+        message={{
+          id: "demo1",
+          role: "assistant",
+          content: "Demo reply.",
+          createdAt: new Date().toISOString(),
+          demoPreview: true,
+        }}
+      />,
+    );
+    expect(screen.getByText("demo preview")).toBeInTheDocument();
+  });
+
+  it("renders bar_chart block with figure caption (happy)", () => {
+    render(
+      <AtlasMessageBubble
+        message={{
+          id: "5",
+          role: "assistant",
+          content: "Visualización:",
+          createdAt: new Date().toISOString(),
+          blocks: [
+            {
+              type: "bar_chart",
+              title: "Bids by buyer",
+              dataSource: "exchange",
+              points: [
+                { label: "A", value: 3 },
+                { label: "B", value: 1 },
+              ],
+            },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByText("Bids by buyer")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Bids by buyer/)).toBeInTheDocument();
+  });
+
+  it("does not render blocks for user messages (edge)", () => {
+    render(
+      <AtlasMessageBubble
+        message={{
+          id: "4",
+          role: "user",
+          content: "Hi",
+          createdAt: new Date().toISOString(),
+          blocks: [
+            {
+              type: "metrics_strip",
+              items: [{ label: "X", value: "y", dataSource: "exchange" }],
+            },
+          ],
+        }}
+      />,
+    );
+    expect(screen.queryByLabelText("Structured assistant content")).toBeNull();
+  });
 });

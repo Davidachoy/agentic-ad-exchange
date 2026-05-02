@@ -22,4 +22,12 @@ describe("<AtlasComposer />", () => {
     await user.click(screen.getByRole("button", { name: "Send message" }));
     expect(onSend).toHaveBeenCalledWith("Hello Atlas");
   });
+
+  it("calls onCancel while pending (happy)", async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    render(<AtlasComposer disabled pending onCancel={onCancel} onSend={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: "Cancel assistant reply" }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
 });

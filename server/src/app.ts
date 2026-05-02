@@ -153,6 +153,7 @@ export function createApp(deps: AppDeps): AppHandles {
     assistantGemini: deps.assistantGemini ?? null,
     assistantRateLimitPerMin: deps.assistantRateLimitPerMin ?? 30,
     fixtureAuctionReplay: deps.fixtureAuctionReplay,
+    logger: log,
   });
 
   app.use(errorHandler);

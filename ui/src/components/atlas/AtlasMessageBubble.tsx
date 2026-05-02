@@ -1,29 +1,8 @@
-import type { JSX, ReactNode } from "react";
+import type { AssistantUiBlock } from "@ade/shared";
+import type { JSX } from "react";
 
-/** Renders `**segments**` as `<strong>`; leaves unmatched `**` as literal text. */
-function renderBoldMarkdown(text: string): ReactNode {
-  const out: ReactNode[] = [];
-  let i = 0;
-  let key = 0;
-  while (i < text.length) {
-    const open = text.indexOf("**", i);
-    if (open === -1) {
-      out.push(text.slice(i));
-      break;
-    }
-    if (open > i) {
-      out.push(text.slice(i, open));
-    }
-    const close = text.indexOf("**", open + 2);
-    if (close === -1) {
-      out.push(text.slice(open));
-      break;
-    }
-    out.push(<strong key={key++}>{text.slice(open + 2, close)}</strong>);
-    i = close + 2;
-  }
-  return out;
-}
+import { AtlasAssistantBlocks } from "./AtlasAssistantBlocks.js";
+import { renderBoldMarkdown } from "./inlineBold.js";
 
 export interface ChatLine {
   id: string;
@@ -31,6 +10,9 @@ export interface ChatLine {
   content: string;
   createdAt: string;
   usedFallback?: boolean;
+  /** Local-only canned reply from suggestion chips (no API call). */
+  demoPreview?: boolean;
+  blocks?: AssistantUiBlock[];
 }
 
 export function AtlasMessageBubble({ message }: { message: ChatLine }): JSX.Element {
@@ -57,6 +39,11 @@ export function AtlasMessageBubble({ message }: { message: ChatLine }): JSX.Elem
               BUYER AGENT
             </span>
           )}
+          {!isUser && message.demoPreview && (
+            <span className="rounded-full border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-900">
+              demo preview
+            </span>
+          )}
           {!isUser && message.usedFallback && (
             <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-900">
               offline summary
@@ -72,6 +59,9 @@ export function AtlasMessageBubble({ message }: { message: ChatLine }): JSX.Elem
           }`}
         >
           <div className="whitespace-pre-wrap">{renderBoldMarkdown(message.content)}</div>
+          {!isUser && message.blocks != null && message.blocks.length > 0 ? (
+            <AtlasAssistantBlocks blocks={message.blocks} />
+          ) : null}
         </div>
       </div>
     </article>
