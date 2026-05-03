@@ -1,6 +1,7 @@
 import type { JSX } from "react";
 
 import type { AssistantComposerModeField } from "./AssistantModeComposer.js";
+import { IconBolt } from "./AtlasComposerIcons.js";
 
 function svg(size: number): { width: number; height: number; viewBox: string; "aria-hidden": boolean } {
   return { width: size, height: size, viewBox: "0 0 24 24", "aria-hidden": true as const };
@@ -22,10 +23,13 @@ function IconHandshake(): JSX.Element {
   );
 }
 
-function IconStop(): JSX.Element {
+/** Buyer + slash — reads as “block buyer”, not a generic square. */
+function IconBlockBuyer(): JSX.Element {
   return (
-    <svg {...svg(14)} className="text-current" fill="none" stroke="currentColor" strokeWidth="1.75">
-      <rect x="5" y="5" width="14" height="14" rx="2" />
+    <svg {...svg(16)} className="text-current" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5.5 20.5v-1A5.5 5.5 0 0111 14h2a5.5 5.5 0 015.5 5.5v1" />
+      <path d="M3 4l18 16" />
     </svg>
   );
 }
@@ -38,8 +42,15 @@ function IconChart(): JSX.Element {
   );
 }
 
-/** Left-to-right: primary pricing control → read-only insight → commercial → restrictive (last). */
+/** Left-to-right: open chat → pricing → insight → commercial → restrictive (last). */
 export const SELLER_COMPOSER_MODES: readonly AssistantComposerModeField[] = [
+  {
+    id: "ask",
+    label: "Ask yield",
+    placeholder: "Ask about floors, deals, buyers, the right panel, or what to do next...",
+    hint: "Tap + for structured modes (floor, analyze, deal, block) — × clears",
+    pillOnClassName: "atlas-composer-pill--on",
+  },
   {
     id: "set_floor",
     label: "Set floor",
@@ -71,11 +82,14 @@ export const SELLER_COMPOSER_MODES: readonly AssistantComposerModeField[] = [
 ];
 
 export function renderSellerComposerIcon(modeId: string): JSX.Element {
+  if (modeId === "ask") {
+    return <IconBolt />;
+  }
   if (modeId === "configure_deal") {
     return <IconHandshake />;
   }
   if (modeId === "block_buyer") {
-    return <IconStop />;
+    return <IconBlockBuyer />;
   }
   if (modeId === "analyze") {
     return <IconChart />;

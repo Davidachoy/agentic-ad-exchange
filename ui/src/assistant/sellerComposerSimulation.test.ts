@@ -3,6 +3,17 @@ import { describe, expect, it } from "vitest";
 import { getSimulatedSellerReply } from "./sellerComposerSimulation.js";
 
 describe("getSimulatedSellerReply", () => {
+  it("returns ask guidance with message (happy)", () => {
+    const r = getSimulatedSellerReply("ask", "what should I do?");
+    expect(r).toMatch(/Revenue/i);
+    expect(r).toMatch(/Floors/i);
+  });
+
+  it("returns ask guidance when message empty (edge)", () => {
+    const r = getSimulatedSellerReply("ask", "   ");
+    expect(r).toMatch(/Analyze/i);
+  });
+
   it("returns CTV floor projection when placement and price present (happy)", () => {
     const r = getSimulatedSellerReply("set_floor", "Set CTV pre-roll floor to $3.20");
     expect(r).toMatch(/Dropping CTV pre-roll/i);

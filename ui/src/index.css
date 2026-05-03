@@ -112,6 +112,215 @@ body,
   padding: 6px 6px 6px 0;
 }
 
+.atlas-composer-mode-select-wrap {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.atlas-composer-mode-select-label {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ac-ink-4);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.atlas-composer-mode-select-inner {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9px;
+  border: 1px solid var(--ac-line-2);
+  background: var(--ac-bg-2);
+  padding: 0 2px 0 8px;
+}
+
+.atlas-composer-mode-select-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  color: var(--ac-ink-2);
+}
+
+.atlas-composer-mode-select-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.atlas-composer-mode-select {
+  min-width: 0;
+  flex: 1;
+  cursor: pointer;
+  border: 0;
+  border-radius: 0 7px 7px 0;
+  padding: 6px 8px 6px 2px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  color: var(--ac-ink);
+  outline: 0;
+}
+
+.atlas-composer-mode-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.atlas-composer-mode-select-inner:has(.atlas-composer-mode-select:focus-visible) {
+  outline: 2px solid oklch(0.55 0.12 250);
+  outline-offset: 2px;
+}
+
+/* + menu (seller general + structured modes) */
+.atlas-composer-plus-wrap {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.atlas-composer-plus-btn {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--ac-line-2);
+  border-radius: 8px;
+  background: var(--ac-bg-2);
+  color: var(--ac-ink-2);
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.atlas-composer-plus-btn:hover:not(:disabled) {
+  border-color: oklch(0.72 0.006 80);
+  background: oklch(0.955 0.005 80);
+}
+
+.atlas-composer-plus-btn--open {
+  border-color: oklch(0.72 0.006 80);
+  background: oklch(0.95 0.005 80);
+}
+
+.atlas-composer-plus-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.atlas-composer-plus-btn:focus-visible {
+  outline: 2px solid oklch(0.55 0.12 250);
+  outline-offset: 2px;
+}
+
+/* Claude-style + menu: sans labels, hairline dividers, soft float */
+.atlas-composer-plus-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  z-index: 50;
+  margin-bottom: 8px;
+  min-width: 232px;
+  max-width: min(300px, 92vw);
+  overflow: hidden;
+  padding: 4px 0;
+  border-radius: 14px;
+  border: 1px solid oklch(0.9 0.004 80);
+  background: #fff;
+  box-shadow:
+    0 0 0 1px oklch(0.2 0.02 80 / 0.04),
+    0 4px 24px oklch(0.2 0.02 80 / 0.1),
+    0 1px 3px oklch(0.2 0.02 80 / 0.06);
+}
+
+.atlas-composer-plus-menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: -0.012em;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color: oklch(0.22 0.01 80);
+  transition: background 0.1s ease;
+}
+
+.atlas-composer-plus-menu-item:hover {
+  background: oklch(0.97 0.004 80);
+}
+
+.atlas-composer-plus-menu-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 22px;
+  min-width: 22px;
+  color: oklch(0.42 0.01 80);
+}
+
+.atlas-composer-plus-menu-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.atlas-composer-plus-menu-icon :is(path, circle, line, polyline, rect) {
+  stroke-width: 1.5;
+}
+
+.atlas-composer-plus-menu-label {
+  min-width: 0;
+  flex: 1;
+}
+
+.atlas-composer-attached-clear {
+  display: inline-grid;
+  margin-left: 2px;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  opacity: 0.88;
+  transition: background 0.1s ease;
+}
+
+.atlas-composer-attached-clear:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.14);
+}
+
+.atlas-composer-attached-clear:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .atlas-composer-pill {
   display: inline-flex;
   align-items: center;

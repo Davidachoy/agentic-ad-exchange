@@ -9,10 +9,16 @@ function newId(): string {
 }
 
 function sellerModeFromId(modeId: string): SellerComposerMode {
-  if (modeId === "configure_deal" || modeId === "block_buyer" || modeId === "analyze") {
+  if (
+    modeId === "ask" ||
+    modeId === "set_floor" ||
+    modeId === "configure_deal" ||
+    modeId === "block_buyer" ||
+    modeId === "analyze"
+  ) {
     return modeId;
   }
-  return "set_floor";
+  return "ask";
 }
 
 export interface UseSellerAssistantChatResult {
@@ -32,7 +38,7 @@ export function useSellerAssistantChat(): UseSellerAssistantChatResult {
       id: newId(),
       role: "assistant",
       content:
-        "I'm your **Yield agent** for this demo publisher shell. **Chips** below return **local** answers; the composer modes simulate **1200ms** responses for floors, deals, blocks, and analysis.",
+        "I'm your **Yield agent** for this demo publisher shell. **Chips** below return **local** answers; the composer simulates **1200ms** replies—start in **Ask** for open questions, or pick a mode for structured floors, deals, blocks, and analysis.",
       createdAt: new Date().toISOString(),
     },
   ]);
@@ -117,7 +123,7 @@ export function useSellerAssistantChat(): UseSellerAssistantChatResult {
         role: "user",
         content: userText,
         createdAt: new Date().toISOString(),
-        userSellerMode: mode === "analyze" ? undefined : mode,
+        userSellerMode: mode === "analyze" || mode === "ask" ? undefined : mode,
       };
       const withUser = [...messagesRef.current, userMsg];
       messagesRef.current = withUser;

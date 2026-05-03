@@ -32,11 +32,12 @@ describe("<AtlasComposer />", () => {
     expect(field.value).toContain("Solstice 1P");
   });
 
-  it("calls onSend with goal mode after selecting Set goal (happy)", async () => {
+  it("calls onSend with goal mode after + menu and Set goal (happy)", async () => {
     const user = userEvent.setup();
     const onSend = vi.fn();
     render(<AtlasComposer onSend={onSend} />);
-    await user.click(screen.getByRole("button", { name: /set goal/i }));
+    await user.click(screen.getByRole("button", { name: /add atlas mode/i }));
+    await user.click(screen.getByRole("menuitem", { name: /set goal/i }));
     await user.type(screen.getByLabelText("Message to Atlas"), "Maximize VCR");
     await user.click(screen.getByRole("button", { name: "Send message" }));
     expect(onSend).toHaveBeenCalledWith("Maximize VCR", "goal");

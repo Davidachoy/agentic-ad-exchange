@@ -1,8 +1,15 @@
 /** Composer modes for seller yield assistant (demo). */
-export type SellerComposerMode = "set_floor" | "configure_deal" | "block_buyer" | "analyze";
+export type SellerComposerMode = "ask" | "set_floor" | "configure_deal" | "block_buyer" | "analyze";
 
 export function getSimulatedSellerReply(mode: SellerComposerMode, message: string): string {
   const m = message.trim();
+
+  if (mode === "ask") {
+    if (m.length === 0) {
+      return "Ask anything about this publisher shell—floors, deals, buyers, or what to do next. Use **Analyze** for a canned performance readout, or the other modes for structured actions.";
+    }
+    return "Noted. In this demo I’m answering locally—use the **Revenue** / **Floors** / **Deals** / **Buyers** panel for snapshots, or switch to **Analyze** / **Set floor** when you want a guided reply.";
+  }
 
   if (mode === "set_floor") {
     const hasPrice = /\$\s*[0-9]+(?:[.,][0-9]{2})?/.test(m) || /[0-9]+(?:[.,][0-9]{2})\s*(?:cpm|usd)?/i.test(m);

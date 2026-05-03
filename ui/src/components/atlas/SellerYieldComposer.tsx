@@ -14,14 +14,18 @@ export function SellerYieldComposer({ disabled, pending, onCancel, onSend }: Sel
   return (
     <AssistantModeComposer
       modes={SELLER_COMPOSER_MODES}
-      defaultModeId="set_floor"
-      resetModeIdAfterSend="set_floor"
+      defaultModeId="ask"
+      resetModeIdAfterSend="ask"
       messageAriaLabel="Message to yield assistant"
       disabled={disabled}
       pending={pending}
       onCancel={onCancel}
       onSend={onSend}
       renderModeIcon={renderSellerComposerIcon}
+      modePicker="plus"
+      plusPickerAriaLabel="Add yield mode"
+      plusPickerTitle="Add yield mode"
+      plusMenuAriaLabel="Yield modes"
     />
   );
 }

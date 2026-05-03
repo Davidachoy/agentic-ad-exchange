@@ -27,6 +27,10 @@ export function AtlasComposer({ disabled, pending, onCancel, onSend }: AtlasComp
       onCancel={onCancel}
       onSend={(text, modeId) => onSend(text, modeId as AtlasComposerMode)}
       renderModeIcon={renderBuyerComposerIcon}
+      modePicker="plus"
+      plusPickerAriaLabel="Add Atlas mode"
+      plusPickerTitle="Add Atlas mode"
+      plusMenuAriaLabel="Atlas assistant modes"
     />
   );
 }

@@ -1,6 +1,7 @@
 import type { JSX } from "react";
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useId, useLayoutEffect, useRef, useState } from "react";
 
+import { AssistantComposerPlusModeRow } from "./AssistantComposerPlusModeRow.js";
 import { IconPaperclip, IconQuickBolt, IconStopGeneration } from "./AtlasComposerIcons.js";
 
 const MAX = 4000;
@@ -28,7 +29,7 @@ function fitComposerTextarea(el: HTMLTextAreaElement): void {
 export interface AssistantModeComposerProps {
   modes: readonly AssistantComposerModeField[];
   defaultModeId: string;
-  /** Mode to select after a successful send (e.g. buyer `direct`, seller `set_floor`). */
+  /** Mode to select after a successful send (e.g. buyer `direct`, seller `ask`). */
   resetModeIdAfterSend: string;
   messageAriaLabel: string;
   quickInsertText?: string;
@@ -39,6 +40,12 @@ export interface AssistantModeComposerProps {
   onCancel?: () => void;
   onSend: (text: string, modeId: string) => void;
   renderModeIcon: (modeId: string) => JSX.Element;
+  /** `plus`: general + menu (seller). `select`: native select. `pills`: buyer chips. */
+  modePicker?: "pills" | "select" | "plus";
+  /** When `modePicker="plus"`, a11y for + button and menu (defaults: Add mode / Structured modes). */
+  plusPickerAriaLabel?: string;
+  plusPickerTitle?: string;
+  plusMenuAriaLabel?: string;
 }
 
 export function AssistantModeComposer({
@@ -52,7 +59,12 @@ export function AssistantModeComposer({
   onCancel,
   onSend,
   renderModeIcon,
+  modePicker = "pills",
+  plusPickerAriaLabel,
+  plusPickerTitle,
+  plusMenuAriaLabel,
 }: AssistantModeComposerProps): JSX.Element {
+  const modeSelectId = useId();
   const [text, setText] = useState("");
   const [mode, setMode] = useState(defaultModeId);
   const [showEmptyHint, setShowEmptyHint] = useState(false);
@@ -117,22 +129,60 @@ export function AssistantModeComposer({
             />
           </div>
           <div className="atlas-composer-bar">
-            {modes.map((m) => {
-              const selected = mode === m.id;
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  disabled={disabled || pending}
-                  aria-pressed={selected}
-                  className={`atlas-composer-pill${selected ? ` ${m.pillOnClassName}` : ""}`}
-                  onClick={() => setMode(m.id)}
-                >
-                  {renderModeIcon(m.id)}
-                  {m.label}
-                </button>
-              );
-            })}
+            {modePicker === "select" ? (
+              <div className="atlas-composer-mode-select-wrap">
+                <label htmlFor={modeSelectId} className="atlas-composer-mode-select-label">
+                  Mode
+                </label>
+                <div className="atlas-composer-mode-select-inner">
+                  <span className="atlas-composer-mode-select-icon" aria-hidden>
+                    {renderModeIcon(mode)}
+                  </span>
+                  <select
+                    id={modeSelectId}
+                    className="atlas-composer-mode-select"
+                    value={mode}
+                    disabled={disabled || pending}
+                    onChange={(e) => setMode(e.target.value)}
+                  >
+                    {modes.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            ) : modePicker === "plus" ? (
+              <AssistantComposerPlusModeRow
+                modes={modes}
+                mode={mode}
+                setMode={setMode}
+                disabled={disabled}
+                pending={pending}
+                renderModeIcon={renderModeIcon}
+                plusPickerAriaLabel={plusPickerAriaLabel}
+                plusPickerTitle={plusPickerTitle}
+                plusMenuAriaLabel={plusMenuAriaLabel}
+              />
+            ) : (
+              modes.map((m) => {
+                const selected = mode === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    disabled={disabled || pending}
+                    aria-pressed={selected}
+                    className={`atlas-composer-pill${selected ? ` ${m.pillOnClassName}` : ""}`}
+                    onClick={() => setMode(m.id)}
+                  >
+                    {renderModeIcon(m.id)}
+                    {m.label}
+                  </button>
+                );
+              })
+            )}
             <div className="atlas-composer-actions">
               <button
                 type="button"

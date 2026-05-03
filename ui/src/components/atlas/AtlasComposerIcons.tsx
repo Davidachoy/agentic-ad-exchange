@@ -37,6 +37,15 @@ export function IconClock({ className }: { className?: string }): JSX.Element {
   );
 }
 
+/** Plus control for composer “add mode” menus (Claude-style). */
+export function IconPlus({ className }: { className?: string }): JSX.Element {
+  return (
+    <svg {...svgProps(18)} className={`${icon} ${className ?? ""}`} fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
 export function IconPaperclip({ className }: { className?: string }): JSX.Element {
   return (
     <svg {...svgProps(18)} className={`${icon} ${className ?? ""}`} fill="none" stroke="currentColor" strokeWidth="1.75">

@@ -9,7 +9,7 @@ export const BUYER_COMPOSER_MODES: readonly AssistantComposerModeField[] = [
     id: "direct",
     label: "Direct Atlas",
     placeholder: "Ask about auctions, bids, settlements, or what to do next...",
-    hint: "Context from live exchange feed",
+    hint: "Tap + for goal or policy — × clears · context from live exchange feed",
     pillOnClassName: "atlas-composer-pill--on",
   },
   {
