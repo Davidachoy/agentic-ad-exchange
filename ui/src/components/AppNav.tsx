@@ -13,7 +13,7 @@ export function AppNav(): JSX.Element {
       <NavLink to="/" className={linkClass} end>
         Exchange
       </NavLink>
-      <NavLink to="/atlas" className={linkClass}>
+      <NavLink to="/buyer" className={linkClass}>
         Atlas
       </NavLink>
     </nav>

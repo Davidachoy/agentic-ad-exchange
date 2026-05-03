@@ -1,5 +1,4 @@
 import type { AssistantChatMessage } from "@ade/shared";
-import type { JSX } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -14,12 +13,7 @@ import {
   buildFallbackAssistantBlocks,
   buildFallbackAssistantSummary,
 } from "../assistant/buildDashboardContext.js";
-import { AtlasChatThread } from "../components/atlas/AtlasChatThread.js";
-import { AtlasComposer } from "../components/atlas/AtlasComposer.js";
 import type { ChatLine } from "../components/atlas/AtlasMessageBubble.js";
-import { AtlasRightPanel } from "../components/atlas/AtlasRightPanel.js";
-import { AtlasSidebar } from "../components/atlas/AtlasSidebar.js";
-import { AtlasTopBar } from "../components/atlas/AtlasTopBar.js";
 import { useDashboardData } from "../context/DashboardDataContext.js";
 
 function newId(): string {
@@ -36,7 +30,18 @@ function isAbortError(error: unknown): boolean {
   return false;
 }
 
-export function AtlasAssistantPage(): JSX.Element {
+export interface UseBuyerAssistantChatResult {
+  messages: ChatLine[];
+  sending: boolean;
+  composerTyping: boolean;
+  sendWithHistory: (userText: string) => Promise<void>;
+  sendComposerMessage: (userText: string, mode: AtlasComposerMode) => void;
+  /** Aborts live assistant fetch or cancels the local composer simulation timer. */
+  cancelPendingGeneration: () => void;
+  chipSuggestions: readonly string[];
+}
+
+export function useBuyerAssistantChat(): UseBuyerAssistantChatResult {
   const data = useDashboardData();
   const [messages, setMessages] = useState<ChatLine[]>(() => [
     {
@@ -53,12 +58,10 @@ export function AtlasAssistantPage(): JSX.Element {
   const assistantAbortRef = useRef<AbortController | null>(null);
   const composerSimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pageMountedRef = useRef(true);
-  /** True while composer demo typing + reply window runs (blocks chip sends). */
   const composerSimBusyRef = useRef(false);
-  /** Prevents parallel POSTs (double chip / re-entrant send) while one assistant call is in flight. */
   const assistantBusyRef = useRef(false);
-  /** True only when the user clicked Cancel — other aborts (unmount) stay silent. */
   const userCancelRequestedRef = useRef(false);
+
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
@@ -103,6 +106,19 @@ export function AtlasAssistantPage(): JSX.Element {
     userCancelRequestedRef.current = true;
     assistantAbortRef.current?.abort();
   }, []);
+
+  const cancelPendingGeneration = useCallback(() => {
+    if (sending) {
+      cancelAssistantRequest();
+      return;
+    }
+    if (composerSimTimerRef.current != null) {
+      clearTimeout(composerSimTimerRef.current);
+      composerSimTimerRef.current = null;
+    }
+    composerSimBusyRef.current = false;
+    setComposerTyping(false);
+  }, [sending, cancelAssistantRequest]);
 
   const sendWithHistory = useCallback(
     async (userText: string) => {
@@ -262,52 +278,13 @@ export function AtlasAssistantPage(): JSX.Element {
     }, 1200);
   }, [sending]);
 
-  return (
-    <div className="flex h-screen min-h-0 bg-[oklch(0.985_0.004_80)] text-[oklch(0.18_0.01_80)]">
-      <AtlasSidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <AtlasTopBar />
-        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(300px,420px)]">
-          <div className="flex min-h-0 flex-col border-r border-[oklch(0.91_0.005_80)] bg-[oklch(0.985_0.004_80)]">
-            <AtlasChatThread
-              messages={messages}
-              assistantPending={sending}
-              composerTyping={composerTyping}
-            />
-            <div className="shrink-0 border-t border-[oklch(0.91_0.005_80)] px-6 pb-2">
-              <div className="mx-auto flex max-w-2xl flex-wrap gap-2 pt-2">
-                {ATLAS_CHIP_SUGGESTIONS.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    disabled={sending || composerTyping}
-                    onClick={() => void sendWithHistory(s)}
-                    className="rounded-full border border-[oklch(0.91_0.005_80)] bg-white px-3 py-1.5 text-left text-[11.5px] text-[oklch(0.36_0.01_80)] hover:border-[oklch(0.72_0.006_80)] disabled:opacity-50"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <AtlasComposer
-              disabled={sending || composerTyping}
-              pending={sending}
-              onCancel={cancelAssistantRequest}
-              onSend={(t, mode) => sendComposerMessage(t, mode)}
-            />
-          </div>
-          <AtlasRightPanel
-            connected={data.connected}
-            paused={data.control.paused}
-            settlementCount={data.settlementCount}
-            bidCount={data.bids.length}
-            listingCount={data.listings.length}
-            lastAuction={data.lastAuction}
-            lastReceipt={data.lastReceipt}
-            control={data.control}
-          />
-        </div>
-      </div>
-    </div>
-  );
+  return {
+    messages,
+    sending,
+    composerTyping,
+    sendWithHistory,
+    sendComposerMessage,
+    cancelPendingGeneration,
+    chipSuggestions: ATLAS_CHIP_SUGGESTIONS,
+  };
 }

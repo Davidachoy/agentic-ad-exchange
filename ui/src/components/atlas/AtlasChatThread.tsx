@@ -2,7 +2,7 @@ import type { JSX } from "react";
 import { useEffect, useRef } from "react";
 
 import { AtlasAssistantTypingRow } from "./AtlasAssistantTypingRow.js";
-import { AtlasMessageBubble, type ChatLine } from "./AtlasMessageBubble.js";
+import { AtlasMessageBubble, type AssistantAgentLabel, type ChatLine } from "./AtlasMessageBubble.js";
 
 export interface AtlasChatThreadProps {
   messages: ChatLine[];
@@ -10,12 +10,17 @@ export interface AtlasChatThreadProps {
   assistantPending?: boolean;
   /** Composer simulation: typing row before canned reply. */
   composerTyping?: boolean;
+  assistantAgentLabel?: AssistantAgentLabel;
+  /** Row label while typing (defaults to Atlas). */
+  assistantTypingName?: string;
 }
 
 export function AtlasChatThread({
   messages,
   assistantPending = false,
   composerTyping = false,
+  assistantAgentLabel = "BUYER AGENT",
+  assistantTypingName = "Atlas",
 }: AtlasChatThreadProps): JSX.Element {
   const endRef = useRef<HTMLDivElement>(null);
   const showTyping = assistantPending || composerTyping;
@@ -37,10 +42,10 @@ export function AtlasChatThread({
           <div className="h-px flex-1 bg-[oklch(0.94_0.004_80)]" />
         </div>
         {messages.map((m) => (
-          <AtlasMessageBubble key={m.id} message={m} />
+          <AtlasMessageBubble key={m.id} message={m} assistantAgentLabel={assistantAgentLabel} />
         ))}
-        {assistantPending ? <AtlasAssistantTypingRow /> : null}
-        {composerTyping && !assistantPending ? <AtlasAssistantTypingRow /> : null}
+        {assistantPending ? <AtlasAssistantTypingRow assistantName={assistantTypingName} /> : null}
+        {composerTyping && !assistantPending ? <AtlasAssistantTypingRow assistantName={assistantTypingName} /> : null}
         <div ref={endRef} />
       </div>
     </div>

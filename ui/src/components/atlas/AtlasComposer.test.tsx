@@ -42,11 +42,11 @@ describe("<AtlasComposer />", () => {
     expect(onSend).toHaveBeenCalledWith("Maximize VCR", "goal");
   });
 
-  it("calls onCancel while pending (happy)", async () => {
+  it("calls onCancel while pending via stop control (happy)", async () => {
     const user = userEvent.setup();
     const onCancel = vi.fn();
     render(<AtlasComposer disabled pending onCancel={onCancel} onSend={vi.fn()} />);
-    await user.click(screen.getByRole("button", { name: "Cancel assistant reply" }));
+    await user.click(screen.getByRole("button", { name: "Stop generation" }));
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });

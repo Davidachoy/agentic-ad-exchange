@@ -56,3 +56,13 @@ export function IconQuickBolt({ className }: { className?: string }): JSX.Elemen
     </svg>
   );
 }
+
+/** Claude-style stop control: ring + solid square (generation in flight). */
+export function IconStopGeneration({ className }: { className?: string }): JSX.Element {
+  return (
+    <svg {...svgProps(18)} className={`${icon} ${className ?? ""}`} fill="none" stroke="currentColor" strokeWidth="1.75">
+      <circle cx="12" cy="12" r="7.25" fill="none" />
+      <rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

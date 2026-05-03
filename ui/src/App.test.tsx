@@ -40,9 +40,27 @@ describe("App routes", () => {
     expect(region).toBeInTheDocument();
   });
 
-  it("renders Atlas assistant shell on /atlas", () => {
+  it("redirects /atlas to buyer assistant shell", () => {
     renderAt("/atlas");
     expect(screen.getByRole("navigation", { name: "Workspace" })).toBeInTheDocument();
     expect(screen.getByLabelText("Message to Atlas")).toBeInTheDocument();
+  });
+
+  it("renders buyer assistant on /buyer", () => {
+    renderAt("/buyer");
+    expect(screen.getByRole("navigation", { name: "Workspace" })).toBeInTheDocument();
+    expect(screen.getByText("Exchange assistant")).toBeInTheDocument();
+    expect(screen.getByLabelText("Message to Atlas")).toBeInTheDocument();
+    expect(screen.getByLabelText("Assistant workspace header")).toBeInTheDocument();
+    expect(screen.getByText("BUYER AGENT")).toBeInTheDocument();
+  });
+
+  it("renders seller assistant shell on /seller", () => {
+    renderAt("/seller");
+    expect(screen.getByRole("navigation", { name: "Assistant role" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Assistant workspace header")).toHaveTextContent(/Yield/);
+    expect(screen.getByText("Supply assistant")).toBeInTheDocument();
+    expect(screen.getByLabelText("Message to yield assistant")).toBeInTheDocument();
+    expect(screen.getByText("Yield workspace")).toBeInTheDocument();
   });
 });

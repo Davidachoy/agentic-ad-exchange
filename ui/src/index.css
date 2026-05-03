@@ -159,17 +159,6 @@ body,
   border-color: oklch(0.24 0.012 80);
 }
 
-.atlas-composer-pill-x {
-  color: var(--ac-ink-4);
-  font-size: 10px;
-  line-height: 1;
-  margin-left: 1px;
-}
-
-.atlas-composer-pill--on .atlas-composer-pill-x {
-  color: oklch(0.92 0.01 80 / 0.65);
-}
-
 .atlas-composer-pill svg {
   width: 11px;
   height: 11px;
@@ -235,6 +224,33 @@ body,
   cursor: not-allowed;
 }
 
+.atlas-composer-stop {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid oklch(0.88 0.006 80);
+  padding: 0;
+  background: oklch(0.995 0.002 80);
+  color: oklch(0.2 0.01 80);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.atlas-composer-stop:hover {
+  background: oklch(0.97 0.004 80);
+  border-color: oklch(0.78 0.006 80);
+}
+
+.atlas-composer-stop:focus-visible {
+  outline: 2px solid oklch(0.55 0.12 250);
+  outline-offset: 2px;
+}
+
 .atlas-composer-send-char {
   font-size: 15px;
   font-weight: 300;
@@ -264,8 +280,26 @@ body,
   font-family: "JetBrains Mono", ui-monospace, monospace;
   margin-top: 8px;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: space-between;
+  align-items: baseline;
   gap: 6px 12px;
   letter-spacing: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.atlas-composer-foot > span:first-child {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.atlas-composer-foot > span:last-child {
+  flex: 1 1 0%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
 }
