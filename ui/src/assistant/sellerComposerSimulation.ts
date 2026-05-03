@@ -17,7 +17,7 @@ export function getSimulatedSellerReply(mode: SellerComposerMode, message: strin
     if (hasPrice && hasPlacement) {
       return "Got it. Dropping CTV pre-roll from $4.20 → $3.20. Projected fill rate: 68% (+34pp). Estimated revenue recovery: +$840/day. Confirm?";
     }
-    return "Floor update noted. Yield agent will apply this to the next auction cycle.";
+    return "Floor update noted. Atlas will apply this to the next auction cycle.";
   }
 
   if (mode === "configure_deal") {

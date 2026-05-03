@@ -77,7 +77,7 @@ export function AtlasMessageBubble({
 }: AtlasMessageBubbleProps): JSX.Element {
   const isUser = message.role === "user";
   const userTag = isUser ? userComposerTag(message) : null;
-  const assistantName = assistantAgentLabel === "SELLER AGENT" ? "Yield agent" : "Atlas";
+  const assistantName = "Atlas";
   return (
     <article
       className={`flex gap-3.5 ${isUser ? "flex-row-reverse" : ""}`}

@@ -32,7 +32,7 @@ export function SellerAssistantPage(): JSX.Element {
             assistantPending={false}
             composerTyping={composerTyping}
             assistantAgentLabel="SELLER AGENT"
-            assistantTypingName="Yield agent"
+            assistantTypingName="Atlas"
           />
           <div className="shrink-0 border-t border-[oklch(0.91_0.005_80)] px-6 pb-2">
             <div className="mx-auto flex max-w-2xl flex-wrap gap-2 pt-2">

@@ -38,7 +38,7 @@ export function useSellerAssistantChat(): UseSellerAssistantChatResult {
       id: newId(),
       role: "assistant",
       content:
-        "I'm your **Yield agent** for this demo publisher shell. **Chips** below return **local** answers; the composer simulates **1200ms** replies—start in **Ask** for open questions, or pick a mode for structured floors, deals, blocks, and analysis.",
+        "I'm **Atlas** for this demo publisher shell. **Chips** below return **local** answers; the composer simulates **1200ms** replies—start in **Ask** for open questions, or pick a mode for structured floors, deals, blocks, and analysis.",
       createdAt: new Date().toISOString(),
     },
   ]);

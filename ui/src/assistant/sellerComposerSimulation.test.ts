@@ -23,6 +23,7 @@ describe("getSimulatedSellerReply", () => {
   it("returns default floor note without strong signals (edge)", () => {
     const r = getSimulatedSellerReply("set_floor", "hello");
     expect(r).toMatch(/Floor update noted/i);
+    expect(r).toMatch(/Atlas will apply/i);
   });
 
   it("returns structured deal draft (happy)", () => {
