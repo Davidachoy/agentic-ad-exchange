@@ -36,6 +36,7 @@ const ServerEnvSchema = z.object({
   LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal", "silent"]).default("info"),
   CORS_ALLOW_ORIGINS: OriginListSchema.default("http://localhost:5173"),
   BID_RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(120),
+  ASSISTANT_CHAT_RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(30),
   ARC_CHAIN_ID: z.coerce.number().int().positive().default(ARC_TESTNET_CHAIN_ID),
   // Reason: blank strings from .env placeholders ("BUYER_WALLET_ID=") must be
   // treated as absent so the server starts without a funded wallet configured.
@@ -81,9 +82,25 @@ const ServerEnvSchema = z.object({
   // 8s fits comfortably inside the seller's 30s cadence so listings don't
   // overlap on the shared single-listing BidStore.
   AUCTION_AUTO_CLEAR_DELAY_MS: z.coerce.number().int().nonnegative().default(8000),
-});
+  /** Set to `1` or `true` in development to load visualization fixtures (forbidden in production). */
+  UI_FIXTURE_SEED: blankToUndefined(z.string().min(1).max(8).optional()),
+})
+  .superRefine((data, ctx) => {
+    if (data.NODE_ENV === "production" && data.UI_FIXTURE_SEED) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "UI_FIXTURE_SEED must not be set when NODE_ENV=production",
+        path: ["UI_FIXTURE_SEED"],
+      });
+    }
+  });
 
-export type ServerConfig = z.infer<typeof ServerEnvSchema>;
+export type ServerEnvParsed = z.infer<typeof ServerEnvSchema>;
+
+export type ServerConfig = ServerEnvParsed & {
+  /** True when fixtures should load (never in production). */
+  uiFixtureSeedEnabled: boolean;
+};
 
 /**
  * Map of lowercased buyer wallet address → Circle DCW wallet id. The auction
@@ -116,7 +133,14 @@ export function loadServerConfig(env: NodeJS.ProcessEnv = process.env): ServerCo
         .join("; ")}`,
     );
   }
-  return parsed.data;
+  const data = parsed.data;
+  const uiFixtureSeedEnabled =
+    data.NODE_ENV !== "production" &&
+    Boolean(
+      data.UI_FIXTURE_SEED &&
+        ["1", "true", "yes"].includes(data.UI_FIXTURE_SEED.toLowerCase()),
+    );
+  return { ...data, uiFixtureSeedEnabled };
 }
 
 // Local atomic-unit helper — mirrors server/src/auction/money.ts. Duplicated

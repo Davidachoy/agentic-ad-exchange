@@ -1,3 +1,4 @@
+import type { AuctionResult } from "@ade/shared";
 import { STREAM_EVENTS } from "@ade/shared";
 import { Router } from "express";
 
@@ -5,6 +6,8 @@ import type { EventBus } from "../events/bus.js";
 
 export interface StreamDeps {
   eventBus: EventBus;
+  /** Dev-only: emit these `auctionMatched` payloads immediately after `connected`. */
+  fixtureAuctionReplay?: ReadonlyArray<AuctionResult>;
 }
 
 /**
@@ -29,6 +32,10 @@ export function createStreamRouter(deps: StreamDeps): Router {
     };
 
     write(STREAM_EVENTS.connected, { at: new Date().toISOString() });
+
+    for (const row of deps.fixtureAuctionReplay ?? []) {
+      write(STREAM_EVENTS.auctionMatched, row);
+    }
 
     const offMatched = deps.eventBus.on(STREAM_EVENTS.auctionMatched, (payload) => {
       write(STREAM_EVENTS.auctionMatched, payload);

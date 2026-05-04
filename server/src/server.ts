@@ -3,16 +3,18 @@ import { createCircleClient } from "@ade/wallets";
 import { createApp } from "./app.js";
 import { buildBuyerWalletRouting, loadServerConfig } from "./config.js";
 import { resolvePersonasFromEnv } from "./demo/runAgentAuction.js";
+import {
+  buildFixtureAuctionReplay,
+  seedDevUiStores,
+} from "./fixtures/devUiSeed.js";
 import { createLogger } from "./logger.js";
 import { createGatewayAdapter, type GatewayMiddlewareAdapter } from "./middleware/nanopayments.js";
+import { createBidStore, createListingStore, createSettlementStore } from "./state/stores.js";
 
-function main(): void {
+async function main(): Promise<void> {
   const config = loadServerConfig();
   const logger = createLogger(config.LOG_LEVEL);
 
-  // Reason: Circle config (API key + entity secret) is optional at server start
-  // so the server boots cleanly in dev without a funded wallet set. The auction
-  // route returns status:"failed" receipts when circleClient is null.
   let circleClient = null;
   try {
     circleClient = createCircleClient({ env: process.env });
@@ -34,16 +36,41 @@ function main(): void {
   const buyerWalletRouting = buildBuyerWalletRouting(config);
   const personas = resolvePersonasFromEnv(process.env);
   const gemini = config.GEMINI_API_KEY
-    ? { apiKey: config.GEMINI_API_KEY, model: config.GEMINI_MODEL }
+    ? { apiKey: config.GEMINI_API_KEY, model: config.GEMINI_MODEL ?? "gemini-2.5-flash" }
     : undefined;
+
+  const assistantGemini = config.GEMINI_API_KEY
+    ? { apiKey: config.GEMINI_API_KEY, model: config.GEMINI_MODEL ?? "gemini-2.5-flash" }
+    : null;
+
+  const listingStore = createListingStore();
+  const bidStore = createBidStore();
+  const settlementStore = createSettlementStore();
+
+  let fixtureAuctionReplay = config.uiFixtureSeedEnabled ? buildFixtureAuctionReplay() : [];
+  if (config.uiFixtureSeedEnabled) {
+    await seedDevUiStores({ listingStore, bidStore, settlementStore, logger });
+    logger.warn(
+      { replay: fixtureAuctionReplay.length },
+      "UI_FIXTURE_SEED enabled — in-memory demo data loaded; do not use in production",
+    );
+  } else {
+    fixtureAuctionReplay = [];
+  }
 
   const { app } = createApp({
     corsAllowOrigins: config.CORS_ALLOW_ORIGINS,
     bidRateLimitPerMin: config.BID_RATE_LIMIT_PER_MIN,
+    assistantGemini,
+    assistantRateLimitPerMin: config.ASSISTANT_CHAT_RATE_LIMIT_PER_MIN,
     circleClient,
     buyerWalletId: config.BUYER_WALLET_ID,
     gateway,
     buyerWalletRouting,
+    listingStore,
+    bidStore,
+    settlementStore,
+    fixtureAuctionReplay,
     demo: {
       exchangeUrl: `http://localhost:${config.PORT}`,
       personas,
@@ -66,10 +93,15 @@ function main(): void {
         demoEnabled: Boolean(gemini && personas.length > 0),
         demoMode: config.DEMO_MODE,
         autoClearDelayMs: config.AUCTION_AUTO_CLEAR_DELAY_MS,
+        uiFixtureSeed: config.uiFixtureSeedEnabled,
       },
       "exchange_server_listening",
     );
   });
 }
 
-main();
+void main().catch((err: unknown) => {
+  // eslint-disable-next-line no-console
+  console.error(err);
+  process.exitCode = 1;
+});
