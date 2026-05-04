@@ -2,14 +2,25 @@ import type { JSX } from "react";
 
 const icon = "text-current";
 
-function svgProps(size: number): { width: number; height: number; viewBox: string; "aria-hidden": boolean } {
+function svgProps(size: number): {
+  width: number;
+  height: number;
+  viewBox: string;
+  "aria-hidden": boolean;
+} {
   return { width: size, height: size, viewBox: "0 0 24 24", "aria-hidden": true };
 }
 
 /** Small outline icons for the Atlas composer (no icon library dependency). */
 export function IconBolt({ className }: { className?: string }): JSX.Element {
   return (
-    <svg {...svgProps(14)} className={`${icon} ${className ?? ""}`} fill="none" stroke="currentColor" strokeWidth="1.75">
+    <svg
+      {...svgProps(14)}
+      className={`${icon} ${className ?? ""}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+    >
       <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
     </svg>
   );
@@ -17,7 +28,13 @@ export function IconBolt({ className }: { className?: string }): JSX.Element {
 
 export function IconTag({ className }: { className?: string }): JSX.Element {
   return (
-    <svg {...svgProps(14)} className={`${icon} ${className ?? ""}`} fill="none" stroke="currentColor" strokeWidth="1.75">
+    <svg
+      {...svgProps(14)}
+      className={`${icon} ${className ?? ""}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -30,7 +47,13 @@ export function IconTag({ className }: { className?: string }): JSX.Element {
 
 export function IconClock({ className }: { className?: string }): JSX.Element {
   return (
-    <svg {...svgProps(14)} className={`${icon} ${className ?? ""}`} fill="none" stroke="currentColor" strokeWidth="1.75">
+    <svg
+      {...svgProps(14)}
+      className={`${icon} ${className ?? ""}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+    >
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
       <circle cx="12" cy="12" r="9" fill="none" />
     </svg>
@@ -40,7 +63,13 @@ export function IconClock({ className }: { className?: string }): JSX.Element {
 /** Plus control for composer “add mode” menus (Claude-style). */
 export function IconPlus({ className }: { className?: string }): JSX.Element {
   return (
-    <svg {...svgProps(18)} className={`${icon} ${className ?? ""}`} fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      {...svgProps(18)}
+      className={`${icon} ${className ?? ""}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path strokeLinecap="round" d="M12 5v14M5 12h14" />
     </svg>
   );
@@ -48,7 +77,13 @@ export function IconPlus({ className }: { className?: string }): JSX.Element {
 
 export function IconPaperclip({ className }: { className?: string }): JSX.Element {
   return (
-    <svg {...svgProps(18)} className={`${icon} ${className ?? ""}`} fill="none" stroke="currentColor" strokeWidth="1.75">
+    <svg
+      {...svgProps(18)}
+      className={`${icon} ${className ?? ""}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -60,7 +95,13 @@ export function IconPaperclip({ className }: { className?: string }): JSX.Elemen
 
 export function IconQuickBolt({ className }: { className?: string }): JSX.Element {
   return (
-    <svg {...svgProps(18)} className={`${icon} ${className ?? ""}`} fill="none" stroke="currentColor" strokeWidth="1.75">
+    <svg
+      {...svgProps(18)}
+      className={`${icon} ${className ?? ""}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+    >
       <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
     </svg>
   );
@@ -69,7 +110,13 @@ export function IconQuickBolt({ className }: { className?: string }): JSX.Elemen
 /** Claude-style stop control: ring + solid square (generation in flight). */
 export function IconStopGeneration({ className }: { className?: string }): JSX.Element {
   return (
-    <svg {...svgProps(18)} className={`${icon} ${className ?? ""}`} fill="none" stroke="currentColor" strokeWidth="1.75">
+    <svg
+      {...svgProps(18)}
+      className={`${icon} ${className ?? ""}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+    >
       <circle cx="12" cy="12" r="7.25" fill="none" />
       <rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" stroke="none" />
     </svg>

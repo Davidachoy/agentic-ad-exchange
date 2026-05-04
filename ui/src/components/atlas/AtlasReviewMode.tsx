@@ -32,7 +32,9 @@ export function AtlasReviewMode({
         <span className="text-2xl text-emerald-600" aria-hidden>
           ✓
         </span>
-        <p className="mt-3 text-sm font-semibold text-[oklch(0.22_0.01_80)]">You&apos;re all caught up</p>
+        <p className="mt-3 text-sm font-semibold text-[oklch(0.22_0.01_80)]">
+          You&apos;re all caught up
+        </p>
         <p className="mt-2 max-w-xs text-[12.5px] text-[oklch(0.5_0.01_80)]">
           Atlas will notify you when a decision needs your input
         </p>
@@ -77,8 +79,13 @@ export function AtlasReviewMode({
         </summary>
         <ul className="list-none space-y-2 border-t border-[oklch(0.94_0.004_80)] p-3">
           {resolved.map((r) => (
-            <li key={r.id} className="flex items-center gap-2 font-atlas-mono text-[11.5px] text-[oklch(0.32_0.01_80)]">
-              <span className={r.approved ? "text-emerald-600" : "text-red-600"}>{r.approved ? "✓" : "✗"}</span>
+            <li
+              key={r.id}
+              className="flex items-center gap-2 font-atlas-mono text-[11.5px] text-[oklch(0.32_0.01_80)]"
+            >
+              <span className={r.approved ? "text-emerald-600" : "text-red-600"}>
+                {r.approved ? "✓" : "✗"}
+              </span>
               <span className="min-w-0 flex-1 truncate">{r.title}</span>
             </li>
           ))}

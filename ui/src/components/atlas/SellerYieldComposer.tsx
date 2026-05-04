@@ -10,7 +10,12 @@ export interface SellerYieldComposerProps {
   onSend: (text: string, modeId: string) => void;
 }
 
-export function SellerYieldComposer({ disabled, pending, onCancel, onSend }: SellerYieldComposerProps): JSX.Element {
+export function SellerYieldComposer({
+  disabled,
+  pending,
+  onCancel,
+  onSend,
+}: SellerYieldComposerProps): JSX.Element {
   return (
     <AssistantModeComposer
       modes={SELLER_COMPOSER_MODES}

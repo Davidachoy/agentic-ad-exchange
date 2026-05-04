@@ -50,9 +50,7 @@ async function runOnce(): Promise<void> {
     `Buyers competing: ${personas.length} (per-persona Circle DCWs)`,
     "",
     "Persona balances:",
-    ...balances.map(
-      (b) => `  ${b.agentId.padEnd(16)} ${b.address.slice(0, 10)}…  ${b.usdc} USDC`,
-    ),
+    ...balances.map((b) => `  ${b.agentId.padEnd(16)} ${b.address.slice(0, 10)}…  ${b.usdc} USDC`),
   ]);
 
   const res = await fetch(`${exchangeUrl}/demo/agent-run`, {

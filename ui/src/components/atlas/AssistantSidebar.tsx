@@ -17,7 +17,9 @@ export function AssistantSidebar(): JSX.Element {
         </div>
         <div>
           <div className="text-sm font-semibold text-[oklch(0.18_0.01_80)]">Agentic Exchange</div>
-          <div className="font-atlas-mono text-[10.5px] text-[oklch(0.55_0.006_80)]">Arc · USDC</div>
+          <div className="font-atlas-mono text-[10.5px] text-[oklch(0.55_0.006_80)]">
+            Arc · USDC
+          </div>
         </div>
       </div>
       <RouteSwitcher />
@@ -29,9 +31,14 @@ export function AssistantSidebar(): JSX.Element {
           </div>
           <div className="min-w-0">
             <div className="truncate text-xs font-medium text-[oklch(0.22_0.01_80)]">Operator</div>
-            <div className="truncate font-atlas-mono text-[10.5px] text-[oklch(0.55_0.006_80)]">demo session</div>
+            <div className="truncate font-atlas-mono text-[10.5px] text-[oklch(0.55_0.006_80)]">
+              demo session
+            </div>
           </div>
-          <span className="ml-auto h-2 w-2 rounded-full bg-[#53d2dc] shadow-[0_0_0_3px_rgba(83,210,220,0.25)]" title="connected" />
+          <span
+            className="ml-auto h-2 w-2 rounded-full bg-[#53d2dc] shadow-[0_0_0_3px_rgba(83,210,220,0.25)]"
+            title="connected"
+          />
         </div>
       </div>
     </aside>

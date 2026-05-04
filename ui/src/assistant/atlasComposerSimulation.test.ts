@@ -21,10 +21,14 @@ describe("getSimulatedAtlasReply", () => {
   });
 
   it("does not match bid inside forbidden (edge)", () => {
-    expect(getSimulatedAtlasReply("direct", "forbidden topic")).toBe("Understood. Processing that instruction now.");
+    expect(getSimulatedAtlasReply("direct", "forbidden topic")).toBe(
+      "Understood. Processing that instruction now.",
+    );
   });
 
   it("returns default direct reply when no keyword (edge)", () => {
-    expect(getSimulatedAtlasReply("direct", "hello")).toBe("Understood. Processing that instruction now.");
+    expect(getSimulatedAtlasReply("direct", "hello")).toBe(
+      "Understood. Processing that instruction now.",
+    );
   });
 });

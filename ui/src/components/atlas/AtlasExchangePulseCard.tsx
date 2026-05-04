@@ -60,15 +60,7 @@ export function AtlasExchangePulseCard({
   );
 }
 
-function Vital({
-  label,
-  value,
-  ok,
-}: {
-  label: string;
-  value: string;
-  ok?: boolean;
-}): JSX.Element {
+function Vital({ label, value, ok }: { label: string; value: string; ok?: boolean }): JSX.Element {
   return (
     <div className="border-r border-[oklch(0.94_0.004_80)] px-3 py-3 last:border-r-0">
       <div className="font-atlas-mono text-[9.5px] font-semibold uppercase tracking-wider text-[oklch(0.55_0.006_80)]">
@@ -76,7 +68,11 @@ function Vital({
       </div>
       <div
         className={`mt-1 font-atlas-mono text-sm font-semibold ${
-          ok === true ? "text-emerald-700" : ok === false ? "text-amber-800" : "text-[oklch(0.18_0.01_80)]"
+          ok === true
+            ? "text-emerald-700"
+            : ok === false
+              ? "text-amber-800"
+              : "text-[oklch(0.18_0.01_80)]"
         }`}
       >
         {value}

@@ -1,7 +1,6 @@
 import { ARC_TESTNET_USDC } from "@ade/shared";
 import { describe, expect, it, vi } from "vitest";
 
-
 import { buildAdapter, normalizeUsdcAmount } from "./circleAdapter.js";
 
 describe("normalizeUsdcAmount", () => {
@@ -63,7 +62,11 @@ describe("buildAdapter.createTransfer — explicit-tokenAddress path", () => {
     const adapter = buildAdapter(client as unknown as never);
 
     await expect(
-      adapter.createTransfer({ walletId: "w-bad", destinationAddress: "0xSeller", amountUsdc: "0.010000" }),
+      adapter.createTransfer({
+        walletId: "w-bad",
+        destinationAddress: "0xSeller",
+        amountUsdc: "0.010000",
+      }),
     ).rejects.toThrow("no wallet address");
   });
 });

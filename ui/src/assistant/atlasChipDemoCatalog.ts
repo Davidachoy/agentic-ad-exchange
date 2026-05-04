@@ -64,10 +64,14 @@ export function getAtlasChipDemoReply(text: string): AtlasChipDemoPayload | null
               "Only bids inside the declared format/size are eligible.",
             ],
             rejected: [
-              { action: "First-price sealed bid", reason: "Demo stack uses second-price for margin story." },
+              {
+                action: "First-price sealed bid",
+                reason: "Demo stack uses second-price for margin story.",
+              },
             ],
             badge: "demo",
-            complianceNote: "Settlement still routes through Circle DCW + nanopayments in the real stack.",
+            complianceNote:
+              "Settlement still routes through Circle DCW + nanopayments in the real stack.",
           },
         ],
       };
@@ -89,7 +93,8 @@ export function getAtlasChipDemoReply(text: string): AtlasChipDemoPayload | null
       };
     case ATLAS_CHIP_SUGGESTIONS[3]:
       return {
-        reply: "Here is a **dummy bar chart** of open bids by buyer agent — values are simulated for UI review.",
+        reply:
+          "Here is a **dummy bar chart** of open bids by buyer agent — values are simulated for UI review.",
         blocks: [
           {
             type: "bar_chart",

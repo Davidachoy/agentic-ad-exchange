@@ -6,8 +6,14 @@ import {
   postAssistantChat,
   type AssistantChatHttpError,
 } from "../api/client.js";
-import { ATLAS_CHIP_SUGGESTIONS, getAtlasChipDemoReply } from "../assistant/atlasChipDemoCatalog.js";
-import { getSimulatedAtlasReply, type AtlasComposerMode } from "../assistant/atlasComposerSimulation.js";
+import {
+  ATLAS_CHIP_SUGGESTIONS,
+  getAtlasChipDemoReply,
+} from "../assistant/atlasChipDemoCatalog.js";
+import {
+  getSimulatedAtlasReply,
+  type AtlasComposerMode,
+} from "../assistant/atlasComposerSimulation.js";
 import {
   buildDashboardAssistantContext,
   buildFallbackAssistantBlocks,
@@ -240,43 +246,46 @@ export function useBuyerAssistantChat(): UseBuyerAssistantChatResult {
     [contextPayload],
   );
 
-  const sendComposerMessage = useCallback((userText: string, mode: AtlasComposerMode) => {
-    if (sending || composerSimBusyRef.current || assistantBusyRef.current) {
-      return;
-    }
-    composerSimBusyRef.current = true;
-    const userMsg: ChatLine = {
-      id: newId(),
-      role: "user",
-      content: userText,
-      createdAt: new Date().toISOString(),
-      userComposerMode: mode === "direct" ? undefined : mode,
-    };
-    const withUser = [...messagesRef.current, userMsg];
-    messagesRef.current = withUser;
-    setMessages(withUser);
-    setComposerTyping(true);
-
-    composerSimTimerRef.current = setTimeout(() => {
-      composerSimTimerRef.current = null;
-      const reply = getSimulatedAtlasReply(mode, userText);
-      const withAssistant: ChatLine[] = [
-        ...messagesRef.current,
-        {
-          id: newId(),
-          role: "assistant" as const,
-          content: reply,
-          createdAt: new Date().toISOString(),
-        },
-      ];
-      if (pageMountedRef.current) {
-        messagesRef.current = withAssistant;
-        setMessages(withAssistant);
-        setComposerTyping(false);
+  const sendComposerMessage = useCallback(
+    (userText: string, mode: AtlasComposerMode) => {
+      if (sending || composerSimBusyRef.current || assistantBusyRef.current) {
+        return;
       }
-      composerSimBusyRef.current = false;
-    }, 1200);
-  }, [sending]);
+      composerSimBusyRef.current = true;
+      const userMsg: ChatLine = {
+        id: newId(),
+        role: "user",
+        content: userText,
+        createdAt: new Date().toISOString(),
+        userComposerMode: mode === "direct" ? undefined : mode,
+      };
+      const withUser = [...messagesRef.current, userMsg];
+      messagesRef.current = withUser;
+      setMessages(withUser);
+      setComposerTyping(true);
+
+      composerSimTimerRef.current = setTimeout(() => {
+        composerSimTimerRef.current = null;
+        const reply = getSimulatedAtlasReply(mode, userText);
+        const withAssistant: ChatLine[] = [
+          ...messagesRef.current,
+          {
+            id: newId(),
+            role: "assistant" as const,
+            content: reply,
+            createdAt: new Date().toISOString(),
+          },
+        ];
+        if (pageMountedRef.current) {
+          messagesRef.current = withAssistant;
+          setMessages(withAssistant);
+          setComposerTyping(false);
+        }
+        composerSimBusyRef.current = false;
+      }, 1200);
+    },
+    [sending],
+  );
 
   return {
     messages,

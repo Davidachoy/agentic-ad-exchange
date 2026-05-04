@@ -141,9 +141,7 @@ export function createGeminiLlmAdapter(config: GeminiLlmAdapterConfig): LlmAdapt
         parts = [last.content];
       } else if (last.role === "tool") {
         if (!chat) {
-          throw new Error(
-            "GeminiLlmAdapter: received tool message before chat was initialized",
-          );
+          throw new Error("GeminiLlmAdapter: received tool message before chat was initialized");
         }
         // If turn 1 used ANY-mode (forced), rebuild the session in AUTO mode
         // so the model can produce a final text response now that the tool
@@ -172,9 +170,7 @@ export function createGeminiLlmAdapter(config: GeminiLlmAdapterConfig): LlmAdapt
           },
         ];
       } else {
-        throw new Error(
-          `GeminiLlmAdapter: unexpected final message role "${last.role}"`,
-        );
+        throw new Error(`GeminiLlmAdapter: unexpected final message role "${last.role}"`);
       }
 
       const result = await sendWithRetry(parts);

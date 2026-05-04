@@ -12,8 +12,11 @@ export function getSimulatedSellerReply(mode: SellerComposerMode, message: strin
   }
 
   if (mode === "set_floor") {
-    const hasPrice = /\$\s*[0-9]+(?:[.,][0-9]{2})?/.test(m) || /[0-9]+(?:[.,][0-9]{2})\s*(?:cpm|usd)?/i.test(m);
-    const hasPlacement = /ctv|pre-roll|preroll|homepage|mobile|banner|placement|970|250|30s/i.test(m);
+    const hasPrice =
+      /\$\s*[0-9]+(?:[.,][0-9]{2})?/.test(m) || /[0-9]+(?:[.,][0-9]{2})\s*(?:cpm|usd)?/i.test(m);
+    const hasPlacement = /ctv|pre-roll|preroll|homepage|mobile|banner|placement|970|250|30s/i.test(
+      m,
+    );
     if (hasPrice && hasPlacement) {
       return "Got it. Dropping CTV pre-roll from $4.20 → $3.20. Projected fill rate: 68% (+34pp). Estimated revenue recovery: +$840/day. Confirm?";
     }

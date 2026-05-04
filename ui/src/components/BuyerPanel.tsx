@@ -77,10 +77,7 @@ export function BuyerPanel({
       {/* Persona roster — informational reference for the demo */}
       <div className="mt-4 space-y-1.5">
         {PERSONA_CARDS.map((p) => (
-          <div
-            key={p.agentId}
-            className={`rounded-lg border ${p.accent} p-2.5 text-xs`}
-          >
+          <div key={p.agentId} className={`rounded-lg border ${p.accent} p-2.5 text-xs`}>
             <div className="flex items-center justify-between">
               <span className="font-semibold">{p.brand}</span>
               <span className="font-mono opacity-70">{p.bidRange}</span>
@@ -124,11 +121,7 @@ export function BuyerPanel({
 
       {/* Ad slot preview — appears after auction */}
       {lastAuction != null && (
-        <AdSlotPreview
-          auction={lastAuction}
-          receipt={lastReceipt}
-          listing={activeListing}
-        />
+        <AdSlotPreview auction={lastAuction} receipt={lastReceipt} listing={activeListing} />
       )}
     </section>
   );

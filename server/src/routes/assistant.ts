@@ -1,19 +1,27 @@
+import { randomUUID } from "node:crypto";
+
 import type {
   AssistantChatMessage,
   AssistantChatResponse,
+  AssistantChatRole,
   DashboardAssistantContext,
 } from "@ade/shared";
 import { AssistantChatRequestSchema } from "@ade/shared";
-import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import type { Logger } from "pino";
 
 import { generateAssistantReply } from "../assistant/geminiReply.js";
 import { createAssistantRateLimiter } from "../middleware/rateLimit.js";
 
+export interface AssistantReplyShape {
+  role: AssistantChatRole;
+  mode?: string;
+}
+
 export type AssistantReplyGenerator = (
   messages: AssistantChatMessage[],
   context: DashboardAssistantContext,
+  shape: AssistantReplyShape,
 ) => Promise<AssistantChatResponse>;
 
 export interface AssistantRouterDeps {
@@ -54,7 +62,7 @@ export function createAssistantRouter(deps: AssistantRouterDeps): Router {
         });
         return;
       }
-      const { messages, context } = parsed.data;
+      const { messages, context, role, mode } = parsed.data;
       const last = messages[messages.length - 1];
       if (!last || last.role !== "user") {
         res.status(400).json({ error: "last_message_must_be_user", code: "invalid_request" });
@@ -72,27 +80,32 @@ export function createAssistantRouter(deps: AssistantRouterDeps): Router {
 
       const t0 = Date.now();
       const rid = randomUUID();
-      const lastPreview = last.content.length > 140 ? `${last.content.slice(0, 140)}…` : last.content;
+      const lastPreview =
+        last.content.length > 140 ? `${last.content.slice(0, 140)}…` : last.content;
       log.info(
         {
           requestId: rid,
           messageTurns: messages.length,
           contextGeneratedAt: context.generatedAt,
           lastUserPreview: lastPreview,
-          mode: deps.replyGenerator != null ? "stub" : "gemini",
+          generator: deps.replyGenerator != null ? "stub" : "gemini",
+          role,
+          composerMode: mode,
         },
         "assistant_chat_start",
       );
 
       try {
         const geminiCfg = deps.gemini;
+        const shape: AssistantReplyShape = { role, mode };
         const payload = await runAssistantGenerationSerialised(() =>
           deps.replyGenerator != null
-            ? deps.replyGenerator(messages, context)
+            ? deps.replyGenerator(messages, context, shape)
             : generateAssistantReply(
                 { apiKey: geminiCfg!.apiKey, model: geminiCfg!.model, logger: deps.logger },
                 messages,
                 context,
+                shape,
               ),
         );
         log.info(

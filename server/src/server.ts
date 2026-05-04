@@ -3,10 +3,7 @@ import { createCircleClient } from "@ade/wallets";
 import { createApp } from "./app.js";
 import { buildBuyerWalletRouting, loadServerConfig } from "./config.js";
 import { resolvePersonasFromEnv } from "./demo/runAgentAuction.js";
-import {
-  buildFixtureAuctionReplay,
-  seedDevUiStores,
-} from "./fixtures/devUiSeed.js";
+import { buildFixtureAuctionReplay, seedDevUiStores } from "./fixtures/devUiSeed.js";
 import { createLogger } from "./logger.js";
 import { createGatewayAdapter, type GatewayMiddlewareAdapter } from "./middleware/nanopayments.js";
 import { createBidStore, createListingStore, createSettlementStore } from "./state/stores.js";

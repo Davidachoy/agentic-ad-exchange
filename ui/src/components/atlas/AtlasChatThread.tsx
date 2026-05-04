@@ -2,7 +2,11 @@ import type { JSX } from "react";
 import { useEffect, useRef } from "react";
 
 import { AtlasAssistantTypingRow } from "./AtlasAssistantTypingRow.js";
-import { AtlasMessageBubble, type AssistantAgentLabel, type ChatLine } from "./AtlasMessageBubble.js";
+import {
+  AtlasMessageBubble,
+  type AssistantAgentLabel,
+  type ChatLine,
+} from "./AtlasMessageBubble.js";
 
 export interface AtlasChatThreadProps {
   messages: ChatLine[];
@@ -45,7 +49,9 @@ export function AtlasChatThread({
           <AtlasMessageBubble key={m.id} message={m} assistantAgentLabel={assistantAgentLabel} />
         ))}
         {assistantPending ? <AtlasAssistantTypingRow assistantName={assistantTypingName} /> : null}
-        {composerTyping && !assistantPending ? <AtlasAssistantTypingRow assistantName={assistantTypingName} /> : null}
+        {composerTyping && !assistantPending ? (
+          <AtlasAssistantTypingRow assistantName={assistantTypingName} />
+        ) : null}
         <div ref={endRef} />
       </div>
     </div>

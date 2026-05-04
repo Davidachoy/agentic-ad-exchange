@@ -9,6 +9,9 @@ const UiEnvSchema = z.object({
   // Reason: public on-chain seller DCW address. Bundle-safe — never holds a secret.
   // Used only to render the "View all on Arcscan" header link in SettlementLedger.
   VITE_SELLER_WALLET_ADDRESS: z.string().optional(),
+  // Reason: optional override for the seller chat backend (Path B follow-up). Bundle-safe — origin only, no secret.
+  // When unset/blank, the seller hook falls back to VITE_API_BASE_URL (Path A: shared ade-server route).
+  VITE_SELLER_API_BASE_URL: z.string().optional(),
 });
 
 const blankToUndefined = (v: unknown): unknown =>
@@ -17,4 +20,5 @@ const blankToUndefined = (v: unknown): unknown =>
 export const uiEnv = UiEnvSchema.parse({
   VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
   VITE_SELLER_WALLET_ADDRESS: blankToUndefined(import.meta.env.VITE_SELLER_WALLET_ADDRESS),
+  VITE_SELLER_API_BASE_URL: blankToUndefined(import.meta.env.VITE_SELLER_API_BASE_URL),
 });

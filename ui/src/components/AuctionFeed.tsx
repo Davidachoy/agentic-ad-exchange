@@ -31,8 +31,7 @@ export function AuctionFeed({ auctions }: AuctionFeedProps): JSX.Element {
                 <span className="font-semibold text-exchange-accent">${a.clearingPriceUsdc}</span>
               </div>
               <div className="mt-1 text-slate-300">
-                Winner:{" "}
-                <span className="font-semibold">{a.winnerBuyerAgentId}</span>
+                Winner: <span className="font-semibold">{a.winnerBuyerAgentId}</span>
               </div>
               <div className="mt-0.5 text-slate-500">
                 {new Date(a.createdAt).toLocaleTimeString()}

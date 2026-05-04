@@ -4,13 +4,7 @@ import { NavLink } from "react-router-dom";
 const FLOOR_ALERTS = 1;
 const DRAFT_DEALS = 2;
 
-function NavRow({
-  label,
-  badge,
-}: {
-  label: string;
-  badge?: number;
-}): JSX.Element {
+function NavRow({ label, badge }: { label: string; badge?: number }): JSX.Element {
   return (
     <button
       type="button"
@@ -58,7 +52,9 @@ export function SellerSidebarNav(): JSX.Element {
       <div className="mt-2 border-t border-[oklch(0.94_0.004_80)] px-3 py-3">
         <div className="rounded-lg border border-[oklch(0.91_0.005_80)] bg-white/60 px-3 py-2.5 shadow-sm">
           <div className="text-[12px] font-semibold text-[oklch(0.22_0.01_80)]">Meridian</div>
-          <div className="mt-0.5 truncate font-atlas-mono text-[10.5px] text-[oklch(0.5_0.01_80)]">meridiandaily.com</div>
+          <div className="mt-0.5 truncate font-atlas-mono text-[10.5px] text-[oklch(0.5_0.01_80)]">
+            meridiandaily.com
+          </div>
         </div>
       </div>
       <div className="flex min-h-0 flex-1" aria-hidden />

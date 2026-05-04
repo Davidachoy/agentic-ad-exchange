@@ -41,13 +41,20 @@ export function SellerYieldFloorsTab({
 }: SellerYieldFloorsTabProps): JSX.Element {
   return (
     <div className="space-y-3">
-      <p className="text-[12.5px] text-[oklch(0.4_0.01_80)]">Placements, floors, and fill signals (demo).</p>
+      <p className="text-[12.5px] text-[oklch(0.4_0.01_80)]">
+        Placements, floors, and fill signals (demo).
+      </p>
       <ul className="list-none space-y-3 p-0">
         {rows.map((row) => (
-          <li key={row.id} className="rounded-[10px] border border-[oklch(0.91_0.005_80)] bg-white p-3 shadow-sm">
+          <li
+            key={row.id}
+            className="rounded-[10px] border border-[oklch(0.91_0.005_80)] bg-white p-3 shadow-sm"
+          >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
-                <div className="text-[13px] font-semibold text-[oklch(0.22_0.01_80)]">{row.placement}</div>
+                <div className="text-[13px] font-semibold text-[oklch(0.22_0.01_80)]">
+                  {row.placement}
+                </div>
                 <div className="mt-1 flex flex-wrap items-center gap-2 font-atlas-mono text-[11px] text-[oklch(0.4_0.01_80)]">
                   <span>Floor {row.floor}</span>
                   <span>·</span>
@@ -72,7 +79,11 @@ export function SellerYieldFloorsTab({
                   >
                     Save
                   </button>
-                  <button type="button" className="text-[11px] text-[oklch(0.45_0.01_80)]" onClick={() => onEditingFloorId(null)}>
+                  <button
+                    type="button"
+                    className="text-[11px] text-[oklch(0.45_0.01_80)]"
+                    onClick={() => onEditingFloorId(null)}
+                  >
                     Cancel
                   </button>
                 </div>

@@ -47,14 +47,17 @@ export function useSellerYieldPanelState(): UseSellerYieldPanelStateResult {
   const [buyers, setBuyers] = useState(() => [...YIELD_BUYER_ROWS]);
   const [deals] = useState<YieldDealRow[]>(() => [...YIELD_DEAL_ROWS]);
 
-  const setActiveMode = useCallback((m: YieldPanelMode) => {
-    if (m === activeMode) {
-      return;
-    }
-    setPanelEntering(true);
-    setActiveModeState(m);
-    window.setTimeout(() => setPanelEntering(false), 120);
-  }, [activeMode]);
+  const setActiveMode = useCallback(
+    (m: YieldPanelMode) => {
+      if (m === activeMode) {
+        return;
+      }
+      setPanelEntering(true);
+      setActiveModeState(m);
+      window.setTimeout(() => setPanelEntering(false), 120);
+    },
+    [activeMode],
+  );
 
   const setApplyFlight = useCallback((key: string, v: boolean) => {
     setApplyFlightState((prev) => ({ ...prev, [key]: v }));

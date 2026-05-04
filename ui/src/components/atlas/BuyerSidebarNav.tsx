@@ -54,7 +54,10 @@ export function BuyerSidebarNav(): JSX.Element {
           </span>
           <span className="font-atlas-mono text-[10px] text-[oklch(0.62_0.006_80)]">soon</span>
         </div>
-        <ul className="list-none flex flex-col gap-1 p-0" aria-label="Atlas context shortcuts (placeholders)">
+        <ul
+          className="list-none flex flex-col gap-1 p-0"
+          aria-label="Atlas context shortcuts (placeholders)"
+        >
           {PLACEHOLDER_CONTEXT_ACTIONS.map((label) => (
             <li key={label}>
               <button
@@ -63,7 +66,10 @@ export function BuyerSidebarNav(): JSX.Element {
                 title="Coming soon"
                 className="flex w-full items-center gap-2 rounded-lg border border-transparent px-2 py-2 text-left text-[12.5px] font-medium text-[oklch(0.5_0.01_80)] disabled:cursor-not-allowed disabled:opacity-55"
               >
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[oklch(0.78_0.005_80)]" aria-hidden />
+                <span
+                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-[oklch(0.78_0.005_80)]"
+                  aria-hidden
+                />
                 {label}
               </button>
             </li>

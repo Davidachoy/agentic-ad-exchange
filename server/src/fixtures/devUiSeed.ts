@@ -1,14 +1,5 @@
-import type {
-  AdInventoryListing,
-  AuctionResult,
-  BidRequest,
-  SettlementReceipt,
-} from "@ade/shared";
-import {
-  AuctionResultSchema,
-  GATEWAY_WALLET_ADDRESS,
-  SettlementReceiptSchema,
-} from "@ade/shared";
+import type { AdInventoryListing, AuctionResult, BidRequest, SettlementReceipt } from "@ade/shared";
+import { AuctionResultSchema, GATEWAY_WALLET_ADDRESS, SettlementReceiptSchema } from "@ade/shared";
 import type { Logger } from "pino";
 
 import type { BidStore, ListingStore, SettlementStore } from "../state/stores.js";

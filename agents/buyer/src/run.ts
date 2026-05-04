@@ -89,30 +89,30 @@ export async function runBuyer(deps: RunBuyerDeps = {}): Promise<RunBuyerResult>
       if (await isPaused(fetcher, config.EXCHANGE_API_URL)) {
         log("cycle_paused", { agentId: config.BUYER_AGENT_ID });
       } else {
-      const res = await fetcher(`${config.EXCHANGE_API_URL}/inventory`, { method: "GET" });
-      if (!res.ok) {
-        log("inventory_fetch_failed", { status: res.status });
-      } else {
-        const json = (await res.json()) as unknown;
-        const items = Array.isArray(json) ? json : (json as { items?: unknown }).items;
-        const listings = AdInventoryListingSchema.array().parse(items);
-        const target = listings.find((l) => !seenListings.has(l.listingId));
-        if (target) {
-          const result = await agent.run(buildPrompt(config, target));
-          // Reason: only mark seen after agent.run() returns. If it throws
-          // (Gemini 503, network blip), the next cycle re-tries this listing
-          // instead of permanently skipping it.
-          seenListings.add(target.listingId);
-          const placed = result.toolCalls.includes("placeBid");
-          if (placed) bids++;
-          log("cycle_done", {
-            listingId: target.listingId,
-            iterations: result.iterations,
-            toolCalls: result.toolCalls,
-            placed,
-          });
+        const res = await fetcher(`${config.EXCHANGE_API_URL}/inventory`, { method: "GET" });
+        if (!res.ok) {
+          log("inventory_fetch_failed", { status: res.status });
+        } else {
+          const json = (await res.json()) as unknown;
+          const items = Array.isArray(json) ? json : (json as { items?: unknown }).items;
+          const listings = AdInventoryListingSchema.array().parse(items);
+          const target = listings.find((l) => !seenListings.has(l.listingId));
+          if (target) {
+            const result = await agent.run(buildPrompt(config, target));
+            // Reason: only mark seen after agent.run() returns. If it throws
+            // (Gemini 503, network blip), the next cycle re-tries this listing
+            // instead of permanently skipping it.
+            seenListings.add(target.listingId);
+            const placed = result.toolCalls.includes("placeBid");
+            if (placed) bids++;
+            log("cycle_done", {
+              listingId: target.listingId,
+              iterations: result.iterations,
+              toolCalls: result.toolCalls,
+              placed,
+            });
+          }
         }
-      }
       }
     } catch (e) {
       log("cycle_error", { error: (e as Error).message });

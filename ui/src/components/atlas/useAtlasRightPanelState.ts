@@ -6,7 +6,6 @@ import {
   INITIAL_REVIEW_DECISIONS,
   MOCK_SSPS,
 } from "./atlasMockCampaign.js";
-import { parseObjectiveToChips } from "./parseObjectiveChips.js";
 import type {
   AtlasException,
   AtlasPanelMode,
@@ -14,6 +13,7 @@ import type {
   ResolvedDecision,
   ReviewDecision,
 } from "./atlasRightPanelTypes.js";
+import { parseObjectiveToChips } from "./parseObjectiveChips.js";
 
 const OBJECTIVE_PREFILL =
   "Maximize VCR for Solstice 1P audience on CTV, $50k weekly cap, run through Sunday";
@@ -161,21 +161,24 @@ export function useAtlasRightPanelState(): UseAtlasRightPanelStateResult {
     setCreateStep(1);
   }, []);
 
-  const resolveDecision = useCallback((id: string, approved: boolean) => {
-    const dec = pendingDecisions.find((d) => d.id === id);
-    if (!dec) return;
-    setExitingDecisionIds((s) => new Set(s).add(id));
-    window.setTimeout(() => {
-      setPendingDecisions((list) => list.filter((d) => d.id !== id));
-      setResolvedHistory((h) => [{ id: `res-${id}`, title: dec.title, approved }, ...h]);
-      setExitingDecisionIds((s) => {
-        const n = new Set(s);
-        n.delete(id);
-        return n;
-      });
-      setExpandedReviewId(null);
-    }, 320);
-  }, [pendingDecisions]);
+  const resolveDecision = useCallback(
+    (id: string, approved: boolean) => {
+      const dec = pendingDecisions.find((d) => d.id === id);
+      if (!dec) return;
+      setExitingDecisionIds((s) => new Set(s).add(id));
+      window.setTimeout(() => {
+        setPendingDecisions((list) => list.filter((d) => d.id !== id));
+        setResolvedHistory((h) => [{ id: `res-${id}`, title: dec.title, approved }, ...h]);
+        setExitingDecisionIds((s) => {
+          const n = new Set(s);
+          n.delete(id);
+          return n;
+        });
+        setExpandedReviewId(null);
+      }, 320);
+    },
+    [pendingDecisions],
+  );
 
   return {
     activeMode,

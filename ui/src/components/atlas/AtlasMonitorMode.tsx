@@ -1,10 +1,11 @@
 import type { JSX } from "react";
 
 import type { ControlStateHandle } from "../../hooks/useControlState.js";
-import type { AtlasException } from "./atlasRightPanelTypes.js";
+
 import { AtlasExchangePulseCard } from "./AtlasExchangePulseCard.js";
 import type { AtlasExchangePulseCardProps } from "./AtlasExchangePulseCard.js";
 import { MOCK_PACING } from "./atlasMockCampaign.js";
+import type { AtlasException } from "./atlasRightPanelTypes.js";
 
 export interface AtlasMonitorModeProps {
   exceptions: AtlasException[];
@@ -87,7 +88,9 @@ export function AtlasMonitorMode({
 
       {exceptions.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-[10px] border border-dashed border-[oklch(0.91_0.005_80)] bg-[oklch(0.995_0.003_80)] px-6 py-12 text-center">
-          <p className="text-sm font-medium text-[oklch(0.28_0.01_80)]">Atlas is operating within policy</p>
+          <p className="text-sm font-medium text-[oklch(0.28_0.01_80)]">
+            Atlas is operating within policy
+          </p>
           <p className="mt-2 max-w-xs text-[12.5px] leading-relaxed text-[oklch(0.5_0.01_80)]">
             {autoExecutedToday} of {totalDecisionsToday} decisions auto-executed today
           </p>
@@ -196,7 +199,11 @@ function MetricChip({
   tone: "neutral" | "good" | "warn";
 }): JSX.Element {
   const valCls =
-    tone === "good" ? "text-emerald-700" : tone === "warn" ? "text-amber-800" : "text-[oklch(0.18_0.01_80)]";
+    tone === "good"
+      ? "text-emerald-700"
+      : tone === "warn"
+        ? "text-amber-800"
+        : "text-[oklch(0.18_0.01_80)]";
   return (
     <div className="px-3 py-3">
       <div className="font-atlas-mono text-[9.5px] font-semibold uppercase tracking-wider text-[oklch(0.55_0.006_80)]">

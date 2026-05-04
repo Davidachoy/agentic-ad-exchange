@@ -6,7 +6,9 @@ export interface AtlasAssistantTypingRowProps {
 }
 
 /** Typing indicator styled like an Atlas assistant bubble (CSS-only dots). */
-export function AtlasAssistantTypingRow({ assistantName = "Atlas" }: AtlasAssistantTypingRowProps): JSX.Element {
+export function AtlasAssistantTypingRow({
+  assistantName = "Atlas",
+}: AtlasAssistantTypingRowProps): JSX.Element {
   return (
     <div className="flex gap-3.5" aria-live="polite">
       <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[oklch(0.18_0.01_80)] font-atlas-mono text-[10px] font-semibold tracking-wide text-white">
@@ -14,7 +16,9 @@ export function AtlasAssistantTypingRow({ assistantName = "Atlas" }: AtlasAssist
       </div>
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex flex-wrap items-baseline gap-2">
-          <span className="text-[13px] font-semibold text-[oklch(0.18_0.01_80)]">{assistantName}</span>
+          <span className="text-[13px] font-semibold text-[oklch(0.18_0.01_80)]">
+            {assistantName}
+          </span>
           <span className="font-atlas-mono text-[10.5px] text-[oklch(0.62_0.006_80)]">typing…</span>
         </div>
         <div
