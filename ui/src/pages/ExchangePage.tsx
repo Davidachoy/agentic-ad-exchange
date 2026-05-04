@@ -137,8 +137,8 @@ export function ExchangePage(): JSX.Element {
             role="status"
             className="mb-6 rounded-lg border border-amber-700/60 bg-amber-900/20 px-4 py-2.5 text-sm text-amber-200"
           >
-            Demo paused — buyer agents, seller agent, and auto-clear are halted.
-            Click Resume to continue.
+            Demo paused — buyer agents, seller agent, and auto-clear are halted. Click Resume to
+            continue.
           </div>
         )}
 

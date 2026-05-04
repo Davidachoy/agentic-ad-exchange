@@ -19,7 +19,9 @@ export interface BuildDashboardContextInput {
   lastReceipt: SettlementReceipt | null;
 }
 
-export function buildDashboardAssistantContext(input: BuildDashboardContextInput): DashboardAssistantContext {
+export function buildDashboardAssistantContext(
+  input: BuildDashboardContextInput,
+): DashboardAssistantContext {
   return DashboardAssistantContextSchema.parse({
     generatedAt: new Date().toISOString(),
     sseConnected: input.sseConnected,

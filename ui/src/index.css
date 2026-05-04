@@ -62,12 +62,16 @@ body,
 
 .atlas-composer--live {
   border-color: oklch(0.78 0.005 80);
-  box-shadow: 0 0 0 4px oklch(0.95 0.005 80), var(--ac-shadow);
+  box-shadow:
+    0 0 0 4px oklch(0.95 0.005 80),
+    var(--ac-shadow);
 }
 
 .atlas-composer--invalid {
   border-color: rgb(251 191 36);
-  box-shadow: 0 0 0 3px rgb(254 243 199), var(--ac-shadow);
+  box-shadow:
+    0 0 0 3px rgb(254 243 199),
+    var(--ac-shadow);
 }
 
 .atlas-composer-input {
@@ -85,7 +89,11 @@ body,
   outline: 0;
   background: transparent;
   resize: none;
-  font: 400 14px/1.5 Inter, ui-sans-serif, system-ui, sans-serif;
+  font:
+    400 14px/1.5 Inter,
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
   letter-spacing: -0.003em;
   color: var(--ac-ink);
   min-height: 22px;

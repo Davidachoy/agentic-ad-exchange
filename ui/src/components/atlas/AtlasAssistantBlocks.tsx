@@ -31,7 +31,11 @@ function renderBlock(block: AssistantUiBlock): JSX.Element {
   }
 }
 
-function MetricsStripBlock({ block }: { block: Extract<AssistantUiBlock, { type: "metrics_strip" }> }): JSX.Element {
+function MetricsStripBlock({
+  block,
+}: {
+  block: Extract<AssistantUiBlock, { type: "metrics_strip" }>;
+}): JSX.Element {
   return (
     <div className="overflow-hidden rounded-[10px] border border-[oklch(0.91_0.005_80)] bg-white shadow-sm">
       <div className="grid grid-cols-2 gap-0 border-b border-[oklch(0.94_0.004_80)] sm:grid-cols-4">
@@ -53,7 +57,9 @@ function MetricsStripBlock({ block }: { block: Extract<AssistantUiBlock, { type:
                 </span>
               ) : null}
             </div>
-            <p className="mt-0.5 font-atlas-mono text-[13px] font-semibold text-[oklch(0.18_0.01_80)]">{item.value}</p>
+            <p className="mt-0.5 font-atlas-mono text-[13px] font-semibold text-[oklch(0.18_0.01_80)]">
+              {item.value}
+            </p>
           </div>
         ))}
       </div>
@@ -72,7 +78,11 @@ function pillClass(variant: "new" | "kept" | "neutral"): string {
   }
 }
 
-function PillGroupBlock({ block }: { block: Extract<AssistantUiBlock, { type: "pill_group" }> }): JSX.Element {
+function PillGroupBlock({
+  block,
+}: {
+  block: Extract<AssistantUiBlock, { type: "pill_group" }>;
+}): JSX.Element {
   return (
     <div className="rounded-[10px] border border-[oklch(0.91_0.005_80)] bg-white px-3 py-2.5 shadow-sm">
       <div className="font-atlas-mono text-[9px] font-semibold uppercase tracking-wider text-[oklch(0.55_0.006_80)]">
@@ -92,7 +102,11 @@ function PillGroupBlock({ block }: { block: Extract<AssistantUiBlock, { type: "p
   );
 }
 
-function DecisionBlock({ block }: { block: Extract<AssistantUiBlock, { type: "decision" }> }): JSX.Element {
+function DecisionBlock({
+  block,
+}: {
+  block: Extract<AssistantUiBlock, { type: "decision" }>;
+}): JSX.Element {
   return (
     <div className="overflow-hidden rounded-[10px] border border-[oklch(0.91_0.005_80)] bg-white shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-2 border-b border-[oklch(0.94_0.004_80)] px-3 py-2">
@@ -100,7 +114,9 @@ function DecisionBlock({ block }: { block: Extract<AssistantUiBlock, { type: "de
           <div className="font-atlas-mono text-[9px] font-semibold uppercase tracking-wider text-[oklch(0.55_0.006_80)]">
             Decision
           </div>
-          <h3 className="mt-0.5 text-[13px] font-semibold text-[oklch(0.18_0.01_80)]">{block.headline}</h3>
+          <h3 className="mt-0.5 text-[13px] font-semibold text-[oklch(0.18_0.01_80)]">
+            {block.headline}
+          </h3>
         </div>
         {block.badge ? (
           <span className="shrink-0 rounded-full border border-[oklch(0.91_0.005_80)] bg-[oklch(0.97_0.005_80)] px-2 py-0.5 font-atlas-mono text-[10px] text-[oklch(0.4_0.01_80)]">
@@ -131,7 +147,10 @@ function DecisionBlock({ block }: { block: Extract<AssistantUiBlock, { type: "de
               {block.rejected.map((r, i) => (
                 <li key={i} className="text-[12.5px]">
                   <span className="font-medium">{renderBoldMarkdown(r.action)}</span>
-                  <span className="text-[oklch(0.5_0.01_80)]"> — {renderBoldMarkdown(r.reason)}</span>
+                  <span className="text-[oklch(0.5_0.01_80)]">
+                    {" "}
+                    — {renderBoldMarkdown(r.reason)}
+                  </span>
                 </li>
               ))}
             </ul>

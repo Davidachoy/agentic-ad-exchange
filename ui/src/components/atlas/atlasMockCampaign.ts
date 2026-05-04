@@ -49,9 +49,33 @@ export const MOCK_PACING: PacingBar[] = [
 ];
 
 export const MOCK_ANALYZE_ROWS: AnalyzeChannelRow[] = [
-  { channel: "Hulu", imps: "2.1M", winPct: "64%", vcr: "94%", ecpm: "$18.20", vsGoal: "+2.1%", tone: "beat" },
-  { channel: "Roku", imps: "890k", winPct: "58%", vcr: "88%", ecpm: "$16.40", vsGoal: "−0.4%", tone: "track" },
-  { channel: "Tubi", imps: "120k", winPct: "22%", vcr: "71%", ecpm: "$22.10", vsGoal: "−8.2%", tone: "miss" },
+  {
+    channel: "Hulu",
+    imps: "2.1M",
+    winPct: "64%",
+    vcr: "94%",
+    ecpm: "$18.20",
+    vsGoal: "+2.1%",
+    tone: "beat",
+  },
+  {
+    channel: "Roku",
+    imps: "890k",
+    winPct: "58%",
+    vcr: "88%",
+    ecpm: "$16.40",
+    vsGoal: "−0.4%",
+    tone: "track",
+  },
+  {
+    channel: "Tubi",
+    imps: "120k",
+    winPct: "22%",
+    vcr: "71%",
+    ecpm: "$22.10",
+    vsGoal: "−8.2%",
+    tone: "miss",
+  },
 ];
 
 export type CreativeRotation = "auto_vcr" | "auto_ctr" | "ab" | "manual";
@@ -70,7 +94,8 @@ export const INITIAL_REVIEW_DECISIONS: ReviewDecision[] = [
     title: "Floor CPM lift — Coastal PMP",
     summary: "Seller counter at $19.20 vs Atlas $18.40 anchor.",
     age: "12m",
-    context: "PMP-1043 Coastal is in draft renewal; counterpart proposed a +4% floor for Q3 flight overlap.",
+    context:
+      "PMP-1043 Coastal is in draft renewal; counterpart proposed a +4% floor for Q3 flight overlap.",
     reasoning: [
       "Historical win rate 61% on this deal above $18 CPM.",
       "Spend pacing is 2% under target with 6 days left in flight.",
@@ -87,7 +112,8 @@ export const INITIAL_REVIEW_DECISIONS: ReviewDecision[] = [
     title: "Shift 15% budget to Roku",
     summary: "VCR on Roku +8% vs goal; Hulu flat.",
     age: "26m",
-    context: "Solstice 1P line item: Atlas recommends intra-week budget shift capped by policy delta.",
+    context:
+      "Solstice 1P line item: Atlas recommends intra-week budget shift capped by policy delta.",
     reasoning: [
       "Roku segment VCR 96% vs 88% benchmark.",
       "Policy allows $4.8k/day autonomous delta — this move is $3.1k/day.",

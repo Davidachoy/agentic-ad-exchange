@@ -1,8 +1,7 @@
+import type { AuctionResult } from "@ade/shared";
 import type { CircleClient } from "@ade/wallets";
 import type { Express } from "express";
 import type { Logger } from "pino";
-
-import type { AuctionResult } from "@ade/shared";
 
 import type { AutoClearScheduler } from "../auction/autoClearScheduler.js";
 import type { ResolvedPersona } from "../demo/runAgentAuction.js";
@@ -11,7 +10,6 @@ import type { GatewayMiddlewareAdapter } from "../middleware/nanopayments.js";
 import type { NonceStore } from "../nonces/store.js";
 import type { ControlStore } from "../state/controlStore.js";
 import type { BidStore, ListingStore, SettlementStore } from "../state/stores.js";
-
 
 import { createAssistantRouter } from "./assistant.js";
 import { createAuctionRouter } from "./auction.js";
@@ -96,9 +94,7 @@ export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
       fixtureAuctionReplay: deps.fixtureAuctionReplay,
     }),
   );
-  app.use(
-    createControlRouter({ controlStore: deps.controlStore, eventBus: deps.eventBus }),
-  );
+  app.use(createControlRouter({ controlStore: deps.controlStore, eventBus: deps.eventBus }));
   if (deps.demo && deps.demo.mode === "in_process") {
     // Reason: when DEMO_MODE=external, standalone Railway agent services own
     // auction generation. Mounting the demo router here would risk

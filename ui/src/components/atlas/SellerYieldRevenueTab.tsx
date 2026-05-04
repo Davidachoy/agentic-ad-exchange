@@ -79,8 +79,12 @@ export function SellerYieldRevenueTab({
                         : "bg-[oklch(0.995_0.003_80)]"
                   }`}
                 >
-                  <td className="px-3 py-2 font-medium text-[oklch(0.22_0.01_80)]">{row.placement}</td>
-                  <td className="px-2 py-2 font-atlas-mono text-[oklch(0.32_0.01_80)]">{row.imps}</td>
+                  <td className="px-3 py-2 font-medium text-[oklch(0.22_0.01_80)]">
+                    {row.placement}
+                  </td>
+                  <td className="px-2 py-2 font-atlas-mono text-[oklch(0.32_0.01_80)]">
+                    {row.imps}
+                  </td>
                   <td className="px-2 py-2 font-atlas-mono">{row.fill}</td>
                   <td className="px-2 py-2 font-atlas-mono">{row.ecpm}</td>
                   <td className="px-2 py-2 font-atlas-mono">{row.revenue}</td>
@@ -98,19 +102,25 @@ export function SellerYieldRevenueTab({
         </div>
         <div className="grid gap-2 sm:grid-cols-3">
           <div className="rounded-[10px] border border-[oklch(0.91_0.005_80)] border-l-[3px] border-l-emerald-500 bg-white p-3 shadow-sm">
-            <div className="font-atlas-mono text-[9px] font-semibold uppercase text-emerald-800">Best call</div>
+            <div className="font-atlas-mono text-[9px] font-semibold uppercase text-emerald-800">
+              Best call
+            </div>
             <p className="mt-2 text-[11.5px] leading-snug text-[oklch(0.28_0.01_80)]">
               Held homepage floor — demand stayed above $2.14 all day
             </p>
           </div>
           <div className="rounded-[10px] border border-[oklch(0.91_0.005_80)] border-l-[3px] border-l-amber-500 bg-white p-3 shadow-sm">
-            <div className="font-atlas-mono text-[9px] font-semibold uppercase text-amber-900">Floor alert</div>
+            <div className="font-atlas-mono text-[9px] font-semibold uppercase text-amber-900">
+              Floor alert
+            </div>
             <p className="mt-2 text-[11.5px] leading-snug text-[oklch(0.28_0.01_80)]">
               CTV pre-roll at $4.20 cutting demand — 34% fill vs 71% benchmark
             </p>
           </div>
           <div className="rounded-[10px] border border-[oklch(0.91_0.005_80)] border-l-[3px] border-l-blue-500 bg-white p-3 shadow-sm">
-            <div className="font-atlas-mono text-[9px] font-semibold uppercase text-blue-900">Learned</div>
+            <div className="font-atlas-mono text-[9px] font-semibold uppercase text-blue-900">
+              Learned
+            </div>
             <p className="mt-2 text-[11.5px] leading-snug text-[oklch(0.28_0.01_80)]">
               Mobile banner floor $0.80 leaving ~$0.40/imp on table
             </p>

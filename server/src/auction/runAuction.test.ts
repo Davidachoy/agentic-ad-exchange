@@ -2,11 +2,7 @@ import type { CircleClient } from "@ade/wallets";
 import { describe, expect, it, vi } from "vitest";
 
 import { createEventBus } from "../events/bus.js";
-import {
-  createBidStore,
-  createListingStore,
-  createSettlementStore,
-} from "../state/stores.js";
+import { createBidStore, createListingStore, createSettlementStore } from "../state/stores.js";
 
 import { runAuction, type RunAuctionDeps } from "./runAuction.js";
 

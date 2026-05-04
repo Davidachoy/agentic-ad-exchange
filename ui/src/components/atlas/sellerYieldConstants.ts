@@ -88,8 +88,36 @@ export const YIELD_DEAL_ROWS: YieldDealRow[] = [
 ];
 
 export const YIELD_BUYER_ROWS: YieldBuyerRow[] = [
-  { id: "b1", name: "Northwave DSP", winsToday: "412", avgCpm: "$2.31", pctRevenue: "38%", status: "preferred" },
-  { id: "b2", name: "Trade Desk", winsToday: "301", avgCpm: "$1.98", pctRevenue: "22%", status: "allowed" },
-  { id: "b3", name: "Solstice 1P", winsToday: "188", avgCpm: "$2.04", pctRevenue: "18%", status: "allowed" },
-  { id: "b4", name: "OpenPath remnant", winsToday: "94", avgCpm: "$0.72", pctRevenue: "7%", status: "blocked" },
+  {
+    id: "b1",
+    name: "Northwave DSP",
+    winsToday: "412",
+    avgCpm: "$2.31",
+    pctRevenue: "38%",
+    status: "preferred",
+  },
+  {
+    id: "b2",
+    name: "Trade Desk",
+    winsToday: "301",
+    avgCpm: "$1.98",
+    pctRevenue: "22%",
+    status: "allowed",
+  },
+  {
+    id: "b3",
+    name: "Solstice 1P",
+    winsToday: "188",
+    avgCpm: "$2.04",
+    pctRevenue: "18%",
+    status: "allowed",
+  },
+  {
+    id: "b4",
+    name: "OpenPath remnant",
+    winsToday: "94",
+    avgCpm: "$0.72",
+    pctRevenue: "7%",
+    status: "blocked",
+  },
 ];

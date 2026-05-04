@@ -8,7 +8,10 @@ export interface AtlasTopBarProps {
 export function AtlasTopBar({ primary, secondary }: AtlasTopBarProps): JSX.Element {
   const now = new Date();
   return (
-    <header aria-label="Assistant workspace header" className="flex h-[52px] shrink-0 items-center gap-3 border-b border-[oklch(0.91_0.005_80)] bg-[oklch(0.985_0.004_80)] px-5 font-atlas">
+    <header
+      aria-label="Assistant workspace header"
+      className="flex h-[52px] shrink-0 items-center gap-3 border-b border-[oklch(0.91_0.005_80)] bg-[oklch(0.985_0.004_80)] px-5 font-atlas"
+    >
       <div className="flex items-center gap-2 text-[12.5px] text-[oklch(0.4_0.01_80)]">
         <span className="font-semibold text-[oklch(0.18_0.01_80)]">{primary}</span>
         <span className="text-[oklch(0.62_0.006_80)]">/</span>

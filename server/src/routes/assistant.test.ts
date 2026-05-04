@@ -4,6 +4,7 @@ import request from "supertest";
 import { describe, expect, it } from "vitest";
 
 import { createLogger } from "../logger.js";
+
 import { createAssistantRouter, type AssistantReplyGenerator } from "./assistant.js";
 
 const testLog = createLogger("silent");
@@ -69,7 +70,7 @@ describe("POST /assistant/chat", () => {
 
   it("returns reply and blocks when replyGenerator is injected (happy)", async () => {
     const res = await request(
-      makeAppWithStubReply(async () => ({
+      makeAppWithStubReply(async (_messages, _context, _shape) => ({
         reply: "OK",
         blocks: [
           {
@@ -85,5 +86,35 @@ describe("POST /assistant/chat", () => {
     expect(res.body.reply).toBe("OK");
     expect(res.body.blocks).toHaveLength(1);
     expect(res.body.blocks[0].type).toBe("metrics_strip");
+  });
+
+  it("forwards role:'seller' and mode to the replyGenerator (happy)", async () => {
+    const calls: { role: string; mode: string | undefined }[] = [];
+    const res = await request(
+      makeAppWithStubReply(async (_messages, _context, shape) => {
+        calls.push({ role: shape.role, mode: shape.mode });
+        return { reply: `seller:${shape.mode ?? "no-mode"}` };
+      }),
+    )
+      .post("/assistant/chat")
+      .send({ ...body, role: "seller", mode: "set_floor" })
+      .expect(200);
+    expect(res.body.reply).toBe("seller:set_floor");
+    expect(calls).toEqual([{ role: "seller", mode: "set_floor" }]);
+  });
+
+  it("defaults role to 'buyer' when omitted from the request body (edge)", async () => {
+    const calls: { role: string; mode: string | undefined }[] = [];
+    const res = await request(
+      makeAppWithStubReply(async (_messages, _context, shape) => {
+        calls.push({ role: shape.role, mode: shape.mode });
+        return { reply: "ok" };
+      }),
+    )
+      .post("/assistant/chat")
+      .send(body)
+      .expect(200);
+    expect(res.body.reply).toBe("ok");
+    expect(calls).toEqual([{ role: "buyer", mode: undefined }]);
   });
 });

@@ -13,7 +13,8 @@ export function createAuctionRateLimiter(perSecond: number): RequestHandler {
     limit: perSecond,
     standardHeaders: "draft-7",
     legacyHeaders: false,
-    keyGenerator: (req) => `listing:${(req.params as Record<string, string>).listingId ?? "unknown"}`,
+    keyGenerator: (req) =>
+      `listing:${(req.params as Record<string, string>).listingId ?? "unknown"}`,
   });
 }
 

@@ -61,7 +61,9 @@ export function AtlasCreateMode({
             type="button"
             onClick={() => onStep(s)}
             className={`flex-1 rounded-md py-1.5 text-center font-atlas-mono text-[10.5px] font-semibold uppercase tracking-wide ${
-              step === s ? "bg-white text-[oklch(0.18_0.01_80)] shadow-sm" : "text-[oklch(0.5_0.01_80)]"
+              step === s
+                ? "bg-white text-[oklch(0.18_0.01_80)] shadow-sm"
+                : "text-[oklch(0.5_0.01_80)]"
             }`}
           >
             {s === 1 ? "Objective" : s === 2 ? "Inventory" : "Policy"}
@@ -135,7 +137,9 @@ export function AtlasCreateMode({
                 className="flex items-center justify-between rounded-lg border border-[oklch(0.91_0.005_80)] bg-white px-3 py-2.5"
               >
                 <div className="flex flex-col">
-                  <span className="text-[13px] font-medium text-[oklch(0.22_0.01_80)]">{s.name}</span>
+                  <span className="text-[13px] font-medium text-[oklch(0.22_0.01_80)]">
+                    {s.name}
+                  </span>
                   {s.warnLowWinRate ? (
                     <span className="mt-0.5 font-atlas-mono text-[10px] font-medium text-amber-800">
                       Low win-rate recently
@@ -172,7 +176,10 @@ export function AtlasCreateMode({
             {dealsOpen ? (
               <ul className="list-none space-y-1 border-t border-[oklch(0.94_0.004_80)] p-3">
                 {MOCK_PMPS.map((p) => (
-                  <li key={p.id} className="font-atlas-mono text-[11.5px] text-[oklch(0.32_0.01_80)]">
+                  <li
+                    key={p.id}
+                    className="font-atlas-mono text-[11.5px] text-[oklch(0.32_0.01_80)]"
+                  >
                     {p.id} {p.label}{" "}
                     <span className={p.status === "active" ? "text-emerald-700" : "text-amber-800"}>
                       [{p.status}]
@@ -180,7 +187,10 @@ export function AtlasCreateMode({
                   </li>
                 ))}
                 <li>
-                  <button type="button" className="text-[11.5px] font-medium text-[oklch(0.36_0.01_80)] underline">
+                  <button
+                    type="button"
+                    className="text-[11.5px] font-medium text-[oklch(0.36_0.01_80)] underline"
+                  >
                     + Add deal ID
                   </button>
                 </li>
@@ -259,7 +269,9 @@ export function AtlasCreateMode({
             <div className="font-atlas-mono text-[9.5px] font-semibold uppercase tracking-wider text-[oklch(0.55_0.006_80)]">
               Policy summary
             </div>
-            <p className="mt-2 text-[12.5px] leading-relaxed text-[oklch(0.28_0.01_80)]">{policySummary}</p>
+            <p className="mt-2 text-[12.5px] leading-relaxed text-[oklch(0.28_0.01_80)]">
+              {policySummary}
+            </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
@@ -277,7 +289,11 @@ export function AtlasCreateMode({
               Save as draft
             </button>
           </div>
-          <button type="button" onClick={() => onStep(2)} className="text-[12.5px] text-[oklch(0.45_0.01_80)]">
+          <button
+            type="button"
+            onClick={() => onStep(2)}
+            className="text-[12.5px] text-[oklch(0.45_0.01_80)]"
+          >
             ← Back to inventory
           </button>
         </div>

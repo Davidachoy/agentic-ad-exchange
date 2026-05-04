@@ -6,8 +6,7 @@ const segmentBase =
 
 const segmentRight = "rounded-l-none rounded-r-[10px]";
 
-const segmentActive =
-  "bg-white text-[oklch(0.22_0.012_80)] shadow-[0_1px_2px_rgba(15,23,42,0.05)]";
+const segmentActive = "bg-white text-[oklch(0.22_0.012_80)] shadow-[0_1px_2px_rgba(15,23,42,0.05)]";
 
 const segmentInactive =
   "bg-transparent text-[oklch(0.58_0.008_80)] hover:text-[oklch(0.40_0.012_80)]";
@@ -23,9 +22,7 @@ export function RouteSwitcher(): JSX.Element {
           to="/buyer"
           end
           aria-current={buyerSegmentActive ? "page" : undefined}
-          className={() =>
-            `${segmentBase} ${buyerSegmentActive ? segmentActive : segmentInactive}`
-          }
+          className={() => `${segmentBase} ${buyerSegmentActive ? segmentActive : segmentInactive}`}
         >
           Buyer
         </NavLink>

@@ -26,61 +26,56 @@ const model = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
 const describeSmoke = apiKey ? describe : describe.skip;
 
 describeSmoke("createGeminiLlmAdapter (live Gemini smoke, seller)", () => {
-  it(
-    "accepts the generated functionDeclarations and picks listInventory",
-    async () => {
-      const fetchImpl = vi.fn(
-        async () =>
-          new Response(
-            JSON.stringify({ listingId: "11111111-1111-4111-8111-111111111111" }),
-            { status: 201 },
-          ),
-      );
-
-      const tools = [
-        createListInventoryTool({
-          exchangeUrl: "http://localhost:4021",
-          sellerAgentId: "seller-smoke",
-          sellerWallet: "0x0000000000000000000000000000000000000001",
-          fetchImpl,
+  it("accepts the generated functionDeclarations and picks listInventory", async () => {
+    const fetchImpl = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ listingId: "11111111-1111-4111-8111-111111111111" }), {
+          status: 201,
         }),
-        createServeAdTool({ exchangeUrl: "http://localhost:4021" }),
-        createViewHistoryTool({ exchangeUrl: "http://localhost:4021" }),
-      ];
+    );
 
-      const llm = createGeminiLlmAdapter({
-        apiKey: apiKey as string,
-        model,
-        tools,
-      });
+    const tools = [
+      createListInventoryTool({
+        exchangeUrl: "http://localhost:4021",
+        sellerAgentId: "seller-smoke",
+        sellerWallet: "0x0000000000000000000000000000000000000001",
+        fetchImpl,
+      }),
+      createServeAdTool({ exchangeUrl: "http://localhost:4021" }),
+      createViewHistoryTool({ exchangeUrl: "http://localhost:4021" }),
+    ];
 
-      const agent = createSellerAgent({ llm, tools, systemPrompt: SELLER_SYSTEM_PROMPT });
+    const llm = createGeminiLlmAdapter({
+      apiKey: apiKey as string,
+      model,
+      tools,
+    });
 
-      const result = await agent.run(
-        [
-          "List a 300x250 display banner with floor 0.001 USDC.",
-          "Use these values:",
-          '- adType: "display"',
-          '- format: "banner"',
-          '- size: "300x250"',
-          "- contextualExclusions: []",
-          '- floorPriceUsdc: "0.001"',
-        ].join("\n"),
-      );
+    const agent = createSellerAgent({ llm, tools, systemPrompt: SELLER_SYSTEM_PROMPT });
 
-      // eslint-disable-next-line no-console
-      console.log("[gemini smoke seller]", {
-        model,
-        iterations: result.iterations,
-        toolCalls: result.toolCalls,
-        output: result.output,
-      });
+    const result = await agent.run(
+      [
+        "List a 300x250 display banner with floor 0.001 USDC.",
+        "Use these values:",
+        '- adType: "display"',
+        '- format: "banner"',
+        '- size: "300x250"',
+        "- contextualExclusions: []",
+        '- floorPriceUsdc: "0.001"',
+      ].join("\n"),
+    );
 
-      expect(result.iterations).toBeGreaterThan(0);
-      expect(result.toolCalls.length).toBeGreaterThan(0);
-      expect(result.toolCalls).toContain("listInventory");
-      expect(fetchImpl).toHaveBeenCalled();
-    },
-    60_000,
-  );
+    // eslint-disable-next-line no-console
+    console.log("[gemini smoke seller]", {
+      model,
+      iterations: result.iterations,
+      toolCalls: result.toolCalls,
+      output: result.output,
+    });
+
+    expect(result.iterations).toBeGreaterThan(0);
+    expect(result.toolCalls.length).toBeGreaterThan(0);
+    expect(result.toolCalls).toContain("listInventory");
+    expect(fetchImpl).toHaveBeenCalled();
+  }, 60_000);
 });

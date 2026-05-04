@@ -1,7 +1,6 @@
 import { ARC_TESTNET_USDC } from "@ade/shared";
 import { initiateDeveloperControlledWalletsClient } from "@circle-fin/developer-controlled-wallets";
 
-
 import type { CircleSdkAdapter } from "./circle.js";
 import type { WalletsConfig } from "./config.js";
 

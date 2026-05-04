@@ -41,14 +41,22 @@ export function ReviewDecisionCard({
           {decision.tag}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[13px] font-semibold text-[oklch(0.18_0.01_80)]">{decision.title}</span>
-          <span className="mt-0.5 block text-[12.5px] text-[oklch(0.42_0.01_80)]">{decision.summary}</span>
+          <span className="block text-[13px] font-semibold text-[oklch(0.18_0.01_80)]">
+            {decision.title}
+          </span>
+          <span className="mt-0.5 block text-[12.5px] text-[oklch(0.42_0.01_80)]">
+            {decision.summary}
+          </span>
         </span>
-        <span className="shrink-0 font-atlas-mono text-[10.5px] text-[oklch(0.55_0.006_80)]">{decision.age}</span>
+        <span className="shrink-0 font-atlas-mono text-[10.5px] text-[oklch(0.55_0.006_80)]">
+          {decision.age}
+        </span>
       </button>
       {expanded ? (
         <div className="border-t border-[oklch(0.94_0.004_80)] px-4 py-3">
-          <p className="text-[12.5px] leading-relaxed text-[oklch(0.32_0.01_80)]">{decision.context}</p>
+          <p className="text-[12.5px] leading-relaxed text-[oklch(0.32_0.01_80)]">
+            {decision.context}
+          </p>
           <div className="mt-3">
             <div className="font-atlas-mono text-[9.5px] font-semibold uppercase tracking-wider text-[oklch(0.55_0.006_80)]">
               Atlas reasoning

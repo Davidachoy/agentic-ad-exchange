@@ -43,9 +43,17 @@ export const DashboardAssistantContextSchema = z.object({
 });
 export type DashboardAssistantContext = z.infer<typeof DashboardAssistantContextSchema>;
 
+/** Role discriminator: lets the server pick the buyer vs seller system prompt. */
+export const AssistantChatRoleSchema = z.enum(["buyer", "seller"]);
+export type AssistantChatRole = z.infer<typeof AssistantChatRoleSchema>;
+
 export const AssistantChatRequestSchema = z.object({
   messages: z.array(AssistantChatMessageSchema).min(1).max(40),
   context: DashboardAssistantContextSchema,
+  /** Defaults to "buyer" so existing buyer clients keep working without sending the field. */
+  role: AssistantChatRoleSchema.default("buyer"),
+  /** Composer mode hint (e.g. "ask", "set_floor"). Server-side prompt may use this for shaping. */
+  mode: z.string().min(1).max(40).optional(),
 });
 export type AssistantChatRequest = z.infer<typeof AssistantChatRequestSchema>;
 

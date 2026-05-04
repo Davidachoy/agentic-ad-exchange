@@ -7,8 +7,7 @@ export interface ParsedChip {
   status: "confirmed" | "ambiguous";
 }
 
-const EXAMPLE =
-  "Maximize VCR for Solstice 1P audience on CTV, $50k weekly cap, run through Sunday";
+const EXAMPLE = "Maximize VCR for Solstice 1P audience on CTV, $50k weekly cap, run through Sunday";
 
 export function parseObjectiveToChips(text: string): ParsedChip[] {
   const t = text.trim();
@@ -67,7 +66,7 @@ export function parseObjectiveToChips(text: string): ParsedChip[] {
     status: /\bctv\b/i.test(lower) ? "confirmed" : "ambiguous",
   });
 
-  if (t === EXAMPLE || t.includes("Solstice") && t.includes("50k")) {
+  if (t === EXAMPLE || (t.includes("Solstice") && t.includes("50k"))) {
     return [
       { key: "goal", label: "Goal", value: "Maximize VCR", status: "confirmed" },
       { key: "budget", label: "Budget", value: "$50k weekly cap", status: "confirmed" },

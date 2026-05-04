@@ -1,8 +1,8 @@
 import type { JSX } from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
-import { IconPlus } from "./AtlasComposerIcons.js";
 import type { AssistantComposerModeField } from "./AssistantModeComposer.js";
+import { IconPlus } from "./AtlasComposerIcons.js";
 
 export interface AssistantComposerPlusModeRowProps {
   modes: readonly AssistantComposerModeField[];
@@ -90,7 +90,12 @@ export function AssistantComposerPlusModeRow({
         <IconPlus />
       </button>
       {open ? (
-        <div id={menuId} role="menu" aria-label={plusMenuAriaLabel} className="atlas-composer-plus-menu">
+        <div
+          id={menuId}
+          role="menu"
+          aria-label={plusMenuAriaLabel}
+          className="atlas-composer-plus-menu"
+        >
           {structured.map((m) => (
             <button
               key={m.id}

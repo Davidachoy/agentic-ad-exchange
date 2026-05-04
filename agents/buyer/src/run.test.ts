@@ -140,8 +140,7 @@ describe("runBuyer", () => {
 
   it("treats a /control/state error as 'running' and proceeds (failure-recovery)", async () => {
     const fetchImpl = makeFetchByUrl({
-      "/control/state": () =>
-        new Response("upstream down", { status: 503 }),
+      "/control/state": () => new Response("upstream down", { status: 503 }),
       "/inventory": () => inventoryResponse([sampleListing]),
     });
     const agent = fakeAgent(["placeBid"]);

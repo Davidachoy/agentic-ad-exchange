@@ -94,7 +94,9 @@ export function AtlasMessageBubble({
       </div>
       <div className={`min-w-0 flex-1 ${isUser ? "text-right" : ""}`}>
         <div className={`mb-1 flex flex-wrap items-baseline gap-2 ${isUser ? "justify-end" : ""}`}>
-          <span className="text-[13px] font-semibold text-[oklch(0.18_0.01_80)]">{isUser ? "You" : assistantName}</span>
+          <span className="text-[13px] font-semibold text-[oklch(0.18_0.01_80)]">
+            {isUser ? "You" : assistantName}
+          </span>
           {!isUser && (
             <span className="rounded-full border border-[oklch(0.91_0.005_80)] bg-[oklch(0.97_0.005_80)] px-1.5 py-0.5 font-atlas-mono text-[10px] text-[oklch(0.45_0.01_80)]">
               {assistantAgentLabel}
@@ -110,8 +112,14 @@ export function AtlasMessageBubble({
               offline summary
             </span>
           )}
-          <time className="font-atlas-mono text-[10.5px] text-[oklch(0.62_0.006_80)]" dateTime={message.createdAt}>
-            {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          <time
+            className="font-atlas-mono text-[10.5px] text-[oklch(0.62_0.006_80)]"
+            dateTime={message.createdAt}
+          >
+            {new Date(message.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
           </time>
         </div>
         {userTag ? (

@@ -19,7 +19,9 @@ export interface SellerYieldRightPanelProps {
   onNewDealInChat: () => void;
 }
 
-export function SellerYieldRightPanel({ onNewDealInChat }: SellerYieldRightPanelProps): JSX.Element {
+export function SellerYieldRightPanel({
+  onNewDealInChat,
+}: SellerYieldRightPanelProps): JSX.Element {
   const s = useSellerYieldPanelState();
   const tablistId = useId();
 
@@ -47,7 +49,9 @@ export function SellerYieldRightPanel({ onNewDealInChat }: SellerYieldRightPanel
                 id={`${tablistId}-${m.id}`}
                 onClick={() => s.setActiveMode(m.id)}
                 className={`relative flex flex-1 items-center justify-center gap-1 rounded-md py-2 text-center font-atlas-mono text-[10px] font-semibold uppercase tracking-wide min-w-[4.5rem] ${
-                  selected ? "bg-white text-[oklch(0.18_0.01_80)] shadow-sm" : "text-[oklch(0.48_0.01_80)]"
+                  selected
+                    ? "bg-white text-[oklch(0.18_0.01_80)] shadow-sm"
+                    : "text-[oklch(0.48_0.01_80)]"
                 }`}
               >
                 {m.label}
@@ -90,7 +94,9 @@ export function SellerYieldRightPanel({ onNewDealInChat }: SellerYieldRightPanel
             onNewDeal={onNewDealInChat}
           />
         ) : null}
-        {s.activeMode === "buyers" ? <SellerYieldBuyersTab buyers={s.buyers} onCycleStatus={s.cycleBuyerStatus} /> : null}
+        {s.activeMode === "buyers" ? (
+          <SellerYieldBuyersTab buyers={s.buyers} onCycleStatus={s.cycleBuyerStatus} />
+        ) : null}
       </div>
     </section>
   );

@@ -1,10 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 
-import {
-  AdTargetingSchema,
-  BidRequestSchema,
-  UsdcAmountSchema,
-} from "@ade/shared";
+import { AdTargetingSchema, BidRequestSchema, UsdcAmountSchema } from "@ade/shared";
 import { GatewayClient, type SupportedChainName } from "@circle-fin/x402-batching/client";
 import { z } from "zod";
 
@@ -105,6 +101,9 @@ export function createPlaceBidTool(
  * Kept separate so callers that don't have a private key can omit it
  * and fall back to the plain-fetch path.
  */
-export function buildGatewayClient(privateKey: `0x${string}`, chain: SupportedChainName): GatewayClient {
+export function buildGatewayClient(
+  privateKey: `0x${string}`,
+  chain: SupportedChainName,
+): GatewayClient {
   return new GatewayClient({ chain, privateKey });
 }

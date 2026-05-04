@@ -17,7 +17,10 @@ export interface SellerYieldBuyersTabProps {
   onCycleStatus: (id: string) => void;
 }
 
-export function SellerYieldBuyersTab({ buyers, onCycleStatus }: SellerYieldBuyersTabProps): JSX.Element {
+export function SellerYieldBuyersTab({
+  buyers,
+  onCycleStatus,
+}: SellerYieldBuyersTabProps): JSX.Element {
   return (
     <div className="overflow-hidden rounded-[10px] border border-[oklch(0.91_0.005_80)] bg-white shadow-sm">
       <div className="border-b border-[oklch(0.94_0.004_80)] px-3 py-2 font-atlas-mono text-[9.5px] font-semibold uppercase tracking-wider text-[oklch(0.55_0.006_80)]">

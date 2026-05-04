@@ -2,7 +2,6 @@ import type { CircleClient } from "@ade/wallets";
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 
-
 import { createApp } from "../app.js";
 
 const wallet = (s: string) => `0x${s.padStart(40, "0")}`;

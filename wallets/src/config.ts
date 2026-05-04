@@ -5,10 +5,7 @@ import { z } from "zod";
 // placeholder (e.g. `WALLET_SET_ID=`) would otherwise fail `.min(1)`. Treat
 // blank strings as "not provided" at the boundary.
 const blankToUndefined = <T extends z.ZodTypeAny>(schema: T) =>
-  z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    schema,
-  );
+  z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), schema);
 
 /**
  * Typed config for @ade/wallets. The Circle entity secret and API key live

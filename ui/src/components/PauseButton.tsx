@@ -5,12 +5,7 @@ export interface PauseButtonProps {
   onResume: () => void;
 }
 
-export function PauseButton({
-  paused,
-  pending,
-  onPause,
-  onResume,
-}: PauseButtonProps): JSX.Element {
+export function PauseButton({ paused, pending, onPause, onResume }: PauseButtonProps): JSX.Element {
   const handleClick = (): void => {
     if (pending) return;
     if (paused) onResume();

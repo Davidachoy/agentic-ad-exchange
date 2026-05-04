@@ -80,7 +80,10 @@ export function AdSlotPreview({ auction, receipt, listing }: AdSlotPreviewProps)
         <span className="text-xs text-slate-400">{size}</span>
       </div>
 
-      <div className="relative w-full overflow-hidden rounded-lg" style={{ paddingBottom: `${aspectPct}%` }}>
+      <div
+        className="relative w-full overflow-hidden rounded-lg"
+        style={{ paddingBottom: `${aspectPct}%` }}
+      >
         <div
           className="absolute inset-0 flex flex-col items-start justify-center p-4"
           style={{ background: `linear-gradient(135deg, ${creative.bgFrom}, ${creative.bgTo})` }}

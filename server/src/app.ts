@@ -3,7 +3,6 @@ import type { CircleClient } from "@ade/wallets";
 import express, { type Express } from "express";
 import type { Logger } from "pino";
 
-
 import { createAutoClearScheduler, type AutoClearScheduler } from "./auction/autoClearScheduler.js";
 import { runAuction } from "./auction/runAuction.js";
 import { createEventBus, type EventBus } from "./events/bus.js";

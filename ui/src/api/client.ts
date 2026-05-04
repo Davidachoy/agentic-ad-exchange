@@ -1,14 +1,21 @@
 import {
   AssistantChatResponseSchema,
   type AdInventoryListing,
-  type AssistantChatRequest,
+  type AssistantChatRequestSchema,
   type AssistantChatResponse,
   type AuctionResult,
   type BidRequest,
   type SettlementReceipt,
 } from "@ade/shared";
+import type { z } from "zod";
 
 import { uiEnv } from "../env.js";
+
+/**
+ * Wire-shape for /assistant/chat. Uses z.input so server-side defaults (e.g.
+ * `role` defaulting to "buyer") stay optional at the client call site.
+ */
+export type AssistantChatRequestPayload = z.input<typeof AssistantChatRequestSchema>;
 
 /**
  * Thin fetch wrapper against the Exchange API. No auth headers — the demo
@@ -104,7 +111,7 @@ export interface AssistantChatHttpError extends Error {
 export const ASSISTANT_FETCH_DEADLINE_MS = 130_000;
 
 export async function postAssistantChat(
-  body: AssistantChatRequest,
+  body: AssistantChatRequestPayload,
   options?: { signal?: AbortSignal },
 ): Promise<AssistantChatResponse> {
   const url = `${uiEnv.VITE_API_BASE_URL}/assistant/chat`;
@@ -117,10 +124,13 @@ export async function postAssistantChat(
     body: JSON.stringify(body),
     signal,
   });
-  const raw: unknown = await res.json().catch(() => (null));
+  const raw: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const code =
-      typeof raw === "object" && raw !== null && "code" in raw && typeof (raw as { code: unknown }).code === "string"
+      typeof raw === "object" &&
+      raw !== null &&
+      "code" in raw &&
+      typeof (raw as { code: unknown }).code === "string"
         ? (raw as { code: string }).code
         : undefined;
     const err = new Error(`assistant ${res.status}`) as AssistantChatHttpError;
@@ -133,7 +143,59 @@ export async function postAssistantChat(
     return parsed.data;
   }
   const reply =
-    typeof raw === "object" && raw !== null && "reply" in raw && typeof (raw as { reply: unknown }).reply === "string"
+    typeof raw === "object" &&
+    raw !== null &&
+    "reply" in raw &&
+    typeof (raw as { reply: unknown }).reply === "string"
+      ? (raw as { reply: string }).reply
+      : "Invalid assistant response.";
+  return { reply };
+}
+
+export type SellerAssistantChatRequest = Omit<AssistantChatRequestPayload, "role" | "mode"> & {
+  role: "seller";
+  mode?: string;
+};
+
+/** Seller variant of postAssistantChat: VITE_SELLER_API_BASE_URL ?? VITE_API_BASE_URL, with role "seller" + composer mode in the body. */
+export async function postSellerAssistantChat(
+  body: SellerAssistantChatRequest,
+  options?: { signal?: AbortSignal },
+): Promise<AssistantChatResponse> {
+  const base = uiEnv.VITE_SELLER_API_BASE_URL ?? uiEnv.VITE_API_BASE_URL;
+  const url = `${base}/assistant/chat`;
+  const deadline = AbortSignal.timeout(ASSISTANT_FETCH_DEADLINE_MS);
+  const signal =
+    options?.signal !== undefined ? AbortSignal.any([options.signal, deadline]) : deadline;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: JSON_HEADERS,
+    body: JSON.stringify(body),
+    signal,
+  });
+  const raw: unknown = await res.json().catch(() => null);
+  if (!res.ok) {
+    const code =
+      typeof raw === "object" &&
+      raw !== null &&
+      "code" in raw &&
+      typeof (raw as { code: unknown }).code === "string"
+        ? (raw as { code: string }).code
+        : undefined;
+    const err = new Error(`seller-assistant ${res.status}`) as AssistantChatHttpError;
+    err.status = res.status;
+    err.code = code;
+    throw err;
+  }
+  const parsed = AssistantChatResponseSchema.safeParse(raw);
+  if (parsed.success) {
+    return parsed.data;
+  }
+  const reply =
+    typeof raw === "object" &&
+    raw !== null &&
+    "reply" in raw &&
+    typeof (raw as { reply: unknown }).reply === "string"
       ? (raw as { reply: string }).reply
       : "Invalid assistant response.";
   return { reply };

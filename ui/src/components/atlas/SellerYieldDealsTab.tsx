@@ -19,7 +19,12 @@ export interface SellerYieldDealsTabProps {
   onNewDeal: () => void;
 }
 
-export function SellerYieldDealsTab({ deals, expandedDealIds, onToggleDeal, onNewDeal }: SellerYieldDealsTabProps): JSX.Element {
+export function SellerYieldDealsTab({
+  deals,
+  expandedDealIds,
+  onToggleDeal,
+  onNewDeal,
+}: SellerYieldDealsTabProps): JSX.Element {
   return (
     <div className="space-y-3">
       <button
@@ -33,14 +38,19 @@ export function SellerYieldDealsTab({ deals, expandedDealIds, onToggleDeal, onNe
         {deals.map((d) => {
           const open = expandedDealIds.has(d.id);
           return (
-            <li key={d.id} className="rounded-[10px] border border-[oklch(0.91_0.005_80)] bg-white shadow-sm">
+            <li
+              key={d.id}
+              className="rounded-[10px] border border-[oklch(0.91_0.005_80)] bg-white shadow-sm"
+            >
               <button
                 type="button"
                 className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left"
                 onClick={() => onToggleDeal(d.id)}
                 aria-expanded={open}
               >
-                <span className="text-[13px] font-semibold text-[oklch(0.22_0.01_80)]">{d.name}</span>
+                <span className="text-[13px] font-semibold text-[oklch(0.22_0.01_80)]">
+                  {d.name}
+                </span>
                 <span
                   className={`shrink-0 rounded-full border px-2 py-0.5 font-atlas-mono text-[9px] font-semibold uppercase ${badgeClass(d.status)}`}
                 >

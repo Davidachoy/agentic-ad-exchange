@@ -12,8 +12,8 @@ import type { CircleClient } from "@ade/wallets";
 import type { EventBus } from "../events/bus.js";
 import type { BidStore, ListingStore, SettlementStore } from "../state/stores.js";
 
-import { matchBidsToListing } from "./match.js";
 import { runSecondPriceAuction } from "./engine.js";
+import { matchBidsToListing } from "./match.js";
 
 export interface RunAuctionDeps {
   listingStore: ListingStore;

@@ -3,14 +3,23 @@ import type { JSX } from "react";
 import type { AssistantComposerModeField } from "./AssistantModeComposer.js";
 import { IconBolt } from "./AtlasComposerIcons.js";
 
-function svg(size: number): { width: number; height: number; viewBox: string; "aria-hidden": boolean } {
+function svg(size: number): {
+  width: number;
+  height: number;
+  viewBox: string;
+  "aria-hidden": boolean;
+} {
   return { width: size, height: size, viewBox: "0 0 24 24", "aria-hidden": true as const };
 }
 
 function IconLayers(): JSX.Element {
   return (
     <svg {...svg(14)} className="text-current" fill="none" stroke="currentColor" strokeWidth="1.75">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4L4 9l8 5 8-5-8-5zM4 14l8 5 8-5M4 19l8 5 8-5" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 4L4 9l8 5 8-5-8-5zM4 14l8 5 8-5M4 19l8 5 8-5"
+      />
     </svg>
   );
 }
@@ -18,7 +27,10 @@ function IconLayers(): JSX.Element {
 function IconHandshake(): JSX.Element {
   return (
     <svg {...svg(14)} className="text-current" fill="none" stroke="currentColor" strokeWidth="1.75">
-      <path strokeLinecap="round" d="M8 12l2 2 4-4M8 12H6a2 2 0 00-2 2v1h3M8 12V9a2 2 0 012-2h2l3 3M16 12h2a2 2 0 012 2v1h-3M16 12V9a2 2 0 00-2-2h-2" />
+      <path
+        strokeLinecap="round"
+        d="M8 12l2 2 4-4M8 12H6a2 2 0 00-2 2v1h3M8 12V9a2 2 0 012-2h2l3 3M16 12h2a2 2 0 012 2v1h-3M16 12V9a2 2 0 00-2-2h-2"
+      />
     </svg>
   );
 }
@@ -26,7 +38,15 @@ function IconHandshake(): JSX.Element {
 /** Buyer + slash — reads as “block buyer”, not a generic square. */
 function IconBlockBuyer(): JSX.Element {
   return (
-    <svg {...svg(16)} className="text-current" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      {...svg(16)}
+      className="text-current"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <circle cx="12" cy="8" r="3.5" />
       <path d="M5.5 20.5v-1A5.5 5.5 0 0111 14h2a5.5 5.5 0 015.5 5.5v1" />
       <path d="M3 4l18 16" />

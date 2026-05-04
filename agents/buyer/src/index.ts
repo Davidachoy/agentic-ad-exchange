@@ -36,8 +36,9 @@ interface BuildToolsDeps {
 }
 
 function buildTools(deps: BuildToolsDeps): AgentTool<unknown, unknown>[] {
-  const gatewayClient =
-    deps.privateKey ? buildGatewayClient(deps.privateKey, deps.chain ?? "arcTestnet") : undefined;
+  const gatewayClient = deps.privateKey
+    ? buildGatewayClient(deps.privateKey, deps.chain ?? "arcTestnet")
+    : undefined;
   return [
     createPlaceBidTool({
       exchangeUrl: deps.exchangeUrl,

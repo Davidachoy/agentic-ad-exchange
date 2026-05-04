@@ -99,8 +99,9 @@ export function AssistantModeComposer({
     }
   }, [quickInsertText, defaultModeId]);
 
-  const composerShellClass =
-    showEmptyHint ? "atlas-composer atlas-composer--invalid" : "atlas-composer atlas-composer--live";
+  const composerShellClass = showEmptyHint
+    ? "atlas-composer atlas-composer--invalid"
+    : "atlas-composer atlas-composer--live";
 
   return (
     <div className="atlas-composer-wrap font-atlas">
@@ -216,7 +217,14 @@ export function AssistantModeComposer({
                   <IconStopGeneration />
                 </button>
               ) : (
-                <button type="button" onClick={send} disabled={disabled} className="atlas-composer-send" aria-label="Send message" title="Send">
+                <button
+                  type="button"
+                  onClick={send}
+                  disabled={disabled}
+                  className="atlas-composer-send"
+                  aria-label="Send message"
+                  title="Send"
+                >
                   <span className="atlas-composer-send-char" aria-hidden>
                     ↑
                   </span>
@@ -232,7 +240,8 @@ export function AssistantModeComposer({
         ) : null}
         <p className="atlas-composer-foot">
           <span>
-            {text.length}/{MAX} · Enter send · Shift+Enter newline{pending ? " · Stop cancels generation" : ""}
+            {text.length}/{MAX} · Enter send · Shift+Enter newline
+            {pending ? " · Stop cancels generation" : ""}
           </span>
           <span>{modeMeta?.hint ?? ""}</span>
         </p>

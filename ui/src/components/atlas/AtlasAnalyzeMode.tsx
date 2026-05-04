@@ -17,7 +17,12 @@ const PERIODS: { id: AnalyzePeriod; label: string }[] = [
   { id: "custom", label: "Custom" },
 ];
 
-export function AtlasAnalyzeMode({ period, onPeriod, applyNext, onApplyNext }: AtlasAnalyzeModeProps): JSX.Element {
+export function AtlasAnalyzeMode({
+  period,
+  onPeriod,
+  applyNext,
+  onApplyNext,
+}: AtlasAnalyzeModeProps): JSX.Element {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-1">
@@ -74,8 +79,12 @@ export function AtlasAnalyzeMode({ period, onPeriod, applyNext, onApplyNext }: A
                         : "bg-[oklch(0.995_0.003_80)]"
                   }`}
                 >
-                  <td className="px-3 py-2 font-medium text-[oklch(0.22_0.01_80)]">{row.channel}</td>
-                  <td className="px-2 py-2 font-atlas-mono text-[oklch(0.32_0.01_80)]">{row.imps}</td>
+                  <td className="px-3 py-2 font-medium text-[oklch(0.22_0.01_80)]">
+                    {row.channel}
+                  </td>
+                  <td className="px-2 py-2 font-atlas-mono text-[oklch(0.32_0.01_80)]">
+                    {row.imps}
+                  </td>
                   <td className="px-2 py-2 font-atlas-mono">{row.winPct}</td>
                   <td className="px-2 py-2 font-atlas-mono">{row.vcr}</td>
                   <td className="px-2 py-2 font-atlas-mono">{row.ecpm}</td>
@@ -93,19 +102,25 @@ export function AtlasAnalyzeMode({ period, onPeriod, applyNext, onApplyNext }: A
         </div>
         <div className="grid gap-2 sm:grid-cols-3">
           <div className="rounded-[10px] border border-[oklch(0.91_0.005_80)] border-l-[3px] border-l-emerald-500 bg-white p-3 shadow-sm">
-            <div className="font-atlas-mono text-[9px] font-semibold uppercase text-emerald-800">Best call</div>
+            <div className="font-atlas-mono text-[9px] font-semibold uppercase text-emerald-800">
+              Best call
+            </div>
             <p className="mt-2 text-[11.5px] leading-snug text-[oklch(0.28_0.01_80)]">
               Held bid floor on Meridian when VCR was already above goal.
             </p>
           </div>
           <div className="rounded-[10px] border border-[oklch(0.91_0.005_80)] border-l-[3px] border-l-amber-500 bg-white p-3 shadow-sm">
-            <div className="font-atlas-mono text-[9px] font-semibold uppercase text-amber-900">Close call</div>
+            <div className="font-atlas-mono text-[9px] font-semibold uppercase text-amber-900">
+              Close call
+            </div>
             <p className="mt-2 text-[11.5px] leading-snug text-[oklch(0.28_0.01_80)]">
               Almost shifted budget to Tubi; paused when win-rate dipped.
             </p>
           </div>
           <div className="rounded-[10px] border border-[oklch(0.91_0.005_80)] border-l-[3px] border-l-sky-500 bg-white p-3 shadow-sm">
-            <div className="font-atlas-mono text-[9px] font-semibold uppercase text-sky-900">Learned</div>
+            <div className="font-atlas-mono text-[9px] font-semibold uppercase text-sky-900">
+              Learned
+            </div>
             <p className="mt-2 text-[11.5px] leading-snug text-[oklch(0.28_0.01_80)]">
               Roku dayparts after 9pm outperform for Solstice 1P.
             </p>

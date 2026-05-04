@@ -28,9 +28,13 @@ export function AtlasBarChartBlock({ block }: { block: AssistantBarChartBlock })
             <div className="font-atlas-mono text-[9px] font-semibold uppercase tracking-wider text-[oklch(0.55_0.006_80)]">
               Chart
             </div>
-            <h3 className="mt-0.5 text-[13px] font-semibold text-[oklch(0.18_0.01_80)]">{block.title}</h3>
+            <h3 className="mt-0.5 text-[13px] font-semibold text-[oklch(0.18_0.01_80)]">
+              {block.title}
+            </h3>
             {block.subtitle != null && block.subtitle.length > 0 ? (
-              <p className="mt-0.5 text-[11.5px] leading-snug text-[oklch(0.45_0.01_80)]">{block.subtitle}</p>
+              <p className="mt-0.5 text-[11.5px] leading-snug text-[oklch(0.45_0.01_80)]">
+                {block.subtitle}
+              </p>
             ) : null}
           </div>
           <div className="flex shrink-0 flex-col items-end gap-1">
@@ -47,7 +51,9 @@ export function AtlasBarChartBlock({ block }: { block: AssistantBarChartBlock })
               </span>
             )}
             {block.yCaption != null && block.yCaption.length > 0 ? (
-              <span className="font-atlas-mono text-[9px] text-[oklch(0.55_0.006_80)]">{block.yCaption}</span>
+              <span className="font-atlas-mono text-[9px] text-[oklch(0.55_0.006_80)]">
+                {block.yCaption}
+              </span>
             ) : null}
           </div>
         </div>
@@ -67,7 +73,10 @@ export function AtlasBarChartBlock({ block }: { block: AssistantBarChartBlock })
               const ratio = scaleMax > 0 ? p.value / scaleMax : 0;
               const barH = Math.max(ratio * CHART_H_PX, p.value > 0 ? 6 : 3);
               return (
-                <div key={i} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1">
+                <div
+                  key={i}
+                  className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1"
+                >
                   <div
                     className="w-full max-w-[44px] rounded-t-md bg-[oklch(0.72_0.12_230)] sm:max-w-[52px]"
                     style={{ height: barH }}
