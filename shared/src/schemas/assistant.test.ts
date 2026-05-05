@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  AssistantAuctionReceiptBlockSchema,
   AssistantChatRequestSchema,
   AssistantChatResponseSchema,
+  AssistantUiBlockSchema,
   DashboardAssistantContextSchema,
   parseAssistantChatResponse,
 } from "./assistant.js";
@@ -116,6 +118,85 @@ describe("parseAssistantChatResponse", () => {
     }
   });
 
+  it("accepts an auction_receipt block (happy)", () => {
+    const out = parseAssistantChatResponse({
+      reply: "Settled.",
+      blocks: [
+        {
+          type: "auction_receipt",
+          listingId: "11111111-1111-4111-8111-111111111111",
+          status: "settled",
+          floorPriceUsdc: "0.003000",
+          clearingPriceUsdc: "0.002000",
+          arcTxHash: `0x${"a".repeat(64)}`,
+          marginNote: "Uneconomic on traditional rails (settled at $0.002).",
+        },
+      ],
+    });
+    expect(out.blocks).toHaveLength(1);
+    expect(out.blocks?.[0].type).toBe("auction_receipt");
+  });
+});
+
+describe("AssistantAuctionReceiptBlockSchema", () => {
+  const listingId = "11111111-1111-4111-8111-111111111111";
+  const txHash = `0x${"a".repeat(64)}`;
+  const isoNow = "2026-04-22T12:00:00Z";
+
+  it("parses a fully populated settled block (happy)", () => {
+    const r = AssistantAuctionReceiptBlockSchema.safeParse({
+      type: "auction_receipt",
+      listingId,
+      floorPriceUsdc: "0.003000",
+      autoClearAtIso: isoNow,
+      clearingPriceUsdc: "0.002500",
+      status: "settled",
+      arcTxHash: txHash,
+      marginNote: "Uneconomic on traditional rails — sub-cent settlement on Arc.",
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("parses listing_not_found with optionals omitted (edge)", () => {
+    const r = AssistantAuctionReceiptBlockSchema.safeParse({
+      type: "auction_receipt",
+      listingId,
+      status: "listing_not_found",
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("rejects status outside the enum (failure)", () => {
+    const r = AssistantAuctionReceiptBlockSchema.safeParse({
+      type: "auction_receipt",
+      listingId,
+      status: "confirmed",
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects floor with > 6 fractional digits (failure)", () => {
+    const r = AssistantAuctionReceiptBlockSchema.safeParse({
+      type: "auction_receipt",
+      listingId,
+      floorPriceUsdc: "0.0000001",
+      status: "settled",
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it("is selected by AssistantUiBlockSchema discriminator (union)", () => {
+    const r = AssistantUiBlockSchema.safeParse({
+      type: "auction_receipt",
+      listingId,
+      status: "no_eligible_bids",
+    });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.type).toBe("auction_receipt");
+  });
+});
+
+describe("parseAssistantChatResponse_extra", () => {
   it("accepts bar_chart with string numeric values and missing dataSource (Gemini-shaped)", () => {
     const out = parseAssistantChatResponse({
       reply: "Chart below.",

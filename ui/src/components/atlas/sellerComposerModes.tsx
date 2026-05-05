@@ -79,6 +79,15 @@ export const SELLER_COMPOSER_MODES: readonly AssistantComposerModeField[] = [
     pillOnClassName: "atlas-composer-pill--on",
   },
   {
+    // Reason: operator vocabulary uses "Close auction"; code id mirrors the
+    // server route (`/auction/run`) so the round-trip mode hint matches.
+    id: "run_auction",
+    label: "Close auction",
+    placeholder: "Which listing? e.g. Close listing 1111-2222-...",
+    hint: "Cleared via /auction/run — server settles via Circle on Arc",
+    pillOnClassName: "atlas-composer-pill--on",
+  },
+  {
     id: "analyze",
     label: "Analyze",
     placeholder: "Ask about your inventory performance. e.g. Why did revenue drop yesterday?...",
@@ -113,6 +122,9 @@ export function renderSellerComposerIcon(modeId: string): JSX.Element {
   }
   if (modeId === "analyze") {
     return <IconChart />;
+  }
+  if (modeId === "run_auction") {
+    return <IconBolt />;
   }
   return <IconLayers />;
 }

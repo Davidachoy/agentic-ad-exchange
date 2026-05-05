@@ -82,6 +82,40 @@ describe("useSellerAssistantChat", () => {
     expect(last.blocks).toBeUndefined();
   });
 
+  it("renders an auction_receipt block from the server in run_auction mode (happy)", async () => {
+    const listingId = "11111111-1111-4111-8111-111111111111";
+    const arcTxHash = `0x${"a".repeat(64)}`;
+    vi.mocked(postSellerAssistantChat).mockResolvedValueOnce({
+      reply: "Settled at $0.002.",
+      blocks: [
+        {
+          type: "auction_receipt",
+          listingId,
+          status: "settled",
+          clearingPriceUsdc: "0.002000",
+          arcTxHash,
+          marginNote: "Settled at $0.002000 USDC — uneconomic on traditional rails.",
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => useSellerAssistantChat());
+
+    act(() => {
+      result.current.sendComposerMessage(`close listing ${listingId}`, "run_auction");
+    });
+    await waitFor(() => expect(result.current.sending).toBe(false));
+
+    const last = result.current.messages.at(-1)!;
+    expect(last.role).toBe("assistant");
+    expect(last.blocks).toHaveLength(1);
+    expect(last.blocks?.[0]?.type).toBe("auction_receipt");
+
+    const [body] = vi.mocked(postSellerAssistantChat).mock.calls[0]!;
+    expect(body.role).toBe("seller");
+    expect(body.mode).toBe("run_auction");
+  });
+
   it("falls back to a simulated reply on 503 gemini_not_configured (failure)", async () => {
     const err = Object.assign(new Error("seller-assistant 503"), {
       status: 503,

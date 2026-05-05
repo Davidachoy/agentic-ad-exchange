@@ -28,6 +28,8 @@ function renderBlock(block: AssistantUiBlock): JSX.Element {
       return <DecisionBlock block={block} />;
     case "bar_chart":
       return <AtlasBarChartBlock block={block} />;
+    case "auction_receipt":
+      return <AuctionReceiptBlock block={block} />;
   }
 }
 
@@ -160,6 +162,56 @@ function DecisionBlock({
           <p className="border-t border-[oklch(0.94_0.004_80)] pt-2 text-[12.5px] text-emerald-800">
             {renderBoldMarkdown(block.complianceNote)}
           </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function statusLabel(
+  status: "settled" | "listing_not_found" | "no_eligible_bids" | "failed",
+): string {
+  switch (status) {
+    case "settled":
+      return "Settled";
+    case "listing_not_found":
+      return "Listing not found";
+    case "no_eligible_bids":
+      return "No eligible bids";
+    case "failed":
+      return "Failed";
+  }
+}
+
+function shortHash(hash: string): string {
+  return hash.length > 14 ? `${hash.slice(0, 6)}…${hash.slice(-4)}` : hash;
+}
+
+function AuctionReceiptBlock({
+  block,
+}: {
+  block: Extract<AssistantUiBlock, { type: "auction_receipt" }>;
+}): JSX.Element {
+  return (
+    <div className="overflow-hidden rounded-[10px] border border-[oklch(0.91_0.005_80)] bg-white shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[oklch(0.94_0.004_80)] px-3 py-2">
+        <div className="font-atlas-mono text-[9px] font-semibold uppercase tracking-wider text-[oklch(0.55_0.006_80)]">
+          Auction receipt · {statusLabel(block.status)}
+        </div>
+        {block.arcTxHash ? (
+          <span className="font-atlas-mono text-[10px] text-[oklch(0.4_0.01_80)]">
+            tx {shortHash(block.arcTxHash)}
+          </span>
+        ) : null}
+      </div>
+      <div className="space-y-1 px-3 py-2.5 text-[13px] leading-relaxed text-[oklch(0.28_0.01_80)]">
+        {block.clearingPriceUsdc ? (
+          <p className="font-atlas-mono text-[13px] font-semibold text-[oklch(0.18_0.01_80)]">
+            ${block.clearingPriceUsdc} USDC
+          </p>
+        ) : null}
+        {block.marginNote ? (
+          <p className="text-[12.5px] text-[oklch(0.4_0.01_80)]">{block.marginNote}</p>
         ) : null}
       </div>
     </div>

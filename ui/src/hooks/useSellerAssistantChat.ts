@@ -27,6 +27,7 @@ function sellerModeFromId(modeId: string): SellerComposerMode {
   if (
     modeId === "ask" ||
     modeId === "set_floor" ||
+    modeId === "run_auction" ||
     modeId === "configure_deal" ||
     modeId === "block_buyer" ||
     modeId === "analyze"

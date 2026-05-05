@@ -100,4 +100,42 @@ describe("createSellerAgent", () => {
     });
     await expect(agent.run("hi")).rejects.toThrow(/Unknown tool/);
   });
+
+  it("rejects when tool calls exceed maxToolCalls (failure)", async () => {
+    const tools = [createViewHistoryTool({ exchangeUrl: "http://localhost:4021" })];
+    const decisions = Array.from({ length: 3 }, () =>
+      Promise.resolve({
+        toolCall: { name: "viewHistory", args: { sellerAgentId: "s-1", limit: 10 } },
+      }),
+    );
+    const agent = createSellerAgent({
+      llm: fakeLlm(decisions),
+      tools,
+      systemPrompt: SELLER_SYSTEM_PROMPT,
+      maxToolCalls: 2,
+    });
+    await expect(agent.run("loop hard")).rejects.toThrow(/Tool-call cap exceeded/);
+  });
+
+  it("allows exactly maxToolCalls tool calls plus a final answer (edge)", async () => {
+    const tools = [createViewHistoryTool({ exchangeUrl: "http://localhost:4021" })];
+    const agent = createSellerAgent({
+      llm: fakeLlm([
+        Promise.resolve({
+          toolCall: { name: "viewHistory", args: { sellerAgentId: "s-1", limit: 10 } },
+        }),
+        Promise.resolve({
+          toolCall: { name: "viewHistory", args: { sellerAgentId: "s-1", limit: 10 } },
+        }),
+        Promise.resolve({ final: "Done." }),
+      ]),
+      tools,
+      systemPrompt: SELLER_SYSTEM_PROMPT,
+      maxToolCalls: 2,
+    });
+    const result = await agent.run("two then done");
+    expect(result.output).toBe("Done.");
+    expect(result.toolCalls).toEqual(["viewHistory", "viewHistory"]);
+    expect(result.lastToolResult?.name).toBe("viewHistory");
+  });
 });

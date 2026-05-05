@@ -1,3 +1,4 @@
+import type { SellerAgent } from "@ade/agent-seller";
 import type { AuctionResult } from "@ade/shared";
 import type { CircleClient } from "@ade/wallets";
 import type { Express } from "express";
@@ -43,6 +44,8 @@ export interface RegisterRoutesDeps {
   autoClearScheduler: AutoClearScheduler;
   controlStore: ControlStore;
   assistantGemini: { apiKey: string; model: string } | null;
+  /** Production: `() => createSellerChatAgentWithGemini()`. Tests can omit. */
+  sellerChatAgentFactory?: () => SellerAgent;
   assistantRateLimitPerMin: number;
   fixtureAuctionReplay?: ReadonlyArray<AuctionResult>;
   /** Pino logger for assistant + route diagnostics (same instance as createApp). */
@@ -55,6 +58,7 @@ export function registerRoutes(app: Express, deps: RegisterRoutesDeps): void {
     createAssistantRouter({
       gemini: deps.assistantGemini,
       rateLimitPerMin: deps.assistantRateLimitPerMin,
+      sellerChatAgentFactory: deps.sellerChatAgentFactory,
       logger: deps.logger,
     }),
   );

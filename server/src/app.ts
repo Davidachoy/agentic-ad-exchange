@@ -1,3 +1,4 @@
+import type { SellerAgent } from "@ade/agent-seller";
 import type { AuctionResult } from "@ade/shared";
 import type { CircleClient } from "@ade/wallets";
 import express, { type Express } from "express";
@@ -81,6 +82,12 @@ export interface AppDeps {
   logger?: Logger;
   /** When null, POST /assistant/chat returns 503 gemini_not_configured. */
   assistantGemini?: { apiKey: string; model: string } | null;
+  /**
+   * Lazy factory for the seller chat agent (action-taking branch). When set,
+   * `/assistant/chat` with `role:"seller"` and a tool-mode (`set_floor` /
+   * `run_auction`) routes through the agent loop instead of pure-Gemini text.
+   */
+  sellerChatAgentFactory?: () => SellerAgent;
   assistantRateLimitPerMin?: number;
   /** Synthetic `auctionMatched` rows replayed on each SSE connect (dev fixtures). */
   fixtureAuctionReplay?: ReadonlyArray<AuctionResult>;
@@ -150,6 +157,7 @@ export function createApp(deps: AppDeps): AppHandles {
     autoClearScheduler,
     controlStore,
     assistantGemini: deps.assistantGemini ?? null,
+    sellerChatAgentFactory: deps.sellerChatAgentFactory,
     assistantRateLimitPerMin: deps.assistantRateLimitPerMin ?? 30,
     fixtureAuctionReplay: deps.fixtureAuctionReplay,
     logger: log,

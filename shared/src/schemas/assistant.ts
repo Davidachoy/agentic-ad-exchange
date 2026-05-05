@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { AuctionResultSchema } from "./auction.js";
+import { IsoDateTimeSchema, UsdcAmountSchema } from "./primitives.js";
 import { SettlementReceiptSchema } from "./settlement.js";
 
 /** One chat turn from the UI (no system role — server adds instructions). */
@@ -120,11 +121,48 @@ export const AssistantBarChartBlockSchema = z.object({
 });
 export type AssistantBarChartBlock = z.infer<typeof AssistantBarChartBlockSchema>;
 
+/**
+ * Outcome status for a chat-driven auction action. Mirrors the discriminated
+ * union returned by the seller agent's `runAuction` tool — `settled` carries
+ * a clearing price and an Arc tx hash; `listing_not_found` / `no_eligible_bids`
+ * are surfaced so the chat can frame the next step; `failed` covers Circle
+ * settlement errors. Distinct from `SettlementStatus` ("confirmed" et al.) on
+ * purpose — that enum is server-internal and would mislead operators here.
+ */
+export const AssistantAuctionReceiptStatusSchema = z.enum([
+  "settled",
+  "listing_not_found",
+  "no_eligible_bids",
+  "failed",
+]);
+export type AssistantAuctionReceiptStatus = z.infer<typeof AssistantAuctionReceiptStatusSchema>;
+
+export const AssistantAuctionReceiptBlockSchema = z.object({
+  type: z.literal("auction_receipt"),
+  listingId: z.string().uuid(),
+  /** Floor the seller submitted — optional because some outcomes do not echo it back. */
+  floorPriceUsdc: UsdcAmountSchema.optional(),
+  /** Wall-clock auto-clear deadline (when known) so the chat can show "closes at HH:MM". */
+  autoClearAtIso: IsoDateTimeSchema.optional(),
+  /** Server-computed clearing price. Absent for non-settled outcomes. */
+  clearingPriceUsdc: UsdcAmountSchema.optional(),
+  status: AssistantAuctionReceiptStatusSchema,
+  /** Arc transaction hash from the Circle DCW transfer when status === "settled". */
+  arcTxHash: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{64}$/)
+    .optional(),
+  /** One-line "uneconomic on traditional rails" framing rendered as block subtitle. */
+  marginNote: z.string().min(1).max(200).optional(),
+});
+export type AssistantAuctionReceiptBlock = z.infer<typeof AssistantAuctionReceiptBlockSchema>;
+
 export const AssistantUiBlockSchema = z.discriminatedUnion("type", [
   AssistantMetricsStripBlockSchema,
   AssistantPillGroupBlockSchema,
   AssistantDecisionBlockSchema,
   AssistantBarChartBlockSchema,
+  AssistantAuctionReceiptBlockSchema,
 ]);
 export type AssistantUiBlock = z.infer<typeof AssistantUiBlockSchema>;
 

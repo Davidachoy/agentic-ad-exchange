@@ -1,3 +1,4 @@
+import { createSellerChatAgentWithGemini, type SellerAgent } from "@ade/agent-seller";
 import { createCircleClient } from "@ade/wallets";
 
 import { createApp } from "./app.js";
@@ -40,6 +41,22 @@ async function main(): Promise<void> {
     ? { apiKey: config.GEMINI_API_KEY, model: config.GEMINI_MODEL ?? "gemini-2.5-flash" }
     : null;
 
+  // Reason: chat-driven seller actions need both Gemini AND a seller wallet to
+  // populate listing identity fields. Build the factory only when both are
+  // configured; otherwise the route falls back to pure-Gemini text replies and
+  // tool-mode chats see the existing 503 / no-tool-execution behaviour.
+  let sellerChatAgentFactory: (() => SellerAgent) | undefined;
+  if (assistantGemini && config.SELLER_WALLET_ADDRESS) {
+    const sellerAgentConfig = {
+      GEMINI_API_KEY: assistantGemini.apiKey,
+      GEMINI_MODEL: assistantGemini.model,
+      EXCHANGE_API_URL: `http://localhost:${config.PORT}`,
+      SELLER_WALLET_ADDRESS: config.SELLER_WALLET_ADDRESS,
+      SELLER_LISTING_INTERVAL_MS: 30_000,
+    };
+    sellerChatAgentFactory = () => createSellerChatAgentWithGemini({ config: sellerAgentConfig });
+  }
+
   const listingStore = createListingStore();
   const bidStore = createBidStore();
   const settlementStore = createSettlementStore();
@@ -59,6 +76,7 @@ async function main(): Promise<void> {
     corsAllowOrigins: config.CORS_ALLOW_ORIGINS,
     bidRateLimitPerMin: config.BID_RATE_LIMIT_PER_MIN,
     assistantGemini,
+    sellerChatAgentFactory,
     assistantRateLimitPerMin: config.ASSISTANT_CHAT_RATE_LIMIT_PER_MIN,
     circleClient,
     buyerWalletId: config.BUYER_WALLET_ID,

@@ -42,4 +42,10 @@ describe("getSimulatedSellerReply", () => {
     const r = getSimulatedSellerReply("analyze", "why");
     expect(r).toMatch(/CTV pre-roll/i);
   });
+
+  it("returns close-auction copy for run_auction mode (happy)", () => {
+    const r = getSimulatedSellerReply("run_auction", "close listing 1234");
+    expect(r.length).toBeGreaterThan(0);
+    expect(r).toMatch(/settl|clos/i);
+  });
 });

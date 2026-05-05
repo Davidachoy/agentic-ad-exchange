@@ -1,5 +1,11 @@
 /** Composer modes for seller yield assistant (demo). */
-export type SellerComposerMode = "ask" | "set_floor" | "configure_deal" | "block_buyer" | "analyze";
+export type SellerComposerMode =
+  | "ask"
+  | "set_floor"
+  | "run_auction"
+  | "configure_deal"
+  | "block_buyer"
+  | "analyze";
 
 export function getSimulatedSellerReply(mode: SellerComposerMode, message: string): string {
   const m = message.trim();
@@ -21,6 +27,10 @@ export function getSimulatedSellerReply(mode: SellerComposerMode, message: strin
       return "Got it. Dropping CTV pre-roll from $4.20 → $3.20. Projected fill rate: 68% (+34pp). Estimated revenue recovery: +$840/day. Confirm?";
     }
     return "Floor update noted. Atlas will apply this to the next auction cycle.";
+  }
+
+  if (mode === "run_auction") {
+    return "Closing the auction now—server will run second-price clearing and settle the winning bid via Circle on Arc. Check the receipt panel for clearing price and tx hash.";
   }
 
   if (mode === "configure_deal") {

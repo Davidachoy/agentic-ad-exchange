@@ -1,7 +1,8 @@
+import type { AgentTool, SellerAgent, SellerAgentRunResult } from "@ade/agent-seller";
 import { AssistantChatRequestSchema } from "@ade/shared";
 import express from "express";
 import request from "supertest";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createLogger } from "../logger.js";
 
@@ -101,6 +102,90 @@ describe("POST /assistant/chat", () => {
       .expect(200);
     expect(res.body.reply).toBe("seller:set_floor");
     expect(calls).toEqual([{ role: "seller", mode: "set_floor" }]);
+  });
+
+  it("forwards mode:'run_auction' for role:'seller' to the replyGenerator (happy)", async () => {
+    const calls: { role: string; mode: string | undefined }[] = [];
+    const res = await request(
+      makeAppWithStubReply(async (_messages, _context, shape) => {
+        calls.push({ role: shape.role, mode: shape.mode });
+        return { reply: `seller:${shape.mode ?? "no-mode"}` };
+      }),
+    )
+      .post("/assistant/chat")
+      .send({ ...body, role: "seller", mode: "run_auction" })
+      .expect(200);
+    expect(res.body.reply).toBe("seller:run_auction");
+    expect(calls).toEqual([{ role: "seller", mode: "run_auction" }]);
+  });
+
+  it("invokes the sellerChatAgentFactory when mode is run_auction (happy)", async () => {
+    const run = vi.fn(
+      async (_msg: string): Promise<SellerAgentRunResult> => ({
+        output: "Settled.",
+        toolCalls: ["runAuction"],
+        iterations: 2,
+        lastToolResult: {
+          name: "runAuction",
+          value: {
+            kind: "settled",
+            listingId: "11111111-1111-4111-8111-111111111111",
+            clearingPriceUsdc: "0.002000",
+            status: "confirmed",
+            arcTxHash: `0x${"a".repeat(64)}`,
+          },
+        },
+      }),
+    );
+    const fakeAgent: SellerAgent = {
+      tools: [] as ReadonlyArray<AgentTool<unknown, unknown>>,
+      run,
+    };
+    const factory = vi.fn(() => fakeAgent);
+
+    const app = express();
+    app.use(express.json());
+    app.use(
+      createAssistantRouter({
+        gemini: null,
+        rateLimitPerMin: 10_000,
+        sellerChatAgentFactory: factory,
+        logger: testLog,
+      }),
+    );
+
+    const res = await request(app)
+      .post("/assistant/chat")
+      .send({ ...body, role: "seller", mode: "run_auction" })
+      .expect(200);
+
+    expect(factory).toHaveBeenCalledTimes(1);
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(run.mock.calls[0]?.[0]).toContain("[mode=run_auction]");
+    expect(res.body.reply).toBe("Settled.");
+    expect(res.body.blocks).toHaveLength(1);
+    expect(res.body.blocks[0].type).toBe("auction_receipt");
+  });
+
+  it("does not invoke sellerChatAgentFactory in ask mode (edge)", async () => {
+    const factory = vi.fn();
+    const app = express();
+    app.use(express.json());
+    app.use(
+      createAssistantRouter({
+        gemini: null,
+        rateLimitPerMin: 10_000,
+        sellerChatAgentFactory: factory,
+        logger: testLog,
+      }),
+    );
+
+    // ask mode + no Gemini configured + no replyGenerator → 503 (existing path).
+    await request(app)
+      .post("/assistant/chat")
+      .send({ ...body, role: "seller", mode: "ask" })
+      .expect(503);
+    expect(factory).not.toHaveBeenCalled();
   });
 
   it("defaults role to 'buyer' when omitted from the request body (edge)", async () => {

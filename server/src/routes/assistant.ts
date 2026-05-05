@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import type { SellerAgent } from "@ade/agent-seller";
 import type {
   AssistantChatMessage,
   AssistantChatResponse,
@@ -11,6 +12,7 @@ import { Router } from "express";
 import type { Logger } from "pino";
 
 import { generateAssistantReply } from "../assistant/geminiReply.js";
+import { generateSellerChatAgentReply } from "../assistant/sellerChatAgent.js";
 import { createAssistantRateLimiter } from "../middleware/rateLimit.js";
 
 export interface AssistantReplyShape {
@@ -24,11 +26,28 @@ export type AssistantReplyGenerator = (
   shape: AssistantReplyShape,
 ) => Promise<AssistantChatResponse>;
 
+/**
+ * Composer modes that fire seller tool calls (`listInventory`, `runAuction`).
+ * Other modes (ask, configure_deal, block_buyer, analyze) stay on the
+ * pure-Gemini text path.
+ */
+const SELLER_TOOL_MODES = new Set(["set_floor", "run_auction"]);
+
 export interface AssistantRouterDeps {
   gemini: { apiKey: string; model: string } | null;
   rateLimitPerMin: number;
   /** Tests: bypass Gemini and return a fixed payload. */
   replyGenerator?: AssistantReplyGenerator;
+  /**
+   * Lazy factory for the seller chat agent. Invoked once per qualifying
+   * request (role:seller AND mode in SELLER_TOOL_MODES) so the underlying
+   * Gemini chat session is fresh per turn — agents/seller's adapter resets
+   * on a new user-only history.
+   *
+   * Tests pass a fake `() => SellerAgent`; production wires
+   * `createSellerChatAgentWithGemini`.
+   */
+  sellerChatAgentFactory?: () => SellerAgent;
   logger: Logger;
 }
 
@@ -69,7 +88,14 @@ export function createAssistantRouter(deps: AssistantRouterDeps): Router {
         return;
       }
 
-      if (!deps.replyGenerator && !deps.gemini) {
+      const useSellerChatAgent =
+        !deps.replyGenerator &&
+        deps.sellerChatAgentFactory != null &&
+        role === "seller" &&
+        mode != null &&
+        SELLER_TOOL_MODES.has(mode);
+
+      if (!deps.replyGenerator && !useSellerChatAgent && !deps.gemini) {
         log.debug("assistant_chat_skipped_gemini_not_configured");
         res.status(503).json({
           error: "assistant_unavailable",
@@ -88,7 +114,12 @@ export function createAssistantRouter(deps: AssistantRouterDeps): Router {
           messageTurns: messages.length,
           contextGeneratedAt: context.generatedAt,
           lastUserPreview: lastPreview,
-          generator: deps.replyGenerator != null ? "stub" : "gemini",
+          generator:
+            deps.replyGenerator != null
+              ? "stub"
+              : useSellerChatAgent
+                ? "seller-chat-agent"
+                : "gemini",
           role,
           composerMode: mode,
         },
@@ -98,16 +129,21 @@ export function createAssistantRouter(deps: AssistantRouterDeps): Router {
       try {
         const geminiCfg = deps.gemini;
         const shape: AssistantReplyShape = { role, mode };
-        const payload = await runAssistantGenerationSerialised(() =>
-          deps.replyGenerator != null
-            ? deps.replyGenerator(messages, context, shape)
-            : generateAssistantReply(
-                { apiKey: geminiCfg!.apiKey, model: geminiCfg!.model, logger: deps.logger },
-                messages,
-                context,
-                shape,
-              ),
-        );
+        const payload = await runAssistantGenerationSerialised(() => {
+          if (deps.replyGenerator != null) {
+            return deps.replyGenerator(messages, context, shape);
+          }
+          if (useSellerChatAgent) {
+            const agent = deps.sellerChatAgentFactory!();
+            return generateSellerChatAgentReply(agent, messages, context, shape);
+          }
+          return generateAssistantReply(
+            { apiKey: geminiCfg!.apiKey, model: geminiCfg!.model, logger: deps.logger },
+            messages,
+            context,
+            shape,
+          );
+        });
         log.info(
           {
             requestId: rid,
